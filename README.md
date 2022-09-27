@@ -9,7 +9,7 @@ The papers of our PhaSUIT can be found below. If you use PhaSUIT for your resear
 
 * PhaMer (phage identification)
 ```
-Jiayu Shang, Xubo Tang, Ruocheng Guo, Yanni Sun, Accurate identification of bacteriophages from metagenomic data using Transformer, Briefings in Bioinformatics, 2022;, bbac258, https://doi.org/10.1093/bib/bbac258
+Jiayu Shang, Xubo Tang, Ruocheng Guo, Yanni Sun, Accurate identification of bacteriophages from metagenomic data using Transformer, Briefings in Bioinformatics, Volume 23, Issue 4, July 2022, bbac258, https://doi.org/10.1093/bib/bbac258
 ```
 
 * PhaGCN (taxonomy classification)
@@ -19,7 +19,7 @@ Jiayu Shang, Jingzhe Jiang, Yanni Sun, Bacteriophage classification for assemble
 
 * Cherry (host prediction)
 ```
-Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction of virus–pRokarYotic interactions using a graph encoder–decoder model, Briefings in Bioinformatics, 2022;, bbac182, https://doi.org/10.1093/bib/bbac182
+Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction of virus–pRokarYotic interactions using a graph encoder–decoder model, Briefings in Bioinformatics, Volume 23, Issue 5, September 2022, bbac182, https://doi.org/10.1093/bib/bbac182
 ```
 
 * PhaTYP (Lifestyle prediction)
