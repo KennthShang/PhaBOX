@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import shutil
 import argparse
@@ -36,17 +37,19 @@ from scripts.data import load_data, preprocess_features, preprocess_adj, sample_
 
 
 parser = argparse.ArgumentParser(description="""Main script of PhaSUIT.""")
-parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'test_contigs.fa')
-parser.add_argument('--threads', help='number of threads to use', type=int, default=8)
+parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'inputs.fa')
+parser.add_argument('--threads', help='number of threads to use', type=int, default=4)
 parser.add_argument('--len', help='minimum length of contigs', type=int, default=3000)
 parser.add_argument('--reject', help='threshold to reject prophage',  type=float, default = 0.2)
 parser.add_argument('--rootpth', help='rootpth of the user', default='user_0/')
 parser.add_argument('--out', help='output path of the user', default='out/')
 parser.add_argument('--midfolder', help='mid folder for intermidiate files', default='midfolder/')
+parser.add_argument('--visual', help='mid folder for intermidiate files', default='visual/')
 parser.add_argument('--dbdir', help='database directory',  default = 'database/')
 parser.add_argument('--parampth', help='path of parameters',  default = 'parameters/')
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
 parser.add_argument('--topk', help='Top k prediction',  type=int, default=1)
+parser.add_argument('--html', help='mid folder for intermidiate files', default='state/')
 inputs = parser.parse_args()
 
 
@@ -57,6 +60,8 @@ db_dir    = inputs.dbdir
 out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
+visual    = inputs.visual
+length    = inputs.len
 
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
@@ -64,6 +69,7 @@ if not os.path.exists(db_dir):
 
 check_path(os.path.join(rootpth, out_dir))
 check_path(os.path.join(rootpth, midfolder))
+check_path(os.path.join(rootpth, visual))
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -76,7 +82,7 @@ if device == 'cpu':
 ###############################################################
 
 rec = []
-for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+for record in SeqIO.parse(contigs, 'fasta'):
     if len(record.seq) > inputs.len:
         rec.append(record)
 SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
@@ -88,7 +94,11 @@ SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 
 translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
 run_diamond(f'{db_dir}/phamer_database.dmnd', os.path.join(rootpth, midfolder), 'test_protein.fa', 'phamer', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'phamer')
 contig2sentence(db_dir, os.path.join(rootpth, midfolder), 'test_protein.fa', 'phamer')
+
+
+
 
 
 pcs2idx = pkl.load(open(f'{rootpth}/{midfolder}/phamer_pc2wordsid.dict', 'rb'))
@@ -132,5 +142,36 @@ with torch.no_grad():
         all_score += [float('{:.3f}'.format(i)) for i in logit]
 
 
-pred_csv = pd.DataFrame({"Contig":id2contig.values(), "Pred":all_pred, "Score":all_score})
+### Add filtered label (Nov. 8th)
+contigs_list = list(id2contig.values())
+contigs_add = []
+length_dict = {}
+seq_dict = {}
+for record in SeqIO.parse(f'{contigs}', 'fasta'):
+    seq_dict[record.id] = str(record.seq)
+    length_dict[record.id] = len(record.seq)
+    if record.id not in contigs_list:
+        if len(record.seq) < inputs.len:
+            contigs_add.append(record.id)
+            all_pred.append('filtered')
+            all_score.append(0)
+            continue
+        contigs_add.append(record.id)
+        all_pred.append('non-phage')
+        all_score.append(0)
+
+contigs_list += contigs_add
+length_list = [length_dict[item] for item in contigs_list]
+
+pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":all_pred, "Score":all_score})
 pred_csv.to_csv(f'{rootpth}/{out_dir}/phamer_prediction.csv', index = False)
+
+
+rec = []
+phage = pred_csv[pred_csv['Pred'] == 'phage']['Accession'].values
+for record in SeqIO.parse(f'{contigs}', 'fasta'):
+    if record.id in phage:
+        rec.append(record)
+SeqIO.write(f'{rootpth}/{out_dir}/predicted_phages.fa')
+
+

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import shutil
 import argparse
@@ -27,6 +28,7 @@ from models.phamer import Transformer
 from models.CAPCNN import WCNN
 from models.PhaGCN import GCN
 from models import Cherry
+from draw import draw_network
 from scipy.special import softmax
 from scripts.data import load_data, preprocess_features, preprocess_adj, sample_mask
 
@@ -36,7 +38,7 @@ from scripts.data import load_data, preprocess_features, preprocess_adj, sample_
 
 
 parser = argparse.ArgumentParser(description="""Main script of PhaSUIT.""")
-parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'test_contigs.fa')
+parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'inputs.fa')
 parser.add_argument('--threads', help='number of threads to use', type=int, default=8)
 parser.add_argument('--len', help='minimum length of contigs', type=int, default=3000)
 parser.add_argument('--reject', help='threshold to reject prophage',  type=float, default = 0.2)
@@ -47,6 +49,8 @@ parser.add_argument('--dbdir', help='database directory',  default = 'database/'
 parser.add_argument('--parampth', help='path of parameters',  default = 'parameters/')
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
 parser.add_argument('--topk', help='Top k prediction',  type=int, default=1)
+parser.add_argument('--visual', help='mid folder for intermidiate files', default='visual/')
+parser.add_argument('--html', help='mid folder for intermidiate files', default='/home/www/web/app/static/figures/jobId')
 inputs = parser.parse_args()
 
 
@@ -57,6 +61,9 @@ db_dir    = inputs.dbdir
 out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
+visual    = inputs.visual
+length    = inputs.len
+html      = inputs.html
 
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
@@ -64,7 +71,8 @@ if not os.path.exists(db_dir):
 
 check_path(os.path.join(rootpth, out_dir))
 check_path(os.path.join(rootpth, midfolder))
-
+check_path(os.path.join(rootpth, visual))
+#check_path(html)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if device == 'cpu':
@@ -76,7 +84,7 @@ if device == 'cpu':
 ###############################################################
 
 rec = []
-for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+for record in SeqIO.parse(contigs, 'fasta'):
     if len(record.seq) > inputs.len:
         rec.append(record)
 SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
@@ -86,8 +94,11 @@ SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 ##########################  PhaMer ############################
 ###############################################################
 
+
+# add convertxml (Nov. 8th)
 translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
 run_diamond(f'{db_dir}/phamer_database.dmnd', os.path.join(rootpth, midfolder), 'test_protein.fa', 'phamer', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'phamer')
 contig2sentence(db_dir, os.path.join(rootpth, midfolder), 'test_protein.fa', 'phamer')
 
 
@@ -131,15 +142,50 @@ with torch.no_grad():
         all_pred += pred
         all_score += [float('{:.3f}'.format(i)) for i in logit]
 
+### Add filtered label (Nov. 8th)
+contigs_list = list(id2contig.values())
+contigs_add = []
+length_dict = {}
+for record in SeqIO.parse(f'{contigs}', 'fasta'):
+    length_dict[record.id] = len(record.seq)
+    if record.id not in contigs_list:
+        if len(record.seq) < inputs.len:
+            contigs_add.append(record.id)
+            all_pred.append('filtered')
+            all_score.append(0)
+            continue
+        contigs_add.append(record.id)
+        all_pred.append('non-phage')
+        all_score.append(0)
 
-pred_csv = pd.DataFrame({"Contig":id2contig.values(), "Pred":all_pred, "Score":all_score})
+contigs_list += contigs_add
+length_list = [length_dict[item] for item in contigs_list]
+
+pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":all_pred, "Score":all_score})
 pred_csv.to_csv(f'{rootpth}/{out_dir}/phamer_prediction.csv', index = False)
+
+# For visulization
+
+### Pie Chart (Nov. 8th)
+cnt = Counter(pred_csv['Pred'].values)
+category2num = {}
+for name, number in cnt.most_common():
+    category2num[name] = number
+
+pie = []
+for item in ['phage', 'non-phage', 'filtered']:
+    try:
+        pie.append(category2num[item])
+    except:
+        pie.append(0)
+pkl.dump(pie, open(f'{rootpth}/{visual}/phamer_pie.list', 'wb'))
+
 
 ###############################################################
 ##########################  PhaTYP ############################
 ###############################################################
 pred_phage_dict = {}
-for contig, pred in zip(pred_csv['Contig'].values, pred_csv['Pred'].values):
+for contig, pred in zip(pred_csv['Accession'].values, pred_csv['Pred'].values):
     if pred == 'phage':
         pred_phage_dict[contig] = contig2id[contig]
 
@@ -163,7 +209,10 @@ tokenizer = BertTokenizer.from_pretrained(f'{parampth}/bert_config', do_basic_to
 tokenized_data= data.map(preprocess_function, batched=True)
 data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
-trainer = init_bert(bert_feat, os.path.join(parampth, "bert"), tokenizer, tokenized_data, data_collator)
+trainer = init_bert(f'{rootpth}/{midfolder}', bert_feat, os.path.join(parampth, "bert"), tokenizer, tokenized_data, data_collator)
+
+
+
 
 with torch.no_grad():
     pred, label, metric = trainer.predict(tokenized_data["test"])
@@ -189,9 +238,23 @@ for score in prediction_value:
 
 
 
-pred_csv = pd.DataFrame({"Contig":id2contig.values(), "Pred":all_pred, "Score":all_score})
+pred_csv = pd.DataFrame({"Accession":id2contig.values(), "Pred":all_pred, "Score":all_score})
 pred_csv.to_csv(f'{rootpth}/{out_dir}/phatyp_prediction.csv', index = False)
 
+### Pie Chart (Nov. 8th)
+cnt = Counter(pred_csv['Pred'].values)
+category2num = {}
+for name, number in cnt.most_common():
+    category2num[name] = number
+
+pie = []
+for item in ['temperate', 'virulent', 'filtered', 'unpredicted']:
+    try:
+        pie.append(category2num[item])
+    except:
+        pie.append(0)
+
+pkl.dump(pie, open(f'{rootpth}/{visual}/phatyp_pie.list', 'wb'))
 
 ###############################################################
 ########################## PhaGCN  ############################
@@ -200,6 +263,53 @@ nucl, protein = recruit_phage_file(rootpth, midfolder, pred_phage_dict)
 
 SeqIO.write(nucl, f'{rootpth}/checked_phage_contigs.fa',"fasta")
 SeqIO.write(protein, f'{rootpth}/checked_phage_protein.fa',"fasta")
+
+
+# Filter unknown family (Nov. 16th)
+query_file = f"{rootpth}/checked_phage_contigs.fa"
+db_virus_prefix = f"{db_dir}/unknown_db/db"
+output_file = f"{rootpth}/{midfolder}/unknown_out.tab"
+virus_call = NcbiblastnCommandline(query=query_file,db=db_virus_prefix,out=output_file,outfmt="6 qseqid sseqid evalue pident length qlen", evalue=1e-10,
+                                 task='megablast',perc_identity=95,num_threads=threads)
+virus_call()
+
+
+check_unknown = {}
+with open(output_file) as file_out:
+    for line in file_out.readlines():
+        parse = line.replace("\n", "").split("\t")
+        virus = parse[0]
+        ident  = float(parse[-3])
+        length = float(parse[-2])
+        qlen   = float(parse[-1])
+        if length/qlen > 0.95 and ident > 0.95:
+            check_unknown[virus] = 1
+
+rec = []
+for record in SeqIO.parse(f'{rootpth}/checked_phage_contigs.fa', 'fasta'):
+    try:
+        if check_unknown[record.id]:
+            continue
+    except:
+        rec.append(record)
+
+SeqIO.write(rec, f'{rootpth}/checked_phage_phagcn_contigs.fa', 'fasta')
+
+
+
+rec = []
+for record in SeqIO.parse(f'{rootpth}/checked_phage_protein.fa', 'fasta'):
+    name = record.id
+    name = name.rsplit('_', 1)[0]
+    try:
+        if check_unknown[name]:
+            continue
+    except:
+        rec.append(record)
+
+SeqIO.write(rec, f'{rootpth}/checked_phage_phagcn_protein.fa', 'fasta')
+
+
 
 single_pth   = os.path.join(rootpth, "CNN_temp/single")
 cnninput_pth = os.path.join(rootpth, "CNN_temp/input")
@@ -211,7 +321,7 @@ check_path(phagcninput_pth)
 contig2name = {}
 with open(f"{rootpth}/{midfolder}/phagcn_name_list.csv",'w') as list_out:
     list_out.write("Contig,idx\n")
-    for contig_id, record in enumerate(SeqIO.parse(f'{rootpth}/checked_phage_contigs.fa', "fasta")):
+    for contig_id, record in enumerate(SeqIO.parse(f'{rootpth}/checked_phage_phagcn_contigs.fa', "fasta")):
         name = f"PhaGCN_{str(contig_id)}"
         list_out.write(record.id + "," + name+ "\n")
         contig2name[record.id] = name
@@ -219,7 +329,7 @@ with open(f"{rootpth}/{midfolder}/phagcn_name_list.csv",'w') as list_out:
         _ = SeqIO.write(record, f"{single_pth}/{name}.fa", "fasta")
 
 rename_rec = []
-for record in SeqIO.parse(f'{rootpth}/checked_phage_protein.fa',"fasta"):
+for record in SeqIO.parse(f'{rootpth}/checked_phage_phagcn_protein.fa',"fasta"):
     old_name = record.id
     idx = old_name.rsplit('_', 1)[1]
     record.id = contig2name[old_name.rsplit('_', 1)[0]] +"_"+ idx
@@ -266,7 +376,9 @@ compress_feature = np.array(compress_feature)
 pkl.dump(compress_feature, open(f"{phagcninput_pth}/phagcn_contig.F", 'wb'))
 
 # Generate knowledge graph
+# add convertxml (Nov. 8th)
 run_diamond(f'{db_dir}/phagcn_database.dmnd', os.path.join(rootpth, midfolder), 'phagcn_renamed_protein.fa', 'phagcn', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'phagcn')
 abc_fp = f"{rootpth}/{midfolder}/merged.abc"
 _ = subprocess.check_call(f"cat {db_dir}/phagcn_database.self-diamond.tab.abc {rootpth}/{midfolder}/phagcn_results.abc > {abc_fp}", shell=True)
 
@@ -448,11 +560,9 @@ for node in node_list:
         G.remove_node(node)
 
 test_to_id = {}
-class_to_label = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 8: 5, 9: 5, 10: 5, 11: 5, 12: 5, 
-13: 5, 14: 6, 15: 6, 16: 6, 17: 7, 18: 7, 19: 7, 20: 7, 21: 7, 22: 7, 23: 7, 24: 7, 25: 7, 26: 7}
 
 
-with open(f'{midfolder}/phagcn_graph.csv'， 'w') as file:
+with open(f'{rootpth}/{midfolder}/phagcn_graph.csv', 'w') as file:
     file.write('source,type\n')
     for node in G.nodes():
         for _, neighbor in G.edges(node):
@@ -468,7 +578,7 @@ if mode == "testing":
     cnt = 0
     for node in G.nodes():
         try:
-            label.append(class_to_label[contig_to_family[node]])
+            label.append(contig_to_family[node])
             cnt+=1
         except:
             if "PhaGCN_" in node:
@@ -517,7 +627,7 @@ for node in G.nodes:
         for edge in G.edges(node):
             neighbor = edge[1]
             if "~" in neighbor:
-                neighbor_label.append(class_to_label[contig_to_family[neighbor]])
+                neighbor_label.append(contig_to_family[neighbor])
             else:
                 continue
         if len(set(neighbor_label)) == 1:
@@ -632,8 +742,8 @@ pred = np.argmax(out, axis = 1)
 score = np.max(out, axis = 1)
 
 
-pred_to_label = {0:"Ackermannviridae", 1:"Autographiviridae", 2:"Demerecviridae",
-3:"Drexlerviridae", 4:"Herelleviridae", 5:"Myoviridae", 6:"Podoviridae", 7:"Siphoviridae"}
+pred_to_label = {0: 'Autographiviridae', 1: 'Straboviridae', 2: 'Herelleviridae', 3: 'Drexlerviridae', 4: 'Demerecviridae', 5: 'Peduoviridae', 6: 'Casjensviridae', 7: 'Schitoviridae', 8: 'Kyanoviridae', 9: 'Ackermannviridae', 10: 'Rountreeviridae', 11: 'Salasmaviridae', 12: 'Vilmaviridae', 13: 'Zierdtviridae', 14: 'Mesyanzhinovviridae', 15: 'Chaseviridae', 16: 'Zobellviridae', 17: 'Orlajensenviridae', 18: 'Guelinviridae', 19: 'Steigviridae', 20: 'Duneviridae', 21: 'Pachyviridae', 22: 'Winoviridae', 23: 'Assiduviridae', 24: 'Suoliviridae', 25: 'Naomviridae', 26: 'Intestiviridae', 27: 'Crevaviridae', 28: 'Pervagoviridae'}
+
 
 
 with open(f'{rootpth}/{midfolder}/phagcn_mid_prediction.csv', 'w') as f_out:
@@ -648,12 +758,61 @@ name_list = pd.read_csv(f"{rootpth}/{midfolder}/phagcn_name_list.csv")
 prediction = pd.read_csv(f'{rootpth}/{midfolder}/phagcn_mid_prediction.csv')
 prediction = prediction.rename(columns={'Contig':'idx'})
 contig_to_pred = pd.merge(name_list, prediction, on='idx')
+contig_to_pred = contig_to_pred.rename(columns={'Contig':'Accession'})
+#contig_to_pred = contig_to_pred.drop(columns=['idx'])
+contig_to_pred.to_csv(f"{rootpth}/{midfolder}/phagcn_prediction.csv", index = None)
+
+# add no prediction (Nov. 13th)
+all_acc_phagcn = contig_to_pred['Accession'].values
+phamer_df = pd.read_csv(f'{rootpth}/{out_dir}/phamer_prediction.csv')
+phage_contig = phamer_df[phamer_df['Pred']=='phage']['Accession'].values
+
+unpredict_contig = []
+unnamed_family = []
+for contig in phage_contig:
+    if contig not in all_acc_phagcn:
+        if contig in check_unknown:
+            unnamed_family.append(contig)
+        else:
+            unpredict_contig.append(contig)
+
+unpredict_df = pd.DataFrame({'Accession':unpredict_contig, 'Pred': ['unknown']*len(unpredict_contig), 'Score':[0]*len(unpredict_contig)})
+unnamed_df   = pd.DataFrame({'Accession':unnamed_family, 'Pred': ['no_family_avaliable']*len(unnamed_family), 'Score':[1]*len(unnamed_family)})
+contig_to_pred = pd.concat((contig_to_pred, unpredict_df, unnamed_df))
+
 contig_to_pred.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
 
+cnt = Counter(contig_to_pred['Pred'].values)
+pred_dict = {}
+for key, value in zip(cnt.keys(), cnt.values()):
+    pred_dict[key] = value
+
+pkl.dump(pred_dict, open(f"{rootpth}/visual/phagcn_pred.dict", 'wb'))
 
 ###############################################################
 ########################## Cherry  ############################
 ###############################################################
+
+contig2name = {}
+with open(f"{rootpth}/{midfolder}/cherry_name_list.csv",'w') as list_out:
+    list_out.write("Contig,idx\n")
+    for contig_id, record in enumerate(SeqIO.parse(f'{rootpth}/checked_phage_contigs.fa', "fasta")):
+        name = f"PhaGCN_{str(contig_id)}"
+        list_out.write(record.id + "," + name+ "\n")
+        contig2name[record.id] = name
+        record.id = name
+        _ = SeqIO.write(record, f"{single_pth}/{name}.fa", "fasta")
+
+rename_rec = []
+for record in SeqIO.parse(f'{rootpth}/checked_phage_protein.fa',"fasta"):
+    old_name = record.id
+    idx = old_name.rsplit('_', 1)[1]
+    record.id = contig2name[old_name.rsplit('_', 1)[0]] +"_"+ idx
+    rename_rec.append(record)
+
+SeqIO.write(rename_rec, f'{rootpth}/{midfolder}/cherry_renamed_protein.fa', 'fasta')
+
+
 
 # generate 4mer feature
 cherrypth = f'{rootpth}/{midfolder}/cherry/'
@@ -665,15 +824,18 @@ pkl.dump(test_virus, open(f'{cherrypth}/test_virus.F', 'wb'))
 
 
 try:
-    make_diamond_cmd = f'diamond makedb --threads {threads} --in {rootpth}/{midfolder}/phagcn_renamed_protein.fa -d {cherrypth}/test_database.dmnd'
+    make_diamond_cmd = f'diamond makedb --threads {threads} --in {rootpth}/{midfolder}/cherry_renamed_protein.fa -d {cherrypth}/test_database.dmnd'
     print("Creating Diamond database...")
     _ = subprocess.check_call(make_diamond_cmd, shell=True)
 except:
     print("create database failed")
     exit(1)
 
-run_diamond(f'{db_dir}/cherry_database.dmnd', os.path.join(rootpth, midfolder),  f'phagcn_renamed_protein.fa', 'cherry', threads)
-run_diamond(f'{cherrypth}/test_database.dmnd', os.path.join(rootpth, midfolder),  f'phagcn_renamed_protein.fa', 'cherry_test', threads)
+# add convertxml (Nov. 8th)
+run_diamond(f'{db_dir}/cherry_database.dmnd', os.path.join(rootpth, midfolder), 'cherry_renamed_protein.fa', 'cherry', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'cherry')
+run_diamond(f'{cherrypth}/test_database.dmnd', os.path.join(rootpth, midfolder),  f'cherry_renamed_protein.fa', 'cherry_test', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'cherry_test')
 
 database_abc_fp = f"{rootpth}/{midfolder}/cherry_merged.abc"
 _ = subprocess.check_call(f"cat {db_dir}/cherry_database.self-diamond.tab.abc {rootpth}/{midfolder}/cherry_results.abc {rootpth}/{midfolder}/cherry_test_results.abc > {database_abc_fp}", shell=True)
@@ -813,7 +975,7 @@ with open(output_file) as file_out:
         ident = float(parse[-3])
         length = float(parse[-2])
         slen = float(parse[-1])
-        if virus not in crispr_pred and length/slen > 0.9 and ident > 0.9:
+        if virus not in crispr_pred and length/slen > 0.95 and ident > 0.95:
             crispr_pred[virus] = prokaryote
 
 pkl.dump(crispr_pred, open(f'{cherrypth}/crispr_pred.dict', 'wb'))
@@ -913,6 +1075,13 @@ for bacteria in bacteria_list:
         if phage in G.nodes():
             G.add_edge(bacteria, phage, weight = 1)
 
+
+# dump the graph G
+with open(f'{rootpth}/{midfolder}/cherry_graph.csv', 'w') as file:
+    file.write('Source,Target\n')
+    for node in G.nodes():
+        for _, neighbor in G.edges(node):
+            file.write(f'{node},{neighbor}\n')
 
 
 virus2id      = pkl.load(open(f"{db_dir}/cherry/virus.dict",'rb'))
@@ -1151,7 +1320,7 @@ with torch.no_grad():
         file_out.write('Contig,')
         for i in range(inputs.topk):
             file_out.write(f'Top_{i+1}_label,Score_{i+1},')
-        file_out.write('\n')
+        file_out.write('Type\n')
         for contig in node2pred:
             file_out.write(f'{contig},')
             cnt = 1
@@ -1160,12 +1329,49 @@ with torch.no_grad():
                     break
                 cnt+=1
                 file_out.write(f'{label},{score:.2f},')
+            if contig in crispr_pred:
+                file_out.write(f'CRISPR')
+            else:
+                file_out.write(f'Predict')
             file_out.write('\n')
 
 tmp_pred = pd.read_csv(f"{rootpth}/{midfolder}/cherry_mid_predict.csv")
-name_list = pd.read_csv(f"{rootpth}/{midfolder}/phagcn_name_list.csv")
+name_list = pd.read_csv(f"{rootpth}/{midfolder}/cherry_name_list.csv")
 prediction = tmp_pred.rename(columns={'Contig':'idx'})
 contig_to_pred = pd.merge(name_list, prediction, on='idx')
+contig_to_pred = contig_to_pred.rename(columns={'Contig': 'Accession'})
+#contig_to_pred = contig_to_pred.drop(columns=['idx'])
+contig_to_pred.to_csv(f"{rootpth}/{midfolder}/cherry_prediction.csv", index = None)
+
+all_Contigs = contig_to_pred['Accession'].values 
+all_Pred = contig_to_pred['Top_1_label'].values
+all_Score = contig_to_pred['Score_1'].values
+all_Type = contig_to_pred['Type'].values
+
+# add no prediction (Nov. 13th)
+all_acc_cherry = contig_to_pred['Accession'].values
+phamer_df = pd.read_csv(f'{rootpth}/{out_dir}/phamer_prediction.csv')
+phage_contig = phamer_df[phamer_df['Pred']=='phage']['Accession'].values
+
+unpredict_contig = []
+for contig in phage_contig:
+    if contig not in all_acc_cherry:
+        unpredict_contig.append(contig)
+
+
+all_Contigs = np.concatenate((all_Contigs, np.array(unpredict_contig)))
+all_Pred = np.concatenate((all_Pred, np.array(['unknown']*len(unpredict_contig))))
+all_Score = np.concatenate((all_Score, np.array([0]*len(unpredict_contig))))
+all_Type = np.concatenate((all_Type, np.array(['-']*len(unpredict_contig))))
+
+
+contig_to_pred = pd.DataFrame({'Accession': all_Contigs, 'Pred': all_Pred, 'Score': all_Score, 'Type': all_Type})
 contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.csv", index = None)
 
+cnt = Counter(contig_to_pred['Pred'].values)
+pred_dict = {}
+for key, value in zip(cnt.keys(), cnt.values()):
+    pred_dict[key] = value
+
+pkl.dump(pred_dict, open(f"{rootpth}/{visual}/cherry_pred.dict", 'wb'))
 

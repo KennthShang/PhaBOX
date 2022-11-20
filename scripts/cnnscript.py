@@ -59,7 +59,11 @@ def encode(data, vocab_to_int):
             if i + 3 > len(read):
                 break
                 
-            int_read.append(vocab_to_int[read[i:i+3]])
+            # int_read.append(vocab_to_int[read[i:i+3]]) # Nov 16th
+            try:
+                int_read.append(vocab_to_int[read[i:i+3]])
+            except:
+                int_read.append(64) 
         
         
         if len(int_read) != 1998:
@@ -82,7 +86,7 @@ def create_cnndataset(data):
 
 
 def load_cnnmodel(parampth):
-    cnn = WCNN(num_token=100,num_class=16,kernel_sizes=[3,7,11,15], kernel_nums=[256, 256, 256, 256])
+    cnn = WCNN(num_token=100,num_class=18,kernel_sizes=[3,7,11,15], kernel_nums=[256, 256, 256, 256])
     pretrained_dict=torch.load(f'{parampth}/CNN_Params.pkl', map_location='cpu')
     cnn.load_state_dict(pretrained_dict)
 

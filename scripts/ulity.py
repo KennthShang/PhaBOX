@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import  os
 import  re
 import  sys
@@ -70,9 +71,9 @@ def reject_prophage(all_pred, weight, reject):
 
 def masked_loss(out, label, mask):
     if torch.cuda.is_available():
-        w = torch.Tensor([3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0]).cuda()
+        w = torch.Tensor([1,1,2,3,3,3,3,3,3,3,10,10,10,10,10,10,10,10,10]).cuda()
     else:
-        w = torch.Tensor([3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0])
+        w = torch.Tensor([1,1,2,3,3,3,3,3,3,3,10,10,10,10,10,10,10,10,10])
     loss = F.cross_entropy(out, label, w, reduction='none')
     
     #all phage
@@ -103,13 +104,13 @@ def phagcn_accuracy(out, mask, labels):
 
 
 
-def init_bert(bert_feat, model_pth, tokenizer, tokenized_data, data_collator):
+def init_bert(midpth, bert_feat, model_pth, tokenizer, tokenized_data, data_collator):
     
     model = AutoModelForSequenceClassification.from_pretrained(model_pth, num_labels=2)
 
 
     training_args = TrainingArguments(
-        output_dir='results',
+        output_dir=f'{midpth}/ber_model_out',
         overwrite_output_dir=False,
         do_train=True,
         do_eval=True,
@@ -155,7 +156,8 @@ def recruit_phage_file(rootpth, midfolder, pred_phage_dict=None, filein=None):
     for record in SeqIO.parse(f'{rootpth}/phage_contigs.fa', 'fasta'):
         seq = str(record.seq)
         seq = seq.upper()
-        if special_match(seq) and len(seq) > 2000:
+        #if special_match(seq) and len(seq) > 2000: # Nov 17th
+        if len(seq) > 2000:
             check_phage[record.id] = 1
             records.append(record)
 

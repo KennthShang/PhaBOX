@@ -9,6 +9,7 @@ from shutil import which
 from collections import Counter
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from xml.etree import ElementTree as ElementTree
 
 
 #############################################################
@@ -38,16 +39,109 @@ def translation(inpth, outpth, infile, outfile, threads, proteins):
 def run_diamond(diamond_db, outpth, infile, tool, threads):
     try:
         # running alignment
-        diamond_cmd = f'diamond blastp --threads {threads} --sensitive -d {diamond_db} -q {outpth}/{infile} -o {outpth}/{tool}_results.tab -k 1'
+        diamond_cmd = f'diamond blastp --outfmt 5 --threads {threads} --sensitive -d {diamond_db} -q {outpth}/{infile} -o {outpth}/{tool}_results.xml -k 5'
         print("Running Diamond...")
+        _ = subprocess.check_call(diamond_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        content = open(f'{outpth}/{tool}_results.xml', 'r').read()
+        content = content.replace('&', '')
+        with open(f'{outpth}/{tool}_results.xml', 'w') as file:
+            file.write(content)
+    except:
+        print(diamond_cmd)
+        print("diamond blastp failed")
+        exit(1)
+
+def convert_xml(outpth, tool):
+    try:
+        # running alignment
+        diamond_cmd = f'blastxml_to_tabular.py -o {outpth}/{tool}_results.tab -c qseqid,sseqid,pident,length,mismatch,gapopen,qstart,qend,sstart,send,evalue {outpth}/{tool}_results.xml'
         _ = subprocess.check_call(diamond_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         diamond_out_fp = f"{outpth}/{tool}_results.tab"
         database_abc_fp = f"{outpth}/{tool}_results.abc"
         _ = subprocess.check_call("awk '$1!=$2 {{print $1,$2,$11}}' {0} > {1}".format(diamond_out_fp, database_abc_fp), shell=True)
     except:
         print(diamond_cmd)
-        print("diamond blastp failed")
+        print("convert xml failed")
         exit(1)
+
+
+def parse_xml(protein2id, outpth, tool):
+    xml_files = ['']*len(protein2id)
+    flag = 0 # 0 for common, 1 for specific item
+    with open(f'{outpth}/{tool}_results.xml', 'r') as file:
+        content = file.readlines()
+        for i in range(len(content)):
+            line = content[i]
+            if '<Iteration>\n' == line:
+                item = content[i+3]
+                qseqid = item.split('>', 1)[1]
+                qseqid = qseqid.split(' ', 1)[0]
+                try:
+                    idx = protein2id[qseqid]
+                    xml_files[idx]+=line
+                    flag = 1
+                except:
+                    flag = 2
+            elif line == '</Iteration>\n':
+                if flag == 1:
+                    xml_files[idx]+=line
+                flag = 0
+            elif flag == 0:
+                for j in range(len(xml_files)):
+                    xml_files[j]+=line
+            elif flag == 1:
+                xml_files[idx]+=line
+            elif flag == 2:
+                continue
+    return xml_files
+
+
+def parse_xml2(protein2id, outpth, tool):
+    #protein2id = {'YP_009984512.1': 0, 'YP_009984889.1':1}
+    xml_files = ['<?xml version="1.0"?>\n<!DOCTYPE BlastOutput PUBLIC "">\n']*len(protein2id)
+    flag = 0 # 0 for common, 1 for specific item
+    start = 0 # start position to writein
+    context = ElementTree.iterparse(f'{outpth}/{tool}_results.xml', events=("start", "end"))
+    for event, elem in context:
+        if elem.tag == 'Iteration' and event == 'start':
+            try:
+                qseqid = elem.findtext("Iteration_query-def").split(" ", 1)[0]
+                idx = protein2id[qseqid]
+                xml_files[idx]+=f'<{elem.tag}>{elem.text}'
+                flag = 1
+            except:
+                flag = 2
+        elif elem.tag == 'Iteration' and event == 'end':
+            if flag == 1:
+                xml_files[idx]+=f'</{elem.tag}>\n'
+            elif flag == 2:
+                pass
+            flag = 0
+        elif flag == 0 and event =='start':
+            for i in range(len(xml_files)):
+                xml_files[i]+=f'<{elem.tag}>{elem.text}'
+        elif flag == 0 and event =='end':
+            for i in range(len(xml_files)):
+                xml_files[i]+=f'</{elem.tag}>\n'
+        elif flag == 1 and event =='start':
+            xml_files[idx]+=f'<{elem.tag}>{elem.text}'
+        elif flag == 1 and event =='end':
+            xml_files[idx]+=f'</{elem.tag}>\n'
+        elif flag == 2:
+            continue
+    return xml_files
+
+def parse_position(outpth):
+    protein2start = {}
+    protein2end   = {}
+    for record in SeqIO.parse(f'{outpth}/test_protein.fa', 'fasta'):
+        description = str(record.description)
+        description = description.split(' # ')
+        start = description[1]
+        end   = description[2]
+        protein2start[record.id] = f'{start}'
+        protein2end[record.id] =f'{end}'
+    return protein2start, protein2end
 
 
 
@@ -66,7 +160,11 @@ def contig2sentence(db_dir, outpth, infile, tool):
 
     # Parse the DIAMOND results
     contig2pcs = {}
+    old_query = ''
     for query, ref, evalue in zip(blast_df['query'].values, blast_df['ref'].values, blast_df['evalue'].values):
+        if old_query == query:
+            continue
+        old_query = query
         conitg = query.rsplit('_', 1)[0]
         idx    = query.rsplit('_', 1)[1]
         pc     = pc2wordsid[protein2pc[ref]]

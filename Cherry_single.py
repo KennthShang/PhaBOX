@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import shutil
 import argparse
@@ -27,6 +28,7 @@ from models.phamer import Transformer
 from models.CAPCNN import WCNN
 from models.PhaGCN import GCN
 from models import Cherry
+from draw import draw_network
 from scipy.special import softmax
 from scripts.data import load_data, preprocess_features, preprocess_adj, sample_mask
 
@@ -36,9 +38,10 @@ from scripts.data import load_data, preprocess_features, preprocess_adj, sample_
 
 
 parser = argparse.ArgumentParser(description="""Main script of PhaSUIT.""")
-parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'test_contigs.fa')
+parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'inputs.fa')
 parser.add_argument('--threads', help='number of threads to use', type=int, default=8)
 parser.add_argument('--len', help='minimum length of contigs', type=int, default=3000)
+parser.add_argument('--reject', help='threshold to reject prophage',  type=float, default = 0.2)
 parser.add_argument('--rootpth', help='rootpth of the user', default='user_0/')
 parser.add_argument('--out', help='output path of the user', default='out/')
 parser.add_argument('--midfolder', help='mid folder for intermidiate files', default='midfolder/')
@@ -46,6 +49,8 @@ parser.add_argument('--dbdir', help='database directory',  default = 'database/'
 parser.add_argument('--parampth', help='path of parameters',  default = 'parameters/')
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
 parser.add_argument('--topk', help='Top k prediction',  type=int, default=1)
+parser.add_argument('--visual', help='mid folder for intermidiate files', default='visual/')
+parser.add_argument('--html', help='mid folder for intermidiate files', default='state/')
 inputs = parser.parse_args()
 
 
@@ -56,6 +61,10 @@ db_dir    = inputs.dbdir
 out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
+visual    = inputs.visual
+length    = inputs.len
+html      = inputs.html
+
 
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
@@ -63,6 +72,8 @@ if not os.path.exists(db_dir):
 
 check_path(os.path.join(rootpth, out_dir))
 check_path(os.path.join(rootpth, midfolder))
+check_path(os.path.join(rootpth, visual))
+check_path(html)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -138,7 +149,9 @@ except:
     exit(1)
 
 run_diamond(f'{db_dir}/cherry_database.dmnd', os.path.join(rootpth, midfolder),  f'phagcn_renamed_protein.fa', 'cherry', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'cherry')
 run_diamond(f'{cherrypth}/test_database.dmnd', os.path.join(rootpth, midfolder),  f'phagcn_renamed_protein.fa', 'cherry_test', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'cherry_test')
 
 database_abc_fp = f"{rootpth}/{midfolder}/cherry_merged.abc"
 _ = subprocess.check_call(f"cat {db_dir}/cherry_database.self-diamond.tab.abc {rootpth}/{midfolder}/cherry_results.abc {rootpth}/{midfolder}/cherry_test_results.abc > {database_abc_fp}", shell=True)
@@ -278,7 +291,7 @@ with open(output_file) as file_out:
         ident = float(parse[-3])
         length = float(parse[-2])
         slen = float(parse[-1])
-        if virus not in crispr_pred and length/slen > 0.9 and ident > 0.9:
+        if virus not in crispr_pred and length/slen > 0.95 and ident > 0.95:
             crispr_pred[virus] = prokaryote
 
 pkl.dump(crispr_pred, open(f'{cherrypth}/crispr_pred.dict', 'wb'))
@@ -623,7 +636,7 @@ with torch.no_grad():
         file_out.write('Contig,')
         for i in range(inputs.topk):
             file_out.write(f'Top_{i+1}_label,Score_{i+1},')
-        file_out.write('\n')
+        file_out.write('Type\n')
         for contig in node2pred:
             file_out.write(f'{contig},')
             cnt = 1
@@ -632,12 +645,53 @@ with torch.no_grad():
                     break
                 cnt+=1
                 file_out.write(f'{label},{score:.2f},')
+            if contig in crispr_pred:
+                file_out.write(f'CRISPR')
+            else:
+                file_out.write(f'Predict')
             file_out.write('\n')
 
 tmp_pred = pd.read_csv(f"{rootpth}/{midfolder}/cherry_mid_predict.csv")
 name_list = pd.read_csv(f"{rootpth}/{midfolder}/phagcn_name_list.csv")
 prediction = tmp_pred.rename(columns={'Contig':'idx'})
 contig_to_pred = pd.merge(name_list, prediction, on='idx')
+contig_to_pred = contig_to_pred.rename(columns={'Contig':'Accession'})
+#contig_to_pred = contig_to_pred.drop(columns=['idx'])
+contig_to_pred.to_csv(f"{rootpth}/{midfolder}/cherry_prediction.csv", index = None)
+
+
+# add no prediction (Nov. 13th)
+
+all_Contigs = contig_to_pred['Accession'].values 
+all_Pred = contig_to_pred['Top_1_label'].values
+all_Score = contig_to_pred['Score_1'].values
+all_Type = contig_to_pred['Type'].values
+
+phage_contig = []
+filtered_contig = []
+length_dict = {}
+seq_dict = {}
+for record in SeqIO.parse(f'{rootpth}/{contigs}', 'fasta'):
+    length_dict[record.id] = len(record.seq)
+    seq_dict[record.id] = str(record.seq)
+    if len(record.seq) < inputs.len:
+        filtered_contig.append(record.id)
+    else:
+        phage_contig.append(record.id)
+
+unpredict_contig = []
+for contig in phage_contig:
+    if contig not in all_Contigs:
+        unpredict_contig.append(contig)
+
+
+
+all_Contigs = np.concatenate((all_Contigs, np.array(filtered_contig), np.array(unpredict_contig)))
+all_Pred = np.concatenate((all_Pred, np.array(['filtered']*len(filtered_contig)), np.array(['unknown']*len(unpredict_contig))))
+all_Length = [length_dict[item] for item in all_Contigs]
+all_Score = np.concatenate((all_Score, np.array([0]*len(filtered_contig)), np.array([0]*len(unpredict_contig))))
+all_Type = np.concatenate((all_Type, np.array(['-']*len(filtered_contig)), np.array(['-']*len(unpredict_contig))))
+
+
+contig_to_pred = pd.DataFrame({'Accession': all_Contigs, 'Length': all_Length, 'Pred': all_Pred, 'Score': all_Score, 'Type': all_Type})
 contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.csv", index = None)
-
-

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import shutil
 import argparse
@@ -24,6 +25,7 @@ from models.phamer import Transformer
 from models.CAPCNN import WCNN
 from models.PhaGCN import GCN
 from models import Cherry
+from draw import draw_network
 from scipy.special import softmax
 from scripts.data import load_data, preprocess_features, preprocess_adj, sample_mask
 
@@ -36,7 +38,7 @@ from torch.nn import functional as F
 
 
 parser = argparse.ArgumentParser(description="""Main script of PhaSUIT.""")
-parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'test_contigs.fa')
+parser.add_argument('--contigs', help='FASTA file of contigs',  default = 'inputs.fa')
 parser.add_argument('--threads', help='number of threads to use', type=int, default=8)
 parser.add_argument('--len', help='minimum length of contigs', type=int, default=3000)
 parser.add_argument('--reject', help='threshold to reject prophage',  type=float, default = 0.2)
@@ -47,6 +49,8 @@ parser.add_argument('--dbdir', help='database directory',  default = 'database/'
 parser.add_argument('--parampth', help='path of parameters',  default = 'parameters/')
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
 parser.add_argument('--topk', help='Top k prediction',  type=int, default=1)
+parser.add_argument('--visual', help='mid folder for intermidiate files', default='visual/')
+parser.add_argument('--html', help='mid folder for intermidiate files', default='state/')
 inputs = parser.parse_args()
 
 
@@ -57,6 +61,9 @@ db_dir    = inputs.dbdir
 out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
+visual    = inputs.visual
+length    = inputs.len
+html      = inputs.html
 
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
@@ -64,6 +71,8 @@ if not os.path.exists(db_dir):
 
 check_path(os.path.join(rootpth, out_dir))
 check_path(os.path.join(rootpth, midfolder))
+check_path(os.path.join(rootpth, visual))
+check_path(html)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -72,23 +81,57 @@ if device == 'cpu':
     torch.set_num_threads(inputs.threads)
 
 
+
 ###############################################################
 #######################  Filter length ########################
 ###############################################################
 
 rec = []
-for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+for record in SeqIO.parse(contigs, 'fasta'):
     if len(record.seq) > inputs.len:
         rec.append(record)
 SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
+
+###############################################################
+##################  Filter unknown family #####################
+###############################################################
+
+query_file = f"{rootpth}/filtered_contigs.fa"
+db_virus_prefix = f"{db_dir}/unknown_db/db"
+output_file = f"{rootpth}/{midfolder}/unknown_out.tab"
+virus_call = NcbiblastnCommandline(query=query_file,db=db_virus_prefix,out=output_file,outfmt="6 qseqid sseqid evalue pident length qlen", evalue=1e-10,
+                                 task='megablast',perc_identity=95,num_threads=threads)
+virus_call()
+
+
+check_unknown = {}
+with open(output_file) as file_out:
+    for line in file_out.readlines():
+        parse = line.replace("\n", "").split("\t")
+        virus = parse[0]
+        ident  = float(parse[-3])
+        length = float(parse[-2])
+        qlen   = float(parse[-1])
+        if length/qlen > 0.95 and ident > 0.95:
+            check_unknown[virus] = 1
+
+rec = []
+for record in SeqIO.parse(f'{rootpth}/filtered_contigs.fa', 'fasta'):
+    try:
+        if check_unknown[record.id]:
+            continue
+    except:
+        rec.append(record)
+
+SeqIO.write(rec, f'{rootpth}/filtered_phagcn_contigs.fa', 'fasta')
 
 
 ###############################################################
 ########################## PhaGCN  ############################
 ###############################################################
 
-translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
-nucl, protein = recruit_phage_file(rootpth, midfolder, None, contigs)
+translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_phagcn_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
+nucl, protein = recruit_phage_file(rootpth, midfolder, None, 'filtered_phagcn_contigs.fa')
 
 SeqIO.write(nucl, f'{rootpth}/checked_phage_contigs.fa',"fasta")
 SeqIO.write(protein, f'{rootpth}/checked_phage_protein.fa',"fasta")
@@ -157,7 +200,9 @@ compress_feature = np.array(compress_feature)
 pkl.dump(compress_feature, open(f"{phagcninput_pth}/phagcn_contig.F", 'wb'))
 
 # Generate knowledge graph
+# add convertxml (Nov. 8th)
 run_diamond(f'{db_dir}/phagcn_database.dmnd', os.path.join(rootpth, midfolder), 'phagcn_renamed_protein.fa', 'phagcn', threads)
+convert_xml(os.path.join(rootpth, midfolder), 'phagcn')
 abc_fp = f"{rootpth}/{midfolder}/merged.abc"
 _ = subprocess.check_call(f"cat {db_dir}/phagcn_database.self-diamond.tab.abc {rootpth}/{midfolder}/phagcn_results.abc > {abc_fp}", shell=True)
 
@@ -339,8 +384,9 @@ for node in node_list:
         G.remove_node(node)
 
 test_to_id = {}
-class_to_label = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 8: 5, 9: 5, 10: 5, 11: 5, 12: 5, 
-13: 5, 14: 6, 15: 6, 16: 6, 17: 7, 18: 7, 19: 7, 20: 7, 21: 7, 22: 7, 23: 7, 24: 7, 25: 7, 26: 7}
+# Nov. 16th
+#class_to_label = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 8: 5, 9: 5, 10: 5, 11: 5, 12: 5, 
+#13: 5, 14: 6, 15: 6, 16: 6, 17: 7, 18: 7, 19: 7, 20: 7, 21: 7, 22: 7, 23: 7, 24: 7, 25: 7, 26: 7}
 
 with open(f'{rootpth}/{midfolder}/phagcn_graph.csv', 'w') as file:
     file.write('Source,Target\n')
@@ -358,7 +404,7 @@ if mode == "testing":
     cnt = 0
     for node in G.nodes():
         try:
-            label.append(class_to_label[contig_to_family[node]])
+            label.append(contig_to_family[node]) # Nov. 17th
             cnt+=1
         except:
             if "PhaGCN_" in node:
@@ -407,7 +453,7 @@ for node in G.nodes:
         for edge in G.edges(node):
             neighbor = edge[1]
             if "~" in neighbor:
-                neighbor_label.append(class_to_label[contig_to_family[neighbor]])
+                neighbor_label.append(contig_to_family[neighbor]) # Nov. 16th
             else:
                 continue
         if len(set(neighbor_label)) == 1:
@@ -415,9 +461,6 @@ for node in G.nodes:
             cnt += 1
 
 pkl.dump(label, open(f"{phagcninput_pth}/contig.label", "wb" ) )
-
-
-
 
 
 phagcninput_pth = os.path.join(rootpth, midfolder, "phgcn/")
@@ -522,8 +565,7 @@ pred = np.argmax(out, axis = 1)
 score = np.max(out, axis = 1)
 
 
-pred_to_label = {0:"Ackermannviridae", 1:"Autographiviridae", 2:"Demerecviridae",
-3:"Drexlerviridae", 4:"Herelleviridae", 5:"Myoviridae", 6:"Podoviridae", 7:"Siphoviridae"}
+pred_to_label = {0: 'Autographiviridae', 1: 'Straboviridae', 2: 'Herelleviridae', 3: 'Drexlerviridae', 4: 'Demerecviridae', 5: 'Peduoviridae', 6: 'Casjensviridae', 7: 'Schitoviridae', 8: 'Kyanoviridae', 9: 'Ackermannviridae', 10: 'Rountreeviridae', 11: 'Salasmaviridae', 12: 'Vilmaviridae', 13: 'Zierdtviridae', 14: 'Mesyanzhinovviridae', 15: 'Chaseviridae', 16: 'Zobellviridae', 17: 'Orlajensenviridae', 18: 'Guelinviridae', 19: 'Steigviridae', 20: 'Duneviridae', 21: 'Pachyviridae', 22: 'Winoviridae', 23: 'Assiduviridae', 24: 'Suoliviridae', 25: 'Naomviridae', 26: 'Intestiviridae', 27: 'Crevaviridae', 28: 'Pervagoviridae'}
 
 
 with open(f'{rootpth}/{midfolder}/phagcn_mid_prediction.csv', 'w') as f_out:
@@ -534,11 +576,50 @@ with open(f'{rootpth}/{midfolder}/phagcn_mid_prediction.csv', 'w') as f_out:
         else:
             _ = f_out.write(str(key) + "," + str(pred_to_label[labels[test_to_id[key]]]) + "," + str(1) + "\n")
 
+
 name_list = pd.read_csv(f"{rootpth}/{midfolder}/phagcn_name_list.csv")
 prediction = pd.read_csv(f'{rootpth}/{midfolder}/phagcn_mid_prediction.csv')
 prediction = prediction.rename(columns={'Contig':'idx'})
 contig_to_pred = pd.merge(name_list, prediction, on='idx')
+contig_to_pred = contig_to_pred.rename(columns={'Contig':'Accession'})
+#contig_to_pred = contig_to_pred.drop(columns=['idx'])
+contig_to_pred.to_csv(f"{rootpth}/{midfolder}/phagcn_prediction.csv", index = None)
+
+# add no prediction (Nov. 13th)
+
+all_Contigs = contig_to_pred['Accession'].values 
+all_Pred = contig_to_pred['Pred'].values
+all_Score = contig_to_pred['Score'].values
+
+phage_contig = []
+filtered_contig = []
+length_dict = {}
+seq_dict = {}
+for record in SeqIO.parse(f'{contigs}', 'fasta'):
+    length_dict[record.id] = len(record.seq)
+    seq_dict[record.id] = str(record.seq)
+    if len(record.seq) < inputs.len:
+        filtered_contig.append(record.id)
+    else:
+        phage_contig.append(record.id)
+
+unpredict_contig = []
+unnamed_family = []
+for contig in phage_contig:
+    if contig not in all_Contigs:
+        if contig in check_unknown:
+            unnamed_family.append(contig)
+        else:
+            unpredict_contig.append(contig)
+
+
+
+all_Contigs = np.concatenate((all_Contigs, np.array(unnamed_family), np.array(filtered_contig), np.array(unpredict_contig)))
+all_Pred = np.concatenate((all_Pred, np.array(['no_family_avaliable']*len(unnamed_family)), np.array(['filtered']*len(filtered_contig)), np.array(['unknown']*len(unpredict_contig))))
+all_Score = np.concatenate((all_Score, np.array([1]*len(unnamed_family)), np.array([0]*len(filtered_contig)), np.array([0]*len(unpredict_contig))))
+all_Length = [length_dict[item] for item in all_Contigs]
+
+
+contig_to_pred = pd.DataFrame({'Accession': all_Contigs, 'Length': all_Length, 'Pred': all_Pred, 'Score': all_Score})
 contig_to_pred.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
-cnt = Counter(contig_to_pred['Pred'].values)
-phagcn = pd.DataFrame({"Category": cnt.keys(), "value": cnt.values()})
-phagcn.to_csv(f"{rootpth}/figures/phagcn.csv", index = None)
+
