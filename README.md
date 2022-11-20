@@ -34,7 +34,7 @@ Due to the limited size of the GitHub, we zip the database. Before using phasuit
 1. When you use PhaMer at the first time
 ```
 cd PhaSUIT/
-conda env create -f websever.yaml -n phasuit
+conda env create -f webserver.yaml -n phasuite
 conda activate phasuit
 
 
@@ -60,7 +60,7 @@ python init_script.py --threads [num]
 
 2. Then, you only need to activate your 'phasuit' environment before using phasuit in the next time.
 ```
-conda activate phasuit
+conda activate phasuite
 ```
 
 
