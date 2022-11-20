@@ -39,32 +39,38 @@ conda activate phasuit
 
 
 # database
-fileid="1d_6DGhN4Q-NZPKHEIo4yD4InLkP2U1rI"
-filename="database.zip"
+fileid="1hjACPsIOqqcS5emGaduYvYrCzrIpt2_9"
+filename="phagesuite_database.zip"
 html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
 curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=${fileid}" -o ${filename}
 
 # inital files
-fileid="1d_6DGhN4Q-NZPKHEIo4yD4InLkP2U1rI"
-filename="initial_files.zip"
+fileid="1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20"
+filename="phagesuite_parameters.zip"
 html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
 curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=${fileid}" -o ${filename}
 
-unzip database.zip 
-unzip initial_files.zip
+unzip phagesuite_database.zip 
+unzip phagesuite_parameters.zip
 
-# generate intial files (this program might takes 30mins to a few hours according to the number of threads)
-python init_script.py --threads [num]
+# move the script to where the conda located
+cp blastxml_to_tabular.py {path_to_conda}/envs/phasuit/bin/blastxml_to_tabular.py
+chmod 777 {path_to_conda}/envs/phasuit/bin/blastxml_to_tabular.py
+
+# example
+cp blastxml_to_tabular.py ~/miniconda3/envs/phasuit/bin/blastxml_to_tabular.py
+chmod 777 ~/miniconda3/envs/phasuit/bin/blastxml_to_tabular.py
 ```
 
 
-2. Then, you only need to activate your 'phasuit' environment before using phasuit in the next time.
+2. Then, you only need to activate your 'phasuite' environment before using phasuite in the next time.
 ```
 conda activate phasuite
 ```
 
+## Usage 
 
-## Usage
+### Run all pipelines in one command:
 
 ```
 python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [--rootpth ROOT_PTH] [--out OUTPUT_PTH]  [--midfolder MID_PTH] [--parampth PARAM_PTH] [--dbdir DR]
@@ -95,13 +101,53 @@ python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [-
 
 Prediction on the example file:
 
-    python main.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out
+    python main.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
 
-Then, PhaSUIT will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
+Then, Phage SUITE will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
 
 
+
+### Run pipeline seperately:
+
+The only difference between running all pipelines and running single pipelines is the name of the file. Below are the examples:
+
+```
+# run PhaMer
+python phamer_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+
+# run PhaTYP
+python phatyp_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+
+# run PhaGCN
+python phatyp_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+
+# run CHERRY
+python cherry_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+```
+
+
+
+## Running Phage SUITE as a binary file
+
+We are sorry that Phage SUITE currently do not support to run as an env in conda. However, you can still add the path of the *.py files to your system path and run them as binary files:
+
+```
+export PATH="{path of the *py files}:$PATH"
+```
+
+However, if you do not want to revise the system path, you can run Phage SUITE by passing absolute path. For example, if you placed PhaSUITE/ folder under your home path (~/PhaSUITE/) and your database and parameters are store under PhaSUITE/ (~/PhaSUITE/database/ and ~/PhaSUITE/parameters/), then you can run the command line as below:
+
+```
+python ~/PhaSUITE/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaSUITE/database/ --parampth ~/PhaSUITE/parameters/
+
+#example
+python ~/PhaSUITE/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth ~/my_contigs_result/ --out out/ --dbdir ~/PhaSUITE/database/ --parampth ~/PhaSUITE/parameters/
+```
+
+ 
 
 ### Contact
+
 If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
 
 
