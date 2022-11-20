@@ -1,4 +1,8 @@
-PhaSUIT is a python library for phage-related tasks, including phage identification, taxonomy classification, host prediction and lifestyle prediction. We integrate our previous published tools: PhaMer, PhaGCN, Cherry, and PhaTYP into one program and optimized the functions in these program to save computation resourse and time. We also provided an one-shot mode to run all the pipelines using one command. The Websever version of PhaSUIT will coming soon. Hope you will enjoy it.
+<img src='logo1.png'>
+
+This is the source code of our website [Phage SUITE](https://phage.ee.cityu.edu.hk/result?jobId=PhaSUITE20221120-163201-152075)
+
+Phage SUITE is a python library for phage-related tasks, including phage identification, taxonomy classification, host prediction and lifestyle prediction. We integrate our previous published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP into one program. In addition, we optimized the functions in these program to save computation resourse and time and provided an one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
 
 If you have any suggestion or problem, feel free to contact me via email: jyshang2-c@my.cityu.edu.hk. Also you can open an issue under this GitHub folder.
 
@@ -32,7 +36,7 @@ Shang, J., Tang, X., & Sun, Y. (2022). PhaTYP: Predicting the lifestyle for bact
 
 
 ## Required Dependencies
-Detailed package information can be found in `websever.yaml`
+Detailed package information can be found in `webserver.yaml`
 
 If you want to use the gpu to accelerate the program please install the packages below:
 * cuda
@@ -122,5 +126,4 @@ Then, PhaSUIT will run all the sub-functions to generate predictions under the `
 
 ### Contact
 If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
-
 
