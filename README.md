@@ -8,29 +8,6 @@ If you have any suggestion or problem, feel free to contact me via email: jyshan
 
 
 
-# Citations
-The papers of our PhaSUIT can be found below. If you use PhaSUIT for your research, please use the following citations: 
-
-* PhaMer (phage identification)
-```
-Jiayu Shang, Xubo Tang, Ruocheng Guo, Yanni Sun, Accurate identification of bacteriophages from metagenomic data using Transformer, Briefings in Bioinformatics, 2022;, bbac258, https://doi.org/10.1093/bib/bbac258
-```
-
-* PhaGCN (taxonomy classification)
-```
-Jiayu Shang, Jingzhe Jiang, Yanni Sun, Bacteriophage classification for assembled contigs using graph convolutional network, Bioinformatics, Volume 37, Issue Supplement_1, July 2021, Pages i25–i33, https://doi.org/10.1093/bioinformatics/btab293
-```
-
-* Cherry (host prediction)
-```
-Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction of virus–pRokarYotic interactions using a graph encoder–decoder model, Briefings in Bioinformatics, 2022;, bbac182, https://doi.org/10.1093/bib/bbac182
-```
-
-* PhaTYP (Lifestyle prediction)
-```
-Shang, J., Tang, X., & Sun, Y. (2022). PhaTYP: Predicting the lifestyle for bacteriophages using BERT. arXiv preprint arXiv:2206.09693.
-```
-
 
 # Overview
 
@@ -101,9 +78,9 @@ python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [-
       --threads NUM_THREAD
                             Number of threads to run PhaMer (default 8)
       --len MINIMUM_LEN
-                            predict only for sequence >= len bp (default 3000)3223q8                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+                            predict only for sequence >= len bp (default 3000)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
       --rootpth ROOT_PTH
-                            The folder you want to store the outputs of PhaSUIT (default user_0/)
+                            The folder you want to store the outputs of PhaSUITE (default user_0/)
       --out OUTPUT_PTH
                             The output folder under rootpth. All the prediction will be stored in this folder. (default out/)
       --midfolder MID_PTH
@@ -118,7 +95,7 @@ python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [-
 
 Prediction on the example file:
 
-    python main.py test_contigs.fa --threads 8 --len 1000 --rootpth simple_test
+    python main.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out
 
 Then, PhaSUIT will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
 
@@ -126,4 +103,36 @@ Then, PhaSUIT will run all the sub-functions to generate predictions under the `
 
 ### Contact
 If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
+
+
+
+
+
+# Citations
+
+The papers of our PhaSUIT can be found below. If you use PhaSUIT for your research, please use the following citations: 
+
+* PhaMer (phage identification)
+
+```
+Jiayu Shang, Xubo Tang, Ruocheng Guo, Yanni Sun, Accurate identification of bacteriophages from metagenomic data using Transformer, Briefings in Bioinformatics, 2022;, bbac258, https://doi.org/10.1093/bib/bbac258
+```
+
+* PhaGCN (taxonomy classification)
+
+```
+Jiayu Shang, Jingzhe Jiang, Yanni Sun, Bacteriophage classification for assembled contigs using graph convolutional network, Bioinformatics, Volume 37, Issue Supplement_1, July 2021, Pages i25–i33, https://doi.org/10.1093/bioinformatics/btab293
+```
+
+* Cherry (host prediction)
+
+```
+Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction of virus–pRokarYotic interactions using a graph encoder–decoder model, Briefings in Bioinformatics, 2022;, bbac182, https://doi.org/10.1093/bib/bbac182
+```
+
+* PhaTYP (Lifestyle prediction)
+
+```
+Shang, J., Tang, X., & Sun, Y. (2022). PhaTYP: Predicting the lifestyle for bacteriophages using BERT. arXiv preprint arXiv:2206.09693.
+```
 
