@@ -135,13 +135,13 @@ We are sorry that Phage SUITE currently do not support to run as an env in conda
 export PATH="{path of the *py files}:$PATH"
 ```
 
-However, if you do not want to revise the system path, you can run Phage SUITE by passing absolute path. For example, if you placed PhaSUITE/ folder under your home path (~/PhaSUITE/) and your database and parameters are store under PhaSUITE/ (~/PhaSUITE/database/ and ~/PhaSUITE/parameters/), then you can run the command line as below:
+However, if you do not want to revise the system path, you can run Phage SUITE by passing absolute path. For example, if you placed PhaSUITE/ folder under your home path (home/PhaSUITE/) and your database and parameters are store under PhaSUITE/ (home/PhaSUITE/database/ and home/PhaSUITE/parameters/), then you can run the command line as below:
 
 ```
 python ~/PhaSUITE/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaSUITE/database/ --parampth ~/PhaSUITE/parameters/
 
 #example
-python ~/PhaSUITE/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth ~/my_contigs_result/ --out out/ --dbdir ~/PhaSUITE/database/ --parampth ~/PhaSUITE/parameters/
+python home/PhaSUITE/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaSUITE/database/ --parampth home/PhaSUITE/parameters/
 ```
 
  
