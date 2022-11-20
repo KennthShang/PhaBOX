@@ -156,7 +156,7 @@ If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
 
 # Citations
 
-The papers of our PhaSUIT can be found below. If you use PhaSUIT for your research, please use the following citations: 
+The papers of our PhaSUIT can be found below. If you use PhaSUIT for your research, please use the citations listed below. The citation of PhaSUITE is not yet available. 
 
 * PhaMer (phage identification)
 
