@@ -35,7 +35,7 @@ Due to the limited size of the GitHub, we zip the database. Before using phasuit
 ```
 cd PhaSUIT/
 conda env create -f webserver.yaml -n phasuite
-conda activate phasuit
+conda activate phasuite
 
 
 # database
