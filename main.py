@@ -918,7 +918,7 @@ db_virus_prefix = f"{db_dir}/virus_db/allVIRUS"
 output_file = f"{cherrypth}/virus_out.tab"
 virus_call = NcbiblastnCommandline(query=query_file,db=db_virus_prefix,out=output_file,outfmt="6 qseqid sseqid evalue pident length qlen", evalue=1e-10,gapopen=10,penalty=-1,
                                   gapextend=2,word_size=7,dust='no',
-                                 task='blastn-short',perc_identity=90,num_threads=threads)
+                                 task='megablast',perc_identity=90,num_threads=threads)
 virus_call()
 
 
