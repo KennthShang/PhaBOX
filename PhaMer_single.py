@@ -167,11 +167,3 @@ pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":
 pred_csv.to_csv(f'{rootpth}/{out_dir}/phamer_prediction.csv', index = False)
 
 
-rec = []
-phage = pred_csv[pred_csv['Pred'] == 'phage']['Accession'].values
-for record in SeqIO.parse(f'{contigs}', 'fasta'):
-    if record.id in phage:
-        rec.append(record)
-SeqIO.write(f'{rootpth}/{out_dir}/predicted_phages.fa')
-
-
