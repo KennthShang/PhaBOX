@@ -88,7 +88,7 @@ if device == 'cpu':
 ###############################################################
 
 rec = []
-for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+for record in SeqIO.parse(contigs, 'fasta'):
     if len(record.seq) > inputs.len:
         rec.append(record)
 SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
