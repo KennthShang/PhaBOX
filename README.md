@@ -50,8 +50,8 @@ filename="phagesuite_parameters.zip"
 html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
 curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=${fileid}" -o ${filename}
 
-unzip phagesuite_database.zip 
-unzip phagesuite_parameters.zip
+unzip phagesuite_database.zip  > /dev/null
+unzip phagesuite_parameters.zip  > /dev/null
 
 # move the script to where the conda located
 cp blastxml_to_tabular.py {path_to_conda}/envs/phasuit/bin/blastxml_to_tabular.py
