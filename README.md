@@ -1,8 +1,8 @@
 <img src='logo1.png'>
 
-This is the source code of our website [Phage SUITE](https://phage.ee.cityu.edu.hk/result?jobId=PhaSUITE20221120-163201-152075)
+This is the source code of our website [Phage BOX](https://phage.ee.cityu.edu.hk/result?jobId=PhaSUITE20221120-163201-152075)
 
-Phage SUITE is a python library for phage-related tasks, including phage identification, taxonomy classification, host prediction and lifestyle prediction. We integrate our previous published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP into one program. In addition, we optimized the functions in these program to save computation resourse and time and provided an one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
+Phage BOX is a python library for phage-related tasks, including phage identification, taxonomy classification, host prediction and lifestyle prediction. We integrate our previous published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP into one program. In addition, we optimized the functions in these program to save computation resourse and time and provided an one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
 
 If you have any suggestion or problem, feel free to contact me via email: jyshang2-c@my.cityu.edu.hk. Also you can open an issue under this GitHub folder.
 
@@ -31,11 +31,11 @@ After cloning this respository, you can use anaconda to install the **websever.y
 ### Prepare the database and environment
 Due to the limited size of the GitHub, we zip the database. Before using phasuit, you need to unpack them using the following commands.
 
-1. When you use PhaMer at the first time
+1. When you use PhaBOX at the first time
 ```
-cd PhaSUIT/
-conda env create -f webserver.yaml -n phasuite
-conda activate phasuite
+cd PhaBOX/
+conda env create -f webserver.yaml -n phabox
+conda activate phabox
 
 
 # database
@@ -65,7 +65,7 @@ chmod 777 ~/miniconda3/envs/phasuit/bin/blastxml_to_tabular.py
 
 2. Then, you only need to activate your 'phasuite' environment before using phasuite in the next time.
 ```
-conda activate phasuite
+conda activate phabox
 ```
 
 ## Usage 
@@ -138,10 +138,10 @@ export PATH="{path of the *py files}:$PATH"
 However, if you do not want to revise the system path, you can run Phage SUITE by passing absolute path. For example, if you placed PhaSUITE/ folder under your home path (home/PhaSUITE/) and your database and parameters are store under PhaSUITE/ (home/PhaSUITE/database/ and home/PhaSUITE/parameters/), then you can run the command line as below:
 
 ```
-python ~/PhaSUITE/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaSUITE/database/ --parampth ~/PhaSUITE/parameters/
+python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/
 
 #example
-python home/PhaSUITE/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaSUITE/database/ --parampth home/PhaSUITE/parameters/
+python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/
 ```
 
  
@@ -179,6 +179,6 @@ Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction o
 * PhaTYP (Lifestyle prediction)
 
 ```
-Shang, J., Tang, X., & Sun, Y. (2022). PhaTYP: Predicting the lifestyle for bacteriophages using BERT. arXiv preprint arXiv:2206.09693.
+Jiayu Shang, Xubo Tang, Yanni Sun, PhaTYP: predicting the lifestyle for bacteriophages using BERT, Briefings in Bioinformatics, 2022;, bbac487, https://doi.org/10.1093/bib/bbac487
 ```
 
