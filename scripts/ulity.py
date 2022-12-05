@@ -605,7 +605,7 @@ def phagcn_exception_no_visual(rootpth, midfolder, out_dir, ID2length, inputs, f
                 
                 df = pd.DataFrame({"Accession": Accession, "Pred":Pred, "Score":Score})
                 df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
-                    file_out.write('no_family_flag\n')
+
             else:
                 # unknow label
                 Accession = []
