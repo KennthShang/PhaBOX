@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import shutil
 import argparse
@@ -25,7 +24,7 @@ from models.phamer import Transformer
 from models.CAPCNN import WCNN
 from models.PhaGCN import GCN
 from models import Cherry
-from draw import draw_network
+from draw import draw_network, drop_network
 from scipy.special import softmax
 from scripts.data import load_data, preprocess_features, preprocess_adj, sample_mask
 
@@ -50,7 +49,6 @@ parser.add_argument('--parampth', help='path of parameters',  default = 'paramet
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
 parser.add_argument('--topk', help='Top k prediction',  type=int, default=1)
 parser.add_argument('--visual', help='mid folder for intermidiate files', default='visual/')
-parser.add_argument('--html', help='mid folder for intermidiate files', default='state/')
 inputs = parser.parse_args()
 
 
@@ -63,8 +61,10 @@ parampth  = inputs.parampth
 threads   = inputs.threads
 visual    = inputs.visual
 length    = inputs.len
-html      = inputs.html
 
+
+if not os.path.isfile(os.path.join(rootpth, contigs)):
+    exit()
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
     exit(1)
@@ -72,7 +72,8 @@ if not os.path.exists(db_dir):
 check_path(os.path.join(rootpth, out_dir))
 check_path(os.path.join(rootpth, midfolder))
 check_path(os.path.join(rootpth, visual))
-check_path(html)
+check_path(os.path.join(rootpth, visual, 'xml'))
+check_path(os.path.join(rootpth, visual, 'contigs'))
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -86,10 +87,20 @@ if device == 'cpu':
 #######################  Filter length ########################
 ###############################################################
 
+
+
 rec = []
-for record in SeqIO.parse(contigs, 'fasta'):
+ID2length = {}
+for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
     if len(record.seq) > inputs.len:
         rec.append(record)
+        ID2length[record.id] = len(record.seq)
+        with open(f'{rootpth}/{visual}/contigs/{record.id}.txt', 'w') as file:
+            file.write(str(record.seq))
+
+# FLAGS
+if not rec:
+    exit()
 SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 
 ###############################################################
@@ -105,15 +116,24 @@ virus_call()
 
 
 check_unknown = {}
+check_unknown_all = {}
+check_unknown_all_score = {}
 with open(output_file) as file_out:
     for line in file_out.readlines():
         parse = line.replace("\n", "").split("\t")
         virus = parse[0]
+        target = parse[1]
+        target = target.split('|')[1]
         ident  = float(parse[-3])
         length = float(parse[-2])
         qlen   = float(parse[-1])
         if length/qlen > 0.95 and ident > 0.95:
-            check_unknown[virus] = 1
+            check_unknown[virus] = target
+        if virus not in check_unknown_all:
+            ident  = float(parse[-3])/100
+            ident  = float(f"{ident:.3f}")
+            check_unknown_all[virus] = target
+            check_unknown_all_score[virus] = ident
 
 rec = []
 for record in SeqIO.parse(f'{rootpth}/filtered_contigs.fa', 'fasta'):
@@ -125,13 +145,17 @@ for record in SeqIO.parse(f'{rootpth}/filtered_contigs.fa', 'fasta'):
 
 SeqIO.write(rec, f'{rootpth}/filtered_phagcn_contigs.fa', 'fasta')
 
+if not rec:
+    phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs)
+    exit()
+
 
 ###############################################################
 ########################## PhaGCN  ############################
 ###############################################################
 
 translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_phagcn_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
-nucl, protein = recruit_phage_file(rootpth, midfolder, None, 'filtered_phagcn_contigs.fa')
+nucl, protein = recruit_phage_file(rootpth, midfolder, None, contigs)
 
 SeqIO.write(nucl, f'{rootpth}/checked_phage_contigs.fa',"fasta")
 SeqIO.write(protein, f'{rootpth}/checked_phage_protein.fa',"fasta")
@@ -203,6 +227,10 @@ pkl.dump(compress_feature, open(f"{phagcninput_pth}/phagcn_contig.F", 'wb'))
 # add convertxml (Nov. 8th)
 run_diamond(f'{db_dir}/phagcn_database.dmnd', os.path.join(rootpth, midfolder), 'phagcn_renamed_protein.fa', 'phagcn', threads)
 convert_xml(os.path.join(rootpth, midfolder), 'phagcn')
+if os.path.getsize(f'{rootpth}/{midfolder}/phagcn_results.abc') == 0:
+    phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs)
+    exit()
+
 abc_fp = f"{rootpth}/{midfolder}/merged.abc"
 _ = subprocess.check_call(f"cat {db_dir}/phagcn_database.self-diamond.tab.abc {rootpth}/{midfolder}/phagcn_results.abc > {abc_fp}", shell=True)
 
@@ -233,10 +261,7 @@ for name, df in zip(names, dfs):
     fn = "Cyber_phagcn_{}.csv".format(name)
     fp = os.path.join(f'{rootpth}/{midfolder}', fn)
     index_id = name.strip('s') + '_id'
-    if not os.path.exists(fp):
-        df.set_index(index_id).to_csv(fp)
-    else:
-        print("File {} exists and will be used. Use -f to overwrite.".format(fn))
+    df.set_index(index_id).to_csv(fp)
 
 
 
@@ -477,8 +502,14 @@ features   = pkl.load(open(f"{phagcninput_pth}/contig.feature",'rb'))
 test_to_id = pkl.load(open(f"{phagcninput_pth}/contig.dict",'rb'))
 idx_test   = pkl.load(open(f"{phagcninput_pth}/contig.mask",'rb'))
 
+
+if not idx_test:
+    phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs)
+    exit()
+
 idx_test = np.array(idx_test)
 labels = np.array(labels)
+
 
 y_train = np.zeros(labels.shape)
 y_test = np.zeros(labels.shape)
@@ -550,7 +581,7 @@ for epoch in range(400):
         out = net((feature, support))
         acc_train = phagcn_accuracy(out.detach().cpu().numpy(), train_mask.detach().cpu().numpy(), labels)
         print(epoch, loss.item(), acc_train)
-        if acc_train > 0.978:
+        if acc_train > 0.98:
             break
     _ = net.train()
 
@@ -595,7 +626,7 @@ phage_contig = []
 filtered_contig = []
 length_dict = {}
 seq_dict = {}
-for record in SeqIO.parse(f'{contigs}', 'fasta'):
+for record in SeqIO.parse(f'{rootpth}/{contigs}', 'fasta'):
     length_dict[record.id] = len(record.seq)
     seq_dict[record.id] = str(record.seq)
     if len(record.seq) < inputs.len:
@@ -603,23 +634,126 @@ for record in SeqIO.parse(f'{contigs}', 'fasta'):
     else:
         phage_contig.append(record.id)
 
+# for unpredicted contigs
 unpredict_contig = []
 unnamed_family = []
 for contig in phage_contig:
     if contig not in all_Contigs:
-        if contig in check_unknown:
+        if contig in check_unknown_all:
             unnamed_family.append(contig)
         else:
             unpredict_contig.append(contig)
 
 
+unnamed_pred = np.array([check_unknown_all[item] for item in unnamed_family])
+unnamed_pred = np.array([f'no_family_avaliable({item})' for item in unnamed_pred])
+unnamed_score = np.array([check_unknown_all_score[item] for item in unnamed_family])
+
 
 all_Contigs = np.concatenate((all_Contigs, np.array(unnamed_family), np.array(filtered_contig), np.array(unpredict_contig)))
-all_Pred = np.concatenate((all_Pred, np.array(['no_family_avaliable']*len(unnamed_family)), np.array(['filtered']*len(filtered_contig)), np.array(['unknown']*len(unpredict_contig))))
-all_Score = np.concatenate((all_Score, np.array([1]*len(unnamed_family)), np.array([0]*len(filtered_contig)), np.array([0]*len(unpredict_contig))))
+all_Pred = np.concatenate((all_Pred, unnamed_pred, np.array(['filtered']*len(filtered_contig)), np.array(['unknown']*len(unpredict_contig))))
+all_Score = np.concatenate((all_Score, unnamed_score, np.array([0]*len(filtered_contig)), np.array([0]*len(unpredict_contig))))
 all_Length = [length_dict[item] for item in all_Contigs]
+all_Pie = np.concatenate((contig_to_pred['Pred'].values, np.array(['unnamed_family']*len(unnamed_family)), np.array(['filtered']*len(filtered_contig)), np.array(['unknown']*len(unpredict_contig))))
 
 
 contig_to_pred = pd.DataFrame({'Accession': all_Contigs, 'Length': all_Length, 'Pred': all_Pred, 'Score': all_Score})
 contig_to_pred.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+
+
+cnt = Counter(all_Pie)
+pred_dict = {}
+for key, value in zip(cnt.keys(), cnt.values()):
+    pred_dict[key] = value
+
+pkl.dump(pred_dict, open(f"{rootpth}/visual/phagcn_pred.dict", 'wb'))
+
+
+### BLASTP result (Nov. 14th)
+
+phage_contig = [item for item in all_Contigs if item != 'filtered' and item != 'unknown' and item != 'no_family_avaliable']
+phage_contig_length = [contig_to_pred[contig_to_pred['Accession'] == item]['Length'].values[0] for item in phage_contig]
+phage_contig_pred = [contig_to_pred[contig_to_pred['Accession'] == item]['Pred'].values[0] for item in phage_contig]
+phage_contig_score = [contig_to_pred[contig_to_pred['Accession'] == item]['Score'].values[0] for item in phage_contig]
+phage_contig_score = [f'{item:.3f}' for item in phage_contig_score]
+
+# dump contigtable.csv (Nov. 13th)
+df = pd.DataFrame({"ID": [item+1 for item in range(len(phage_contig))], "Accession": phage_contig, "Length":phage_contig_length, "PhaGCN":phage_contig_pred, "PhaGCN_score":phage_contig_score})
+df.to_csv(f'{rootpth}/{visual}/contigtable.csv', index=False)
+
+blast_df = pd.read_csv(f"{rootpth}/{midfolder}/phagcn_results.abc", sep=' ', names=['query', 'ref', 'evalue'])
+protein2id = {protein:idx for idx, protein in enumerate(sorted(list(set(blast_df['query'].values))))}
+
+
+idx2name = {item: key for key, item in zip(name_list['Contig'].values, name_list['idx'].values)}
+contigs_list = [idx2name[protein.rsplit("_", 1)[0]] for protein in protein2id.keys()]
+
+
+xml_files = parse_xml(protein2id, f'{rootpth}/{midfolder}', 'phagcn')
+protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phagcn')
+protein2start, protein2end = parse_position(f'{rootpth}/{midfolder}')
+Protein_id = [idx2name[item.rsplit("_", 1)[0]]+ '_' + item.rsplit('_', 1)[-1] for item in protein2id.keys()]
+position_start = [protein2start[item] for item in Protein_id]
+position_end = [protein2end[item] for item in Protein_id]
+
+
+evalue_list = [protein2evalue[item] for item in protein2id.keys()]
+df = pd.DataFrame({"Pos_start": position_start, "Pos_end": position_end, "Accession": contigs_list, "Protein_id": Protein_id, "evalue": evalue_list, "xml":xml_files})
+df_list = []
+for item in phage_contig:
+    df_list.append(df[df['Accession']==item])
+
+df = pd.concat(df_list)
+
+button_str = '<button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModalToggle2" data-bs-whatever="pengcheng">Visualize</button>'
+# resorted the protein_id (Nov. 13th)
+sorted_df_list = []
+for contig in set(df['Accession'].values):
+    tmp_df = df[df['Accession'] == contig].reset_index()
+    proteins = tmp_df['Protein_id'].values
+    ori_protein_idx = {item:idx for idx, item in enumerate(proteins)}
+    sorted_idx = sorted([int(item.rsplit('_', 1)[1]) for item in proteins])
+    new_protein_idx = [ori_protein_idx[f'{contig}_{item}'] for item in sorted_idx]
+    tmp_df = tmp_df.loc[np.array(new_protein_idx)]
+    ID = [item+1 for item in range(len(tmp_df))]
+    tmp_df['ID'] = ID
+    button_list = []
+    # dump xml
+    for protein, xml in zip(tmp_df['Protein_id'].values, tmp_df['xml'].values):
+        with open(f'{rootpth}/{visual}/xml/{protein}_xml.txt', 'w') as file:
+            file.write(xml)
+        button_list.append(button_str.replace('pengcheng', protein))
+    # dump single contig csv
+    tmp_df = tmp_df.drop(columns=['xml'])
+    tmp_df['button'] = button_list
+    order = ['ID', 'Accession', 'Protein_id', 'Pos_start', 'Pos_end', 'evalue', 'button']
+    tmp_df = tmp_df[order]
+    tmp_df.to_csv(f'{rootpth}/{visual}/contigs/{contig}_proteintable.csv', index=False)
+    sorted_df_list.append(tmp_df)
+
+
+df = pd.concat(sorted_df_list)
+df.to_csv(f'{rootpth}/{visual}/proteintable.csv', index=False) 
+
+
+
+
+#### draw network
+if os.path.isfile(os.path.join(rootpth, midfolder, 'phagcn_graph.csv')):
+    drop_network('phagcn', rootpth, midfolder, db_dir, out_dir)
+
+
+
+
+rec = []
+for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
+    try:
+        protein2evalue[record.id]
+        rec.append(record)
+    except:
+        pass 
+SeqIO.write(rec, f'{rootpth}/{out_dir}/significant_proteins.fa', 'fasta')
+os.system(f"cp {rootpth}/{midfolder}/phagcn_results.tab {rootpth}/{out_dir}/blast_results.tab")
+os.system(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue' {rootpth}/{out_dir}/blast_results.tab")
+
 

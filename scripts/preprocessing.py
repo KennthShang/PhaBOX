@@ -65,6 +65,35 @@ def convert_xml(outpth, tool):
         exit(1)
 
 
+def parse_evalue(blast_df, outpth, tool):
+    protein2evalue = {}
+    for protein, evalue in zip(blast_df['query'].values, blast_df['evalue'].values):
+        try:
+            protein2evalue[protein]
+        except:
+            protein2evalue[protein] = evalue        
+
+    return protein2evalue
+
+def parse_coverage(blast_df):
+    with open(f'{blast_df}') as file_out:
+        check_name_single = {}
+        for line in file_out.readlines():
+            parse = line.replace("\n", "").split("\t")
+            virus = parse[0]
+            qstart = float(parse[-5])
+            tqend = float(parse[-4])
+            sstart   = float(parse[-3]) 
+            ssend = float(parse[-2])     
+            tmp_score = np.abs((qstart-tqend)/(sstart-ssend))
+            if tmp_score < 0.7:
+                continue
+            if virus in check_name_single:
+                continue
+            check_name_single[virus] = tmp_score
+            
+    return check_name_single
+
 def parse_xml(protein2id, outpth, tool):
     xml_files = ['']*len(protein2id)
     flag = 0 # 0 for common, 1 for specific item
@@ -197,7 +226,7 @@ def contig2sentence(db_dir, outpth, infile, tool):
 
     # propotion
     rec = []
-    for key in blast_df['query'].values:
+    for key in set(blast_df['query'].values):
         name = key.rsplit('_', 1)[0]
         rec.append(name)
     counter = Counter(rec)

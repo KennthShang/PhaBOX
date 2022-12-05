@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import  os
 import  re
 import  sys
@@ -20,6 +19,7 @@ from    torch import nn
 from    torch.nn import functional as F
 from    torch import optim
 import  torch.utils.data as Data
+from collections import Counter
 from transformers import AutoTokenizer
 from transformers import DataCollatorWithPadding
 from transformers import AutoModelForSequenceClassification
@@ -430,4 +430,128 @@ def return_4mer(file_in_fn):
         norm_feature[i] = (feature[i] - np.min(feature[i]))/(np.max(feature[i]) - np.min(feature[i]))
     return norm_feature, file2idx
 
+
+#############################################################
+########################  output  ###########################
+#############################################################
+
+def convert_output_evalue(num):
+    num = float(num)
+    if num == 0:
+        return '0'
+    str_num = f"{num:.1e}"
+    str_num = str_num.split('e-')
+    str_num = ''.join([str_num[0][:3], 'xxx-', str_num[1]])
+    return str_num
+
+
+##############################################################
+#####################  PhaGCN exception ######################
+##############################################################
+
+def phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs, fasta='filtered_contigs.fa'):
+    if os.path.getsize(f'{rootpth}/{midfolder}/unknown_out.tab') != 0:
+        with open(f'{rootpth}/{midfolder}/unknown_out.tab') as file_out:
+            check_name_single = {}
+            Accession = []
+            Pred = []
+            Pred_tmp = []
+            Score = []
+            Length_list = []
+            for line in file_out.readlines():
+                parse = line.replace("\n", "").split("\t")
+                virus = parse[0]
+                target = parse[1]
+                target = target.split('|')[1]
+                ident  = float(parse[-3])/100
+                length = float(parse[-2])
+                qlen   = float(parse[-1])
+                tmp_score = (qlen/length)*ident
+                if tmp_score < 0.2:
+                    continue
+                tmp_score  = f"{tmp_score:.3f}"
+                if virus in check_name_single:
+                    continue
+                check_name_single[virus] = 1
+                Accession.append(virus)
+                Pred.append(f'no_family_avaliable({target})')
+                Score.append(tmp_score)
+                Length_list.append(ID2length[virus])
+                Pred_tmp.append(f'no_family_avaliable')
+
+            if Accession:
+                with open(f'{rootpth}/{visual}/phage_flag.txt', 'w') as file_out:
+                    file_out.write('phage_flag\n')
+                # add unknown label
+                unknown_acc = []
+                unknown_length_list = []
+                for record in SeqIO.parse(f'{rootpth}/{fasta}', 'fasta'):
+                    if len(record.seq) < inputs.len:
+                        continue
+                    if record.id not in Accession:
+                        unknown_acc.append(record.id)
+                        unknown_length_list.append(len(record.seq))
+
+                Accession   = Accession+unknown_acc
+                Length_list = Length_list+unknown_length_list
+                Pred        = Pred + ['unknown']*len(unknown_acc)
+                Score       = Score + ['0']*len(unknown_acc)
+                Pred_tmp    = Pred_tmp + ['unknown']*len(unknown_acc)
+                
+                df = pd.DataFrame({"ID": [item+1 for item in range(len(Accession))], "Accession": Accession, "Length": Length_list, "PhaGCN":Pred, "PhaGCN_score":Score, "Pielist": Pred_tmp})
+                df.to_csv(f'{rootpth}/{visual}/contigtable.csv', index=False)
+                cnt = Counter(df['Pielist'].values)
+                pred_dict = {}
+                for key, value in zip(cnt.keys(), cnt.values()):
+                    pred_dict[key] = value
+                pkl.dump(pred_dict, open(f"{rootpth}/visual/phagcn_pred.dict", 'wb'))
+                df = pd.DataFrame({"Accession": Accession, "Pred":Pred, "Score":Score})
+                df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+                with open(f'{rootpth}/{visual}/no_family_flag.txt', 'w') as file_out:
+                    file_out.write('no_family_flag\n')
+            else:
+                # unknow label
+                Accession = []
+                Length_list = []
+                for record in SeqIO.parse(f'{rootpth}/{fasta}', 'fasta'):
+                    if len(record.seq) < inputs.len:
+                        continue
+                    Accession.append(record.id)
+                    Length_list.append(len(record.seq))
+                    Pred_tmp.append('unknown')
+                df = pd.DataFrame({"ID": [item+1 for item in range(len(Accession))], "Accession": Accession, "Length": Length_list, "PhaGCN":['unknown']*len(Accession), "PhaGCN_score":[0]*len(Accession), "Pielist": Pred_tmp})
+                df.to_csv(f'{rootpth}/{visual}/contigtable.csv', index=False)
+                cnt = Counter(df['Pielist'].values)
+                pred_dict = {}
+                for key, value in zip(cnt.keys(), cnt.values()):
+                    pred_dict[key] = value
+                pkl.dump(pred_dict, open(f"{rootpth}/visual/phagcn_pred.dict", 'wb'))
+                df = pd.DataFrame({"Accession": Accession, "Pred":['unknown']*len(Accession), "Score":[0]*len(Accession)})
+                df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+                with open(f'{rootpth}/{visual}/no_family_flag.txt', 'w') as file_out:
+                    file_out.write('no_family_flag\n')
+                with open(f'{rootpth}/{visual}/phage_flag.txt', 'w') as file_out:
+                    file_out.write('phage_flag\n')
+    else:
+        # unknow label
+        Accession = []
+        Length_list = []
+        Pred_tmp = []
+        for record in SeqIO.parse(f'{rootpth}/{fasta}', 'fasta'):
+            Accession.append(record.id)
+            Length_list.append(len(record.seq))
+            Pred_tmp.append('unknown')
+        df = pd.DataFrame({"ID": [item+1 for item in range(len(Accession))], "Accession": Accession, "Length": Length_list, "PhaGCN":['unknown']*len(Accession), "PhaGCN_score":[0]*len(Accession), "Pielist": Pred_tmp})
+        df.to_csv(f'{rootpth}/{visual}/contigtable.csv', index=False)
+        cnt = Counter(df['Pielist'].values)
+        pred_dict = {}
+        for key, value in zip(cnt.keys(), cnt.values()):
+            pred_dict[key] = value
+        pkl.dump(pred_dict, open(f"{rootpth}/visual/phagcn_pred.dict", 'wb'))
+        df = pd.DataFrame({"Accession": Accession, "Pred":['unknown']*len(Accession), "Score":[0]*len(Accession)})
+        df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+        with open(f'{rootpth}/{visual}/no_family_flag.txt', 'w') as file_out:
+            file_out.write('no_family_flag\n')
+        with open(f'{rootpth}/{visual}/phage_flag.txt', 'w') as file_out:
+            file_out.write('phage_flag\n')
 
