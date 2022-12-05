@@ -1391,6 +1391,7 @@ if os.path.isfile(os.path.join(rootpth, midfolder, 'cherry_graph.csv')):
 
 #### download files
 # protein files 
+protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phamer')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
     try:

@@ -58,7 +58,6 @@ out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
 length    = inputs.len
-html      = inputs.html
 
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
@@ -199,6 +198,7 @@ SeqIO.write(phage_rec, f'{rootpth}/predicted_phage.fa', 'fasta')
 
 
 ##### for phage-only results #####
+protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phamer')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
     try:

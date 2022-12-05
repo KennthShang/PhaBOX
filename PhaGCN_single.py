@@ -662,7 +662,7 @@ if os.path.isfile(os.path.join(rootpth, midfolder, 'phagcn_graph.csv')):
 
 
 
-
+protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phagcn')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
     try:

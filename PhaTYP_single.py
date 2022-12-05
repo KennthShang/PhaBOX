@@ -180,6 +180,7 @@ pred_csv.to_csv(f'{rootpth}/{out_dir}/phatyp_prediction.csv', index = False)
 
 
 
+protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phatyp')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
     try:

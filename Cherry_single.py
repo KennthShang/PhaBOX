@@ -719,6 +719,7 @@ contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.csv", index = None
 drop_network('cherry', rootpth, midfolder, db_dir, out_dir)
 
 
+protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'cherry')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
     try:
