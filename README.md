@@ -144,6 +144,9 @@ python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --
 python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/
 ```
 
+### Output format
+
+The explaination of the output format can be found via: [PhaBOX](https://phage.ee.cityu.edu.hk/example_result#part1)
  
 
 ### Contact
