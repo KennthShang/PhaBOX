@@ -1,6 +1,6 @@
 <img src='logo1.png'>
 
-This is the source code of our website [Phage BOX](https://phage.ee.cityu.edu.hk/result?jobId=PhaSUITE20221120-163201-152075)
+This is the source code of our website [Phage BOX](https://phage.ee.cityu.edu.hk)
 
 Phage BOX is a python library for phage-related tasks, including phage identification, taxonomy classification, host prediction and lifestyle prediction. We integrate our previous published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP into one program. In addition, we optimized the functions in these program to save computation resourse and time and provided an one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
 
@@ -25,11 +25,11 @@ Search [pytorch](https://pytorch.org/) to find the correct cuda version based on
 ## Quick install
 *Note*: we suggest you to install all the package using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
 
-After cloning this respository, you can use anaconda to install the **websever.yaml**. This will install all packages you need with cpu mode. The command is: `conda env create -f websever.yaml -n phasuit`
+After cloning this respository, you can use anaconda to install the **websever.yaml**. This will install all packages you need with cpu mode. The command is: `conda env create -f websever.yaml -n phabox`
 
 
 ### Prepare the database and environment
-Due to the limited size of the GitHub, we zip the database. Before using phasuit, you need to unpack them using the following commands.
+Due to the limited size of the GitHub, we zip the database. Before using phabox, you need to unpack them using the following commands.
 
 1. When you use PhaBOX at the first time
 ```
@@ -55,15 +55,15 @@ unzip phagesuite_parameters.zip  > /dev/null
 
 # move the script to where the conda located
 cp blastxml_to_tabular.py {path_to_conda}/envs/phabox/bin/blastxml_to_tabular.py
-chmod 777 {path_to_conda}/envs/phasuit/bin/blastxml_to_tabular.py
+chmod 777 {path_to_conda}/envs/phabox/bin/blastxml_to_tabular.py
 
 # example
 cp blastxml_to_tabular.py ~/miniconda3/envs/phabox/bin/blastxml_to_tabular.py
-chmod 777 ~/miniconda3/envs/phasuit/bin/blastxml_to_tabular.py
+chmod 777 ~/miniconda3/envs/phabox/bin/blastxml_to_tabular.py
 ```
 
 
-2. Then, you only need to activate your 'phasuite' environment before using phasuite in the next time.
+2. Then, you only need to activate your 'phabox' environment before using phabox in the next time.
 ```
 conda activate phabox
 ```
@@ -86,7 +86,7 @@ python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [-
       --len MINIMUM_LEN
                             predict only for sequence >= len bp (default 3000)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
       --rootpth ROOT_PTH
-                            The folder you want to store the outputs of PhaSUITE (default user_0/)
+                            The folder you want to store the outputs of PhaBOX (default user_0/)
       --out OUTPUT_PTH
                             The output folder under rootpth. All the prediction will be stored in this folder. (default out/)
       --midfolder MID_PTH
@@ -135,7 +135,7 @@ We are sorry that Phage SUITE currently do not support to run as an env in conda
 export PATH="{path of the *py files}:$PATH"
 ```
 
-However, if you do not want to revise the system path, you can run Phage SUITE by passing absolute path. For example, if you placed PhaSUITE/ folder under your home path (home/PhaSUITE/) and your database and parameters are store under PhaSUITE/ (home/PhaSUITE/database/ and home/PhaSUITE/parameters/), then you can run the command line as below:
+However, if you do not want to revise the system path, you can run Phage BOX by passing absolute path. For example, if you placed PhaBOX/ folder under your home path (home/PhaBOX/) and your database and parameters are store under PhaBOX/ (home/PhaBOX/database/ and home/PhaBOX/parameters/), then you can run the command line as below:
 
 ```
 python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/
@@ -156,7 +156,7 @@ If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
 
 # Citations
 
-The papers of our PhaSUIT can be found below. If you use PhaSUIT for your research, please use the citations listed below. The citation of PhaSUITE is not yet available. 
+If you use PhaBOX for your research, please use the citations listed below. The citation of PhaBOX is not yet available. 
 
 * PhaMer (phage identification)
 
