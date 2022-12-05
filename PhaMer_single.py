@@ -44,13 +44,9 @@ parser.add_argument('--reject', help='threshold to reject prophage',  type=float
 parser.add_argument('--rootpth', help='rootpth of the user', default='user_0/')
 parser.add_argument('--out', help='output path of the user', default='out/')
 parser.add_argument('--midfolder', help='mid folder for intermidiate files', default='midfolder/')
-parser.add_argument('--visual', help='mid folder for intermidiate files', default='visual/')
 parser.add_argument('--dbdir', help='database directory',  default = 'database/')
 parser.add_argument('--parampth', help='path of parameters',  default = 'parameters/')
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
-parser.add_argument('--topk', help='Top k prediction',  type=int, default=1)
-parser.add_argument('--html', help='mid folder for intermidiate files', default='state/')
-parser.add_argument('--flag', help='for visualization', default=1)
 inputs = parser.parse_args()
 
 
@@ -61,7 +57,6 @@ db_dir    = inputs.dbdir
 out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
-visual    = inputs.visual
 length    = inputs.len
 html      = inputs.html
 
@@ -71,9 +66,6 @@ if not os.path.exists(db_dir):
 
 check_path(os.path.join(rootpth, out_dir))
 check_path(os.path.join(rootpth, midfolder))
-check_path(os.path.join(rootpth, visual))
-check_path(os.path.join(rootpth, visual, 'xml'))
-check_path(os.path.join(rootpth, visual, 'contigs'))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if device == 'cpu':
@@ -86,19 +78,15 @@ if device == 'cpu':
 
 rec = []
 ID2length = {}
-for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+for record in SeqIO.parse(contigs, 'fasta'):
     ID2length[record.id] = len(record.seq)
     if len(record.seq) > inputs.len:
         rec.append(record)
-        with open(f'{rootpth}/{visual}/contigs/{record.id}.txt', 'w') as file:
-            file.write(str(record.seq))
 
 if not rec:
-    with open(f'{rootpth}/{visual}/non_alignment_flag.txt', 'w') as file_out:
-        file_out.write('non_alignment_flag\n')
     with open(f'{rootpth}/{out_dir}/phamer_prediction.csv', 'w') as file_out:
         file_out.write("Accession,Pred,Score\n")
-        for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+        for record in SeqIO.parse(contigs, 'fasta'):
             file_out.write(f'{record.id},filtered,0\n')
     exit()
 
@@ -113,11 +101,9 @@ translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_contigs.fa', 't
 run_diamond(f'{db_dir}/phamer_database.dmnd', os.path.join(rootpth, midfolder), 'test_protein.fa', 'phamer', threads)
 convert_xml(os.path.join(rootpth, midfolder), 'phamer')
 if os.path.getsize(f'{rootpth}/{midfolder}/phamer_results.abc') == 0:
-    with open(f'{rootpth}/{visual}/non_alignment_flag.txt', 'w') as file_out:
-        file_out.write('non_alignment_flag\n')
     with open(f'{rootpth}/{out_dir}/phamer_prediction.csv', 'w') as file_out:
         file_out.write("Accession,Pred,Score\n")
-        for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+        for record in SeqIO.parse(contigs, 'fasta'):
             if len(record.seq) > inputs.len:
                 file_out.write(f'{record.id},non-phage,0\n')
             else:
@@ -174,7 +160,7 @@ with torch.no_grad():
 if len(set(all_pred)) == 1 and all_pred[0] == 'non-phage':
     with open(f'{rootpth}/{out_dir}/phamer_prediction.csv', 'w') as file_out:
         file_out.write("Accession,Pred,Score\n")
-        for record in SeqIO.parse(os.path.join(rootpth, contigs), 'fasta'):
+        for record in SeqIO.parse(contigs, 'fasta'):
             file_out.write(f'{record.id},non-phage,0\n')
     exit()   
 
@@ -184,7 +170,7 @@ contigs_add = []
 pred_rec = []
 seq_dict = {}
 phage_rec = []
-for record in SeqIO.parse(f'{rootpth}/{contigs}', 'fasta'):
+for record in SeqIO.parse(f'{contigs}', 'fasta'):
     seq_dict[record.id] = str(record.seq)
     if record.id not in contigs_list:
         if len(record.seq) < inputs.len:
@@ -205,91 +191,11 @@ pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":
 pred_csv.to_csv(f'{rootpth}/{out_dir}/phamer_prediction.csv', index = False)
 phage_list = pred_csv[pred_csv['Pred'] == 'phage']['Accession'].values
 
-for record in SeqIO.parse(f'{rootpth}/{contigs}', 'fasta'):
+for record in SeqIO.parse(f'{contigs}', 'fasta'):
     if record.id in phage_list:
         phage_rec.append(record)
 
 SeqIO.write(phage_rec, f'{rootpth}/predicted_phage.fa', 'fasta')
-
-if inputs.flag == 0:
-    exit()
-
-# For visulization
-
-### Pie Chart (Nov. 8th)
-cnt = Counter(pred_csv['Pred'].values)
-pred_dict = {}
-for key, value in zip(cnt.keys(), cnt.values()):
-    pred_dict[key] = value
-
-pkl.dump(pred_dict, open(f"{rootpth}/{visual}/phamer_pred.dict", 'wb'))
-
-
-### BLASTP result (Nov. 8th)
-
-
-phage_contig = pred_csv[pred_csv['Pred']=='phage']['Accession'].values
-phage_contig_length = pred_csv[pred_csv['Pred']=='phage']['Length'].values
-phamer_score = [f'{item:.3f}' for item in pred_csv[pred_csv['Pred']=='phage']['Score'].values]
-
-
-# dump contigtable.csv (Nov. 13th)
-all_Seq = [seq_dict[item] for item in phage_contig]
-df = pd.DataFrame({"ID": [item+1 for item in range(len(phage_contig))], "Accession": phage_contig, "Length":phage_contig_length, "PhaMer": ['phage']*len(phage_contig), "PhaMer_score": phamer_score})
-df.to_csv(f'{rootpth}/{visual}/contigtable.csv', index=False)
-
-
-# recruit the predicted contigs (Nov. 13th)
-blast_df = pd.read_csv(f"{rootpth}/{midfolder}/phamer_results.abc", sep=' ', names=['query', 'ref', 'evalue'])
-protein2id = {protein:idx for idx, protein in enumerate(sorted(list(set(blast_df['query'].values))))}
-id2protein = {idx:protein for idx, protein in enumerate(sorted(list(set(blast_df['query'].values))))}
-contigs_list = [protein.rsplit("_", 1)[0] for protein in protein2id.keys()]
-xml_files = parse_xml(protein2id, f'{rootpth}/{midfolder}', 'phamer')
-protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phamer')
-protein2start, protein2end = parse_position(f'{rootpth}/{midfolder}')
-position_start = [protein2start[item] for item in protein2id.keys()]
-position_end = [protein2end[item] for item in protein2id.keys()]
-evalue_list = [protein2evalue[item] for item in protein2id.keys()]
-xml_df = pd.DataFrame({"Pos_start": position_start, "Pos_end": position_end, "Accession": contigs_list, "Protein_id": protein2id.keys(), "evalue": evalue_list, "xml":xml_files})
-
-
-
-##### for phage-only proteintable #####
-df_list = []
-for item in phage_contig:
-    df_list.append(xml_df[xml_df['Accession']==item])
-
-df = pd.concat(df_list)
-
-button_str = '<button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModalToggle2" data-bs-whatever="pengcheng">Visualize</button>'
-# resorted the protein_id (Nov. 13th)
-sorted_df_list = []
-for contig in set(df['Accession'].values):
-    tmp_df = df[df['Accession'] == contig].reset_index()
-    proteins = tmp_df['Protein_id'].values
-    ori_protein_idx = {item:idx for idx, item in enumerate(proteins)}
-    sorted_idx = sorted([int(item.rsplit('_', 1)[1]) for item in proteins])
-    new_protein_idx = [ori_protein_idx[f'{contig}_{item}'] for item in sorted_idx]
-    tmp_df = tmp_df.loc[np.array(new_protein_idx)]
-    ID = [item+1 for item in range(len(tmp_df))]
-    tmp_df['ID'] = ID
-    button_list = []
-    # dump xml
-    for protein, xml in zip(tmp_df['Protein_id'].values, tmp_df['xml'].values):
-        with open(f'{rootpth}/{visual}/xml/{protein}_xml.txt', 'w') as file:
-            file.write(xml)
-        button_list.append(button_str.replace('pengcheng', protein))
-    # dump single contig csv
-    tmp_df = tmp_df.drop(columns=['xml'])
-    tmp_df['button'] = button_list
-    order = ['ID', 'Accession', 'Protein_id', 'Pos_start', 'Pos_end', 'evalue', 'button']
-    tmp_df = tmp_df[order]
-    tmp_df.to_csv(f'{rootpth}/{visual}/contigs/{contig}_proteintable.csv', index=False)
-    sorted_df_list.append(tmp_df)
-
-
-df = pd.concat(sorted_df_list)
-df.to_csv(f'{rootpth}/{visual}/proteintable.csv', index=False) 
 
 
 ##### for phage-only results #####

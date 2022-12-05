@@ -148,7 +148,7 @@ def recruit_phage_file(rootpth, midfolder, pred_phage_dict=None, filein=None):
 
         SeqIO.write(phage_rec, f"{rootpth}/phage_contigs.fa", "fasta")
     else:
-        shutil.copyfile(f"{rootpth}/{filein}", f"{rootpth}/phage_contigs.fa")
+        shutil.copyfile(f"{filein}", f"{rootpth}/phage_contigs.fa")
 
 
     records = []
@@ -554,4 +554,84 @@ def phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs, fas
             file_out.write('no_family_flag\n')
         with open(f'{rootpth}/{visual}/phage_flag.txt', 'w') as file_out:
             file_out.write('phage_flag\n')
+
+
+def phagcn_exception_no_visual(rootpth, midfolder, out_dir, ID2length, inputs, fasta='filtered_contigs.fa'):
+    if os.path.getsize(f'{rootpth}/{midfolder}/unknown_out.tab') != 0:
+        with open(f'{rootpth}/{midfolder}/unknown_out.tab') as file_out:
+            check_name_single = {}
+            Accession = []
+            Pred = []
+            Pred_tmp = []
+            Score = []
+            Length_list = []
+            for line in file_out.readlines():
+                parse = line.replace("\n", "").split("\t")
+                virus = parse[0]
+                target = parse[1]
+                target = target.split('|')[1]
+                ident  = float(parse[-3])/100
+                length = float(parse[-2])
+                qlen   = float(parse[-1])
+                tmp_score = (qlen/length)*ident
+                if tmp_score < 0.2:
+                    continue
+                tmp_score  = f"{tmp_score:.3f}"
+                if virus in check_name_single:
+                    continue
+                check_name_single[virus] = 1
+                Accession.append(virus)
+                Pred.append(f'no_family_avaliable({target})')
+                Score.append(tmp_score)
+                Length_list.append(ID2length[virus])
+                Pred_tmp.append(f'no_family_avaliable')
+
+            if Accession:
+                # add unknown label
+                unknown_acc = []
+                unknown_length_list = []
+                for record in SeqIO.parse(f'{rootpth}/{fasta}', 'fasta'):
+                    if len(record.seq) < inputs.len:
+                        continue
+                    if record.id not in Accession:
+                        unknown_acc.append(record.id)
+                        unknown_length_list.append(len(record.seq))
+
+                Accession   = Accession+unknown_acc
+                Length_list = Length_list+unknown_length_list
+                Pred        = Pred + ['unknown']*len(unknown_acc)
+                Score       = Score + ['0']*len(unknown_acc)
+                Pred_tmp    = Pred_tmp + ['unknown']*len(unknown_acc)
+                
+                df = pd.DataFrame({"Accession": Accession, "Pred":Pred, "Score":Score})
+                df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+                    file_out.write('no_family_flag\n')
+            else:
+                # unknow label
+                Accession = []
+                Length_list = []
+                for record in SeqIO.parse(f'{rootpth}/{fasta}', 'fasta'):
+                    if len(record.seq) < inputs.len:
+                        continue
+                    Accession.append(record.id)
+                    Length_list.append(len(record.seq))
+                    Pred_tmp.append('unknown')
+                
+                df = pd.DataFrame({"Accession": Accession, "Pred":['unknown']*len(Accession), "Score":[0]*len(Accession)})
+                df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+
+    else:
+        # unknow label
+        Accession = []
+        Length_list = []
+        Pred_tmp = []
+        for record in SeqIO.parse(f'{rootpth}/{fasta}', 'fasta'):
+            Accession.append(record.id)
+            Length_list.append(len(record.seq))
+            Pred_tmp.append('unknown')
+        
+        df = pd.DataFrame({"Accession": Accession, "Pred":['unknown']*len(Accession), "Score":[0]*len(Accession)})
+        df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+
+
 
