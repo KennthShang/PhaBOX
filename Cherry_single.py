@@ -719,12 +719,14 @@ contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.csv", index = None
 drop_network('cherry', rootpth, midfolder, db_dir, out_dir)
 
 
+name2idx = {contig:idx for contig, idx in zip(name_list['Contig'].values, name_list['idx'].values)}
 blast_df = pd.read_csv(f"{rootpth}/{midfolder}/cherry_results.abc", sep=' ', names=['query', 'ref', 'evalue'])
 protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'cherry')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
     try:
-        protein2evalue[record.id]
+        name = record.id
+        protein2evalue[name2idx[name.rsplit('_',1)[0]]+'_'+name.rsplit('_',1)[1]]
         rec.append(record)
     except:
         pass 
