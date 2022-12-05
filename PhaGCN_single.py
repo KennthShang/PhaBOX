@@ -661,7 +661,7 @@ if os.path.isfile(os.path.join(rootpth, midfolder, 'phagcn_graph.csv')):
     drop_network('phagcn', rootpth, midfolder, db_dir, out_dir)
 
 
-
+blast_df = pd.read_csv(f"{rootpth}/{midfolder}/phagcn_results.abc", sep=' ', names=['query', 'ref', 'evalue'])
 protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phagcn')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):

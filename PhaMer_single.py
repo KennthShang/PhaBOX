@@ -198,6 +198,7 @@ SeqIO.write(phage_rec, f'{rootpth}/predicted_phage.fa', 'fasta')
 
 
 ##### for phage-only results #####
+blast_df = pd.read_csv(f"{rootpth}/{midfolder}/phamer_results.abc", sep=' ', names=['query', 'ref', 'evalue'])
 protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phamer')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):

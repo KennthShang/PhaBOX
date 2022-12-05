@@ -179,7 +179,7 @@ pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":
 pred_csv.to_csv(f'{rootpth}/{out_dir}/phatyp_prediction.csv', index = False)
 
 
-
+blast_df = pd.read_csv(f"{rootpth}/{midfolder}/phatyp_results.abc", sep=' ', names=['query', 'ref', 'evalue'])
 protein2evalue = parse_evalue(blast_df, f'{rootpth}/{midfolder}', 'phatyp')
 rec = []
 for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
