@@ -149,7 +149,7 @@ if not rec:
 ###############################################################
 
 translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_phagcn_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
-nucl, protein = recruit_phage_file(rootpth, midfolder, None, contigs)
+nucl, protein = recruit_phage_file(rootpth, midfolder, None, 'filtered_contigs.fa')
 
 SeqIO.write(nucl, f'{rootpth}/checked_phage_contigs.fa',"fasta")
 SeqIO.write(protein, f'{rootpth}/checked_phage_protein.fa',"fasta")

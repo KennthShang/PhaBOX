@@ -148,7 +148,7 @@ def recruit_phage_file(rootpth, midfolder, pred_phage_dict=None, filein=None):
 
         SeqIO.write(phage_rec, f"{rootpth}/phage_contigs.fa", "fasta")
     else:
-        shutil.copyfile(f"{filein}", f"{rootpth}/phage_contigs.fa")
+        shutil.copyfile(f"{rootpth}/{filein}", f"{rootpth}/phage_contigs.fa")
 
 
     records = []
