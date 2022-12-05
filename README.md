@@ -54,11 +54,11 @@ unzip phagesuite_database.zip  > /dev/null
 unzip phagesuite_parameters.zip  > /dev/null
 
 # move the script to where the conda located
-cp blastxml_to_tabular.py {path_to_conda}/envs/phasuit/bin/blastxml_to_tabular.py
+cp blastxml_to_tabular.py {path_to_conda}/envs/phabox/bin/blastxml_to_tabular.py
 chmod 777 {path_to_conda}/envs/phasuit/bin/blastxml_to_tabular.py
 
 # example
-cp blastxml_to_tabular.py ~/miniconda3/envs/phasuit/bin/blastxml_to_tabular.py
+cp blastxml_to_tabular.py ~/miniconda3/envs/phabox/bin/blastxml_to_tabular.py
 chmod 777 ~/miniconda3/envs/phasuit/bin/blastxml_to_tabular.py
 ```
 
