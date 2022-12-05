@@ -25,7 +25,7 @@ Search [pytorch](https://pytorch.org/) to find the correct cuda version based on
 ## Quick install
 *Note*: we suggest you to install all the package using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
 
-After cloning this respository, you can use anaconda to install the **websever.yaml**. This will install all packages you need with cpu mode. The command is: `conda env create -f websever.yaml -n phabox`
+After cloning this respository, you can use anaconda to install the **webserver.yml**. This will install all packages you need with cpu mode. The command is: `conda env create -f webserver.yml -n phabox`
 
 
 ### Prepare the database and environment
@@ -34,7 +34,7 @@ Due to the limited size of the GitHub, we zip the database. Before using phabox,
 1. When you use PhaBOX at the first time
 ```
 cd PhaBOX/
-conda env create -f webserver.yaml -n phabox
+conda env create -f webserver.yml -n phabox
 conda activate phabox
 
 
