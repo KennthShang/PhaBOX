@@ -103,7 +103,7 @@ Prediction on the example file:
 
     python main.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
 
-Then, Phage SUITE will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
+Then, Phage BOX will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
 
 
 
@@ -127,9 +127,9 @@ python Cherry_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootp
 
 
 
-## Running Phage SUITE as a binary file
+## Running Phage BOX as a binary file
 
-We are sorry that Phage SUITE currently do not support to run as an env in conda. However, you can still add the path of the *.py files to your system path and run them as binary files:
+We are sorry that Phage BOX currently do not support to run as an env in conda. However, you can still add the path of the *.py files to your system path and run them as binary files:
 
 ```
 export PATH="{path of the *py files}:$PATH"
