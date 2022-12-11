@@ -466,7 +466,7 @@ def phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs, fas
                 ident  = float(parse[-3])/100
                 length = float(parse[-2])
                 qlen   = float(parse[-1])
-                tmp_score = (qlen/length)*ident
+                tmp_score = (length/qlen)*ident
                 if tmp_score < 0.2:
                     continue
                 tmp_score  = f"{tmp_score:.3f}"
