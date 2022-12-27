@@ -28,6 +28,7 @@ from models.CAPCNN import WCNN
 from models.PhaGCN import GCN
 from models import Cherry
 from draw import draw_network, drop_network
+from collections import Counter
 from scipy.special import softmax
 from scripts.data import load_data, preprocess_features, preprocess_adj, sample_mask
 
@@ -1420,4 +1421,3 @@ for record in SeqIO.parse(f'{rootpth}/{midfolder}/test_protein.fa', 'fasta'):
 SeqIO.write(rec, f'{rootpth}/{out_dir}/significant_proteins.fa', 'fasta')
 os.system(f"cp {rootpth}/{midfolder}/phamer_results.tab {rootpth}/{out_dir}/blast_results.tab")
 os.system(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue' {rootpth}/{out_dir}/blast_results.tab")
-
