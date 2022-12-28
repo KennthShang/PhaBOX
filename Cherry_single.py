@@ -534,18 +534,20 @@ for sub in nx.connected_components(G):
             test_id[node] = 3
 
 # check graph situation 3
-try:
-    for node in G.nodes():
-        # if test virus node
-        if "PhaGCN" in node:
-            neighbor_label = []
-            for _, neighbor in G.edges(node):
-                if neighbor in virus2id.keys():
-                    virus_label = virus_df[virus_df['Accession'] == neighbor]['Species'].values[0]
-                    neighbor_label.append(virus_label)
-                elif neighbor in prokaryote2id.keys():
-                    prokaryote_label = prokaryote_df[prokaryote_df['Accession'] == neighbor]['Species'].values[0]
-                    neighbor_label.append(prokaryote_label)
+for node in G.nodes():
+    # if test virus node
+    if "PhaGCN" in node:
+        neighbor_label = []
+        for _, neighbor in G.edges(node):
+            if neighbor in virus2id.keys():
+                virus_label = virus_df[virus_df['Accession'] == neighbor]['Species'].values[0]
+                neighbor_label.append(virus_label)
+            elif neighbor in prokaryote2id.keys():
+                prokaryote_label = prokaryote_df[prokaryote_df['Accession'] == neighbor]['Species'].values[0]
+                neighbor_label.append(prokaryote_label)
+        try:
+            if not neighbor_label:
+                continue
             cnt = Counter(neighbor_label)
             most_cnt = cnt.most_common()[0]
             if len(set(sub_label)) == 0:
@@ -553,8 +555,8 @@ try:
             if most_cnt[1]- 1/len(set(sub_label)) > 0.3:
                 node2label[node] = most_cnt[0]
                 test_id[node] = 1
-except:
-    pass
+        except:
+            continue
 
 id2node = {idx: node for idx, node in enumerate(G.nodes())}
 node2id = {node: idx for idx, node in enumerate(G.nodes())}
