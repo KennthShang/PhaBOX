@@ -1221,6 +1221,7 @@ for sub in nx.connected_components(G):
             test_id[node] = 3
 
 # check graph situation 3
+try:
 for node in G.nodes():
     # if test virus node
     if "PhaGCN" in node:
@@ -1234,9 +1235,13 @@ for node in G.nodes():
                 neighbor_label.append(prokaryote_label)
         cnt = Counter(neighbor_label)
         most_cnt = cnt.most_common()[0]
+        if len(set(sub_label)) == 0:
+            continue
         if most_cnt[1]- 1/len(set(sub_label)) > 0.3:
             node2label[node] = most_cnt[0]
             test_id[node] = 1
+except:
+    continue
 
 id2node = {idx: node for idx, node in enumerate(G.nodes())}
 node2id = {node: idx for idx, node in enumerate(G.nodes())}
