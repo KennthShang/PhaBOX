@@ -1241,7 +1241,7 @@ try:
                 node2label[node] = most_cnt[0]
                 test_id[node] = 1
 except:
-    continue
+    pass
 
 id2node = {idx: node for idx, node in enumerate(G.nodes())}
 node2id = {node: idx for idx, node in enumerate(G.nodes())}
