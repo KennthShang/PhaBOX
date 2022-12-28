@@ -548,7 +548,7 @@ for node in G.nodes():
         cnt = Counter(neighbor_label)
         most_cnt = cnt.most_common()[0]
         if most_cnt[1]- 1/len(set(sub_label)) > 0.3:
-            node2label[node] = most_cnt [0]
+            node2label[node] = most_cnt[0]
             test_id[node] = 1
 
 id2node = {idx: node for idx, node in enumerate(G.nodes())}
