@@ -925,7 +925,15 @@ ntw = create_network(matrix, singletons, thres=1, max_sig=300)
 fi = to_clusterer(ntw, f"{cherrypth}/intermediate.ntw", merged_df.copy())
 
 # BLASTN
-_ = subprocess.check_call(f"cat {rootpth}/CNN_temp/single/* > {cherrypth}/test.fa", shell=True)
+try:
+    rec = []
+    for file in os.listdir(f'{rootpth}/CNN_temp/single/'):
+        for record in SeqIO.parse(f'{rootpth}/CNN_temp/single/{file}', 'fasta'):
+            rec.append(record)
+    SeqIO.write(rec, f"{cherrypth}/test.fa", 'fasta')
+except:
+    _ = subprocess.check_call(f"cat {rootpth}/CNN_temp/single/* > {cherrypth}/test.fa", shell=True)
+
 query_file = f"{cherrypth}/test.fa"
 db_virus_prefix = f"{db_dir}/virus_db/allVIRUS"
 output_file = f"{cherrypth}/virus_out.tab"
