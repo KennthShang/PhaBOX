@@ -1,10 +1,14 @@
 <img src='logo1.png'>
 
+# [PhaBOX](https://phage.ee.cityu.edu.hk) Webserver
+
+
+
 This is the source code of our website [Phage BOX](https://phage.ee.cityu.edu.hk). Please note that this stand-alone version is only avaliable on Linux system
 
 Phage BOX is a python library for phage-related tasks, including phage identification, taxonomy classification, host prediction and lifestyle prediction. We integrate our previous published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP into one program. In addition, we optimized the functions in these program to save computation resourse and time and provided an one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
 
-If you have any suggestion or problem, feel free to contact me via email: jyshang2-c@my.cityu.edu.hk. Also you can open an issue under this GitHub folder.
+If you have any suggestion or problem, feel free to contact me via email: kenneth.shang@foxmail.com. Also you can open an issue under this GitHub folder.
 
 
 
@@ -151,7 +155,7 @@ The explaination of the output format can be found via: [PhaBOX](https://phage.e
 
 ### Contact
 
-If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
+If you have any questions, please email us: kenneth.shang@foxmail.com
 
 
 
