@@ -165,6 +165,11 @@ If you have any questions, please email us: kenneth.shang@foxmail.com
 
 If you use PhaBOX for your research, please use the citations listed below. The citation of PhaBOX is not yet available. 
 
+* PhaBOX (arXiv version)
+
+```
+Shang, J., Peng, C., Liao, H., Tang, X., & Sun, Y. (2023). PhaBOX: A web server for identifying and characterizing phage contigs in metagenomic data. arXiv preprint arXiv:2303.15707.
+```
 * PhaMer (phage identification)
 
 ```
