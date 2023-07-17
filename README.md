@@ -4,21 +4,19 @@
 
 
 
-This is the source code of our website [Phage BOX](https://phage.ee.cityu.edu.hk). Please note that this stand-alone version is only avaliable on Linux system.
+This is the source code of our website [Phage BOX](https://phage.ee.cityu.edu.hk). Please note that this stand-alone version is only available on Linux systems.
 
-Phage BOX is a python library for phage-related tasks: 
+Phage BOX is a Python library for phage-related tasks: 
 1. phage identification
 2. taxonomy classification
 3. host prediction
 4. lifestyle prediction. 
 
 
-We integrate our previous published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP into one program. In addition, we optimized the functions in these program to save computation resourse and time and provided an one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
+We integrate our previously published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP, into one program. In addition, we optimized the functions in these programs to save computation resources and time and provided a one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
 
 
-If you have any suggestion or problem, feel free to contact me via email: kenneth.shang@foxmail.com. Also you can open an issue under this GitHub folder.
-
-
+If you have any suggestions or problems, feel free to contact me via email: jyshang2-c@my.cityu.edu.hk. Also, you can open an issue under this GitHub folder.
 
 
 # Overview
@@ -27,23 +25,23 @@ If you have any suggestion or problem, feel free to contact me via email: kennet
 ## Required Dependencies
 Detailed package information can be found in `webserver.yaml`
 
-If you want to use the gpu to accelerate the program please install the packages below:
+If you want to use the GPU to accelerate the program, please install the packages below:
 * cuda
 * Pytorch-gpu
 
-Search [pytorch](https://pytorch.org/) to find the correct cuda version based on your computer
+Search [pytorch](https://pytorch.org/) to find the correct Cuda version based on your computer
 
 
 ## Quick install
-*Note*: we suggest you to install all the package using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
+*Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
 
-After cloning this respository, you can use anaconda to install the **webserver.yml**. This will install all packages you need with cpu mode. The command is: `conda env create -f webserver.yml -n phabox`
+After cloning this repository, you can use conda to install the **webserver.yml**. This will install all packages you need with CPU mode. The command is: `conda env create -f webserver.yml -n phabox`
 
 
 ### Prepare the database and environment
-Due to the limited size of the GitHub, we zip the database. Before using phabox, you need to unpack them using the following commands.
+Due to the limited size of GitHub, we zip the database. Before using phabox, you need to unpack them using the following commands.
 
-1. When you use PhaBOX at the first time
+1. When you use PhaBOX for the first time
 ```
 cd PhaBOX/
 conda env create -f webserver.yml -n phabox
@@ -158,12 +156,19 @@ python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta
 
 ### Output format
 
-The explaination of the output format can be found via: [PhaBOX](https://phage.ee.cityu.edu.hk/example_result#part1)
- 
+The explanation of the output format can be found via: [PhaBOX Example Result](https://phage.ee.cityu.edu.hk/example_result#part1)
+
+
+**Note for the prediction of CHERRY (host prediction part)** -- released on July 17th, 2023
+
+The current taxonomy is based on the NCBI RefSeq; if you want to use the GTDB version, we provide a script (in the GTDB folder) to convert.
+```
+python convert_refseq_gtdb.py --infile [PATH_TO_'cherry_prediction.csv']
+```
 
 ### Contact
 
-If you have any questions, please email us: kenneth.shang@foxmail.com
+If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
 
 
 
@@ -201,4 +206,13 @@ Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction o
 ```
 Jiayu Shang, Xubo Tang, Yanni Sun, PhaTYP: predicting the lifestyle for bacteriophages using BERT, Briefings in Bioinformatics, 2022;, bbac487, https://doi.org/10.1093/bib/bbac487
 ```
+
+### Possible Issues (updated by July 17th 2023)
+1. Inputs should be in FASTA format.
+2. The contigs' accession should begin with a letter. Only number (such as >1, >2, >3) is not allowed.
+3. Special characters such as '|', '~', '&', '$', ':', and '/' are not allowed in the contigs' accession/ID/name.
+4. The sequences should be made up of CAPITAL LETTERS.
+5. It is recommended to only input phage contigs when using PhaGCN, PhaTYP and CHERRY.
+
+
 
