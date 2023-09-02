@@ -176,12 +176,12 @@ If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
 
 # Citations
 
-If you use PhaBOX for your research, please use the citations listed below. The citation of PhaBOX is not yet available. 
+If you use PhaBOX for your research, please use the citations listed below. 
 
-* PhaBOX (arXiv version)
+* PhaBOX (Whole pipeline)
 
 ```
-Jiayu Shang, Cheng Peng, Herui Liao, Xubo Tang, and Yanni Sun. "PhaBOX: A web server for identifying and characterizing phage contigs in metagenomic data." arXiv preprint arXiv:2303.15707 (2023).
+Jiayu Shang, Cheng Peng, Herui Liao, Xubo Tang, Yanni Sun, PhaBOX: a web server for identifying and characterizing phage contigs in metagenomic data, Bioinformatics Advances, Volume 3, Issue 1, 2023, vbad101, https://doi.org/10.1093/bioadv/vbad101
 ```
 * PhaMer (phage identification)
 
