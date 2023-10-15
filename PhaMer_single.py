@@ -98,7 +98,7 @@ SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 
 translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
 run_diamond(f'{db_dir}/phamer_database.dmnd', os.path.join(rootpth, midfolder), 'test_protein.fa', 'phamer', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'phamer')
+convert_xml(os.path.join(rootpth, midfolder), 'phamer', scriptpth)
 if os.path.getsize(f'{rootpth}/{midfolder}/phamer_results.abc') == 0:
     with open(f'{rootpth}/{out_dir}/phamer_prediction.csv', 'w') as file_out:
         file_out.write("Accession,Pred,Score\n")

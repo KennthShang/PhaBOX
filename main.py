@@ -47,6 +47,7 @@ parser.add_argument('--out', help='output path of the user', default='out/')
 parser.add_argument('--midfolder', help='mid folder for intermidiate files', default='midfolder/')
 parser.add_argument('--dbdir', help='database directory',  default = 'database/')
 parser.add_argument('--parampth', help='path of parameters',  default = 'parameters/')
+parser.add_argument('--scriptpth', help='path of parameters',  default = 'scripts/')
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
 parser.add_argument('--topk', help='Top k prediction',  type=int, default=1)
 inputs = parser.parse_args()
@@ -60,6 +61,7 @@ out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
 length    = inputs.len
+scriptpth = inputs.scriptpth
 
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
@@ -104,7 +106,7 @@ SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 # add convertxml (Nov. 8th)
 translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
 run_diamond(f'{db_dir}/phamer_database.dmnd', os.path.join(rootpth, midfolder), 'test_protein.fa', 'phamer', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'phamer')
+convert_xml(os.path.join(rootpth, midfolder), 'phamer', scriptpth)
 if os.path.getsize(f'{rootpth}/{midfolder}/phamer_results.abc') == 0:
     with open(f'{rootpth}/{out_dir}/phamer_prediction.csv', 'w') as file_out:
         file_out.write("Accession,Pred,Score\n")
@@ -388,7 +390,7 @@ else:
     # Generate knowledge graph
     # add convertxml (Nov. 8th)
     run_diamond(f'{db_dir}/phagcn_database.dmnd', os.path.join(rootpth, midfolder), 'phagcn_renamed_protein.fa', 'phagcn', threads)
-    convert_xml(os.path.join(rootpth, midfolder), 'phagcn')
+    convert_xml(os.path.join(rootpth, midfolder), 'phagcn', scriptpth)
 
     #FLAGS
     if os.path.getsize(f'{rootpth}/{midfolder}/phagcn_results.abc') == 0:
@@ -849,9 +851,9 @@ except:
 
 # add convertxml (Nov. 8th)
 run_diamond(f'{db_dir}/cherry_database.dmnd', os.path.join(rootpth, midfolder), 'cherry_renamed_protein.fa', 'cherry', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'cherry')
+convert_xml(os.path.join(rootpth, midfolder), 'cherry', scriptpth)
 run_diamond(f'{cherrypth}/test_database.dmnd', os.path.join(rootpth, midfolder),  f'cherry_renamed_protein.fa', 'cherry_test', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'cherry_test')
+convert_xml(os.path.join(rootpth, midfolder), 'cherry_test', scriptpth)
 
 database_abc_fp = f"{rootpth}/{midfolder}/cherry_merged.abc"
 _ = subprocess.check_call(f"cat {db_dir}/cherry_database.self-diamond.tab.abc {rootpth}/{midfolder}/cherry_results.abc {rootpth}/{midfolder}/cherry_test_results.abc > {database_abc_fp}", shell=True)

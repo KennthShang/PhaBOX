@@ -220,7 +220,7 @@ pkl.dump(compress_feature, open(f"{phagcninput_pth}/phagcn_contig.F", 'wb'))
 # Generate knowledge graph
 # add convertxml (Nov. 8th)
 run_diamond(f'{db_dir}/phagcn_database.dmnd', os.path.join(rootpth, midfolder), 'phagcn_renamed_protein.fa', 'phagcn', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'phagcn')
+convert_xml(os.path.join(rootpth, midfolder), 'phagcn', scriptpth)
 if os.path.getsize(f'{rootpth}/{midfolder}/phagcn_results.abc') == 0:
     phagcn_exception_no_visual(rootpth, midfolder, out_dir, ID2length, inputs)
     exit()

@@ -98,7 +98,7 @@ SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 
 translation(rootpth, os.path.join(rootpth, midfolder), 'filtered_contigs.fa', 'test_protein.fa', threads, inputs.proteins)
 run_diamond(f'{db_dir}/phamer_database.dmnd', os.path.join(rootpth, midfolder), 'test_protein.fa', 'phatyp', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'phatyp')
+convert_xml(os.path.join(rootpth, midfolder), 'phatyp', scriptpth)
 if os.path.getsize(f'{rootpth}/{midfolder}/phatyp_results.abc') == 0:
     Accession = []
     Length_list = []

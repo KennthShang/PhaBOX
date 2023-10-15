@@ -51,10 +51,13 @@ def run_diamond(diamond_db, outpth, infile, tool, threads):
         print("diamond blastp failed")
         exit(1)
 
-def convert_xml(outpth, tool):
+def convert_xml(outpth, tool, scripts='scripts/'):
     try:
         # running alignment
-        diamond_cmd = f'blastxml_to_tabular.py -o {outpth}/{tool}_results.tab -c qseqid,sseqid,pident,length,mismatch,gapopen,qstart,qend,sstart,send,evalue {outpth}/{tool}_results.xml'
+        try:
+            diamond_cmd = f'{scripts}/blastxml_to_tabular.py -o {outpth}/{tool}_results.tab -c qseqid,sseqid,pident,length,mismatch,gapopen,qstart,qend,sstart,send,evalue {outpth}/{tool}_results.xml'
+        except:
+            diamond_cmd = f'blastxml_to_tabular.py -o {outpth}/{tool}_results.tab -c qseqid,sseqid,pident,length,mismatch,gapopen,qstart,qend,sstart,send,evalue {outpth}/{tool}_results.xml'
         _ = subprocess.check_call(diamond_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         diamond_out_fp = f"{outpth}/{tool}_results.tab"
         database_abc_fp = f"{outpth}/{tool}_results.abc"

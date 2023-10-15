@@ -149,7 +149,7 @@ except:
     exit(1)
 
 run_diamond(f'{db_dir}/cherry_database.dmnd', os.path.join(rootpth, midfolder),  f'phagcn_renamed_protein.fa', 'cherry', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'cherry')
+convert_xml(os.path.join(rootpth, midfolder), 'cherry', scriptpth)
 if os.path.getsize(f'{rootpth}/{midfolder}/cherry_results.abc') == 0:
     Accession = []
     Length_list = []
@@ -164,7 +164,7 @@ if os.path.getsize(f'{rootpth}/{midfolder}/cherry_results.abc') == 0:
     exit()
 
 run_diamond(f'{cherrypth}/test_database.dmnd', os.path.join(rootpth, midfolder),  f'phagcn_renamed_protein.fa', 'cherry_test', threads)
-convert_xml(os.path.join(rootpth, midfolder), 'cherry_test')
+convert_xml(os.path.join(rootpth, midfolder), 'cherry_test', scriptpth)
 
 database_abc_fp = f"{rootpth}/{midfolder}/cherry_merged.abc"
 _ = subprocess.check_call(f"cat {db_dir}/cherry_database.self-diamond.tab.abc {rootpth}/{midfolder}/cherry_results.abc {rootpth}/{midfolder}/cherry_test_results.abc > {database_abc_fp}", shell=True)
