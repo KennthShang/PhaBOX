@@ -103,6 +103,8 @@ python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [-
                             The midfolder under rootpth. All the intermediate files will be stored in this folder. (default midfolder/)
       --parampth PARAM_PTH 
                             The pth you store your parameters (default parameters/)
+      --scriptpth PARAM_PTH 
+                            The pth you store your scripts (default scripts/)
       --dbdir DR
                             An optional path to store the database directory (default database/)
 
@@ -152,6 +154,16 @@ python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --
 
 #example
 python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/
+```
+
+### Note
+
+If you did not move **blastxml_to_tabular.py** to your conda env as introduced in the **Prepare the database and environment** section, you can use the parameter *--script* to pass a path of the folder.
+```
+python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/ --scripts ~/PhaBOX/scripts
+
+#example
+python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/ --scripts home/PhaBOX/scripts
 ```
 
 ### Output format
