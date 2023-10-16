@@ -45,6 +45,7 @@ parser.add_argument('--rootpth', help='rootpth of the user', default='user_0/')
 parser.add_argument('--out', help='output path of the user', default='out/')
 parser.add_argument('--midfolder', help='mid folder for intermidiate files', default='midfolder/')
 parser.add_argument('--dbdir', help='database directory',  default = 'database/')
+parser.add_argument('--scriptpth', help='path of parameters',  default = 'scripts/')
 parser.add_argument('--parampth', help='path of parameters',  default = 'parameters/')
 parser.add_argument('--proteins', help='FASTA file of predicted proteins (optional)')
 inputs = parser.parse_args()
@@ -58,6 +59,7 @@ out_dir   = inputs.out
 parampth  = inputs.parampth
 threads   = inputs.threads
 length    = inputs.len
+scriptpth = inputs.scriptpth
 
 if not os.path.exists(db_dir):
     print(f'Database directory {db_dir} missing or unreadable')
