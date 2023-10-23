@@ -81,6 +81,12 @@ chmod 777 ~/miniconda3/envs/phabox/bin/blastxml_to_tabular.py
 conda activate phabox
 ```
 
+**Notice:** If you are in Mainland China, please use VPN to download the file or you can try Baidu Cloud via the link below:
+
+```
+Link: https://pan.baidu.com/s/18gx_p-Y4g22W5LcXvIyO_A pwd: uran
+Link: https://pan.baidu.com/s/1QJQAIr89xbt4e3pJr_QhaQ pwd: 2gjb
+```
 ## Usage 
 
 ### Run all pipelines in one command:
