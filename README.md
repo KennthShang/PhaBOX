@@ -18,6 +18,9 @@ We integrate our previously published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP,
 
 If you have any suggestions or problems, feel free to contact me via email: jyshang2-c@my.cityu.edu.hk. Also, you can open an issue under this GitHub folder.
 
+## Latest update:
+1. If you want to predict the phage-bacteria interaction using your own bacterial assemblies, please try: https://github.com/KennthShang/CHERRY_MAGs
+2. If you want to predict the host range (multiple hosts) of your phages, please try: https://github.com/KennthShang/CHERRY_crispr_multihost
 
 # Overview
 
