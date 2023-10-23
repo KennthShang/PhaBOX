@@ -231,3 +231,5 @@ Jiayu Shang, Xubo Tang, Yanni Sun, PhaTYP: predicting the lifestyle for bacterio
 
 
 
+## Update log
+Oct. 23th 2023: Currently, if CHERRY finds the CRISPRs match of the input phages, CHERRY will no longer call the model-predict function for host prediction.
