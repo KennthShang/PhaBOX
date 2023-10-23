@@ -1352,7 +1352,7 @@ with torch.no_grad():
         pred_label_score = []
         for label in set(trainable_label):
             if label == confident_label:
-                pred_label_score.append((label, 1))
+                pred_label_score.append((label, 10))
                 continue
             prokaryote_feature = encode[label2hostid[label]]
             pred = decoder(virus_feature - prokaryote_feature)
@@ -1375,6 +1375,8 @@ with torch.no_grad():
                 if cnt > inputs.topk:
                     break
                 cnt+=1
+                if score > 1:
+                    score = 1
                 file_out.write(f'{label},{score:.3f},')
             if contig in crispr_pred:
                 file_out.write(f'CRISPR')
