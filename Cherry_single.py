@@ -267,7 +267,7 @@ with open(output_file) as file_out:
         ident = float(parse[-3])
         length = float(parse[-2])
         qlen = float(parse[-1])
-        if virus not in virus_pred and length/qlen > 0.95 and ident > 0.95:
+        if virus not in virus_pred and length/qlen > 0.95 and ident > 95:
             virus_pred[virus] = ref_virus
 
 pkl.dump(virus_pred, open(f'{cherrypth}/virus_pred.dict', 'wb'))
@@ -310,7 +310,7 @@ with open(output_file) as file_out:
         ident = float(parse[-3])
         length = float(parse[-2])
         slen = float(parse[-1])
-        if virus not in crispr_pred and length/slen > 0.95 and ident > 0.95:
+        if virus not in crispr_pred and length/slen > 0.95 and ident > 95:
             crispr_pred[virus] = prokaryote
 
 pkl.dump(crispr_pred, open(f'{cherrypth}/crispr_pred.dict', 'wb'))
