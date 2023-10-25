@@ -310,8 +310,9 @@ with open(output_file) as file_out:
         ident = float(parse[-3])
         length = float(parse[-2])
         slen = float(parse[-1])
-        if virus not in crispr_pred and length/slen > 0.95 and ident > 90:
-            crispr_pred[virus] = prokaryote
+        if virus not in crispr_pred:
+            if length/slen > 0.95 or ident > 95:
+                crispr_pred[virus] = prokaryote
 
 pkl.dump(crispr_pred, open(f'{cherrypth}/crispr_pred.dict', 'wb'))
 
