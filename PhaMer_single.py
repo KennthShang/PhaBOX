@@ -69,7 +69,7 @@ check_path(os.path.join(rootpth, out_dir))
 check_path(os.path.join(rootpth, midfolder))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-if device == 'cpu':
+if device.type == 'cpu':
     print("running with cpu")
     torch.set_num_threads(inputs.threads)
 
