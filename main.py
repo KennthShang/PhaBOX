@@ -731,7 +731,7 @@ else:
             for epoch in range(400):
                 # forward pass
                 out = net((feature, support))
-                loss = masked_loss(out, train_label, train_mask)
+                loss = masked_loss(out, train_label, train_mask, device)
                 loss += 5e-4 * net.l2_loss()
                 # backward pass
                 optimizer.zero_grad()
