@@ -69,16 +69,10 @@ def reject_prophage(all_pred, weight, reject):
     return all_pred
 
 
-def masked_loss(out, label, mask):
-    if torch.cuda.is_available():
-        w = torch.Tensor([1,1,2,3,3,3,3,3,3,3,10,10,10,10,10,10,10,10,10]).cuda()
-    else:
-        w = torch.Tensor([1,1,2,3,3,3,3,3,3,3,10,10,10,10,10,10,10,10,10])
+def masked_loss(out, label, mask, device):
+    w = torch.Tensor([1,1,2,3,3,3,3,3,3,3,10,10,10,10,10,10,10,10,10]).to(device)
     loss = F.cross_entropy(out, label, w, reduction='none')
     
-    #all phage
-    #w = torch.Tensor([3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0, 3.0, 2.0, 3.0]).cuda()
-    #loss = F.cross_entropy(out, label, w, reduction='none')
     mask = mask.float()
     mask = mask / mask.mean()
     loss *= mask
