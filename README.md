@@ -122,7 +122,7 @@ python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [-
 
 Prediction on the example file:
 
-    python main.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+    python main.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
 
 Then, Phage BOX will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
 
@@ -134,16 +134,16 @@ The only difference between running all pipelines and running single pipelines i
 
 ```
 # run PhaMer
-python PhaMer_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+python PhaMer_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
 
 # run PhaTYP
-python PhaTYP_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+python PhaTYP_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
 
 # run PhaGCN
-python PhaGCN_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+python PhaGCN_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
 
 # run CHERRY
-python Cherry_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/
+python Cherry_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
 ```
 
 
@@ -159,10 +159,10 @@ export PATH="{path of the *py files}:$PATH"
 However, if you do not want to revise the system path, you can run Phage BOX by passing absolute path. For example, if you placed PhaBOX/ folder under your home path (home/PhaBOX/) and your database and parameters are store under PhaBOX/ (home/PhaBOX/database/ and home/PhaBOX/parameters/), then you can run the command line as below:
 
 ```
-python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/
+python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/ --scriptpth ~/PhaBOX/scripts/
 
 #example
-python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/
+python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/ --scriptpth home/PhaBOX/scripts/
 ```
 
 ### Note
