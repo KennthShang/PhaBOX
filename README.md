@@ -52,16 +52,11 @@ conda activate phabox
 
 
 # database
-fileid="1hjACPsIOqqcS5emGaduYvYrCzrIpt2_9"
-filename="phagesuite_database.zip"
-html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
-curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=${fileid}" -o ${filename}
+pip install gdown
+gdown  --id 1hjACPsIOqqcS5emGaduYvYrCzrIpt2_9
 
 # initial files
-fileid="1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20"
-filename="phagesuite_parameters.zip"
-html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
-curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=${fileid}" -o ${filename}
+gdown  --id 1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20
 
 unzip phagesuite_database.zip  > /dev/null
 unzip phagesuite_parameters.zip  > /dev/null
