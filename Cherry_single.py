@@ -484,7 +484,7 @@ for node in G.nodes():
                 node2label[node] = prokaryote_df[prokaryote_df['Accession'] == crispr_pred[node]]['Species'].values[0]
                 test_id[node] = 1
             except:
-                node2label[node] = crispr_pred[node]
+                node2label[node] = f'Unknown species with accession {crispr_pred[node]}'
                 test_id[node] = 1
         elif node in virus_pred:
             node2label[node] = virus_df[virus_df['Accession'] == virus_pred[node]]['Species'].values[0]
@@ -681,7 +681,10 @@ with torch.no_grad():
         node2pred[id2node[i]] = sorted(pred_label_score, key=lambda tup: tup[1], reverse=True)
     for virus in crispr_pred:
         #if virus not in node2pred:
-        pred = prokaryote_df[prokaryote_df['Accession'] == crispr_pred[virus]]['Species'].values[0]
+        try:
+            pred = prokaryote_df[prokaryote_df['Accession'] == crispr_pred[virus]]['Species'].values[0]
+        except:
+            pred = f"Unknown species with accession {crispr_pred[virus]}"
         node2pred[virus] = [(pred, 1)]
     # dump the prediction
     with open(f"{rootpth}/{midfolder}/cherry_mid_predict.csv", 'w') as file_out:
