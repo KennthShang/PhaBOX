@@ -3,15 +3,16 @@ import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser(description='manual to this script')
-parser.add_argument('--infile', type=str, default = 'out/cherry_prediction.csv')
+parser.add_argument('--infile', type=str, default = 'cherry_prediction.csv')
+parser.add_argument('--script', type=str, default = './')
 inputs = parser.parse_args()
 
 
 
 # script for converting
 pred_df = pd.read_csv(f'{inputs.infile}')
-refseq_df = pd.read_csv(f'refseq_prokaryote.csv')
-gtdb_df = pd.read_csv(f'gtdb_prokaryote.csv')
+refseq_df = pd.read_csv(f'{inputs.script}/refseq_prokaryote.csv')
+gtdb_df = pd.read_csv(f'{inputs.script}/gtdb_prokaryote.csv')
 find_name = []
 new_pred = []
 for name, pred in zip(pred_df['Accession'].values, pred_df['Pred'].values):
