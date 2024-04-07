@@ -1368,7 +1368,7 @@ with torch.no_grad():
         try:
             pred = prokaryote_df[prokaryote_df['Accession'] == crispr_pred[virus]]['Species'].values[0]
         except:
-            pred = f'Unknown species with accession {crispr_pred[node]}'
+            pred = f'Unknown species with accession {crispr_pred[virus]}'
         node2pred[virus] = [(pred, 1)]
     # dump the prediction
     with open(f"{rootpth}/{midfolder}/cherry_mid_predict.csv", 'w') as file_out:
