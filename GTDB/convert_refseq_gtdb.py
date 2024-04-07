@@ -4,6 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='manual to this script')
 parser.add_argument('--infile', type=str, default = 'cherry_prediction.csv')
+parser.add_argument('--outfile', type=str, default = 'cherry_prediction_gtdb.csv')
 parser.add_argument('--script', type=str, default = './')
 inputs = parser.parse_args()
 
@@ -27,4 +28,4 @@ new_pred_df = pd.concat(new_pred)
 new_pred_df['Accession'] = find_name
 order = ['Accession', 'Domain', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']
 new_pred_df = new_pred_df[order]
-new_pred_df.to_csv('cherry_prediction_gtdb_ver.csv', index=False)
+new_pred_df.to_csv(f'{inputs.outfile}/cherry_prediction_gtdb_ver.csv', index=False)
