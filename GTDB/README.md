@@ -2,13 +2,14 @@
 
 
 ## Usage
+```
   --infile INPUT_CSV
                         input csv file (the output of the cherry program
   --outfile OUTPUT_CSV
                         output csv file in GTDB Taxa
   --script FOLDER
                         The path to the PhaBOX/GTDB folder
-
+```
 ## Example
 
 ```
