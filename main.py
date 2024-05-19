@@ -1429,10 +1429,13 @@ contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.csv", index = None
 
 
 #### draw network
-if os.path.isfile(os.path.join(rootpth, midfolder, 'phagcn_graph.csv')):
-    drop_network('phagcn', rootpth, midfolder, db_dir, out_dir)
-if os.path.isfile(os.path.join(rootpth, midfolder, 'cherry_graph.csv')):
-    drop_network('cherry', rootpth, midfolder, db_dir, out_dir)
+try:
+    if os.path.isfile(os.path.join(rootpth, midfolder, 'phagcn_graph.csv')):
+        drop_network('phagcn', rootpth, midfolder, db_dir, out_dir)
+    if os.path.isfile(os.path.join(rootpth, midfolder, 'cherry_graph.csv')):
+        drop_network('cherry', rootpth, midfolder, db_dir, out_dir)
+except:
+    continue
 
 #### download files
 # protein files 
