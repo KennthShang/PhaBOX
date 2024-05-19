@@ -1435,7 +1435,7 @@ try:
     if os.path.isfile(os.path.join(rootpth, midfolder, 'cherry_graph.csv')):
         drop_network('cherry', rootpth, midfolder, db_dir, out_dir)
 except:
-    continue
+    pass
 
 #### download files
 # protein files 
