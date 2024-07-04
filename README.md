@@ -20,10 +20,9 @@ If you have any suggestions or problems, feel free to contact me via email: jysh
 
 ## Latest update:
 1. If you want to predict the phage-bacteria interaction using your own bacterial assemblies, please try: https://github.com/KennthShang/CHERRY_MAGs
-2. If you want to predict the host range (multiple hosts) of your phages, please try: https://github.com/KennthShang/CHERRY_crispr_multihost
+2. If you want to predict the host range (multiple hosts) of your phages or you only want to use CRISPRs for host prediction, please try: https://github.com/KennthShang/CHERRY_crispr_multihost
 
 # Overview
-
 
 ## Required Dependencies
 Detailed package information can be found in `webserver.yaml`
