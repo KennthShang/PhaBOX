@@ -264,14 +264,14 @@ The PhaBOX pipelines are released under the terms of the [Academic Free License 
 
  * <b>Head of PhaBOX program</b><br/>
 
- | Jiayu SHANG       | Cheng PENG       |
+ | [Jiayu SHANG](https://kennthshang.github.io/)       | [Cheng PENG](https://github.com/ChengPENG-wolf)       |
 |:-------------------------:|:-------------------------:|
 | <img width=120/ src="imgs/mine.pic.jpg?raw=true"> | <img width=120/ src="imgs/Wolf.jpg?raw=true"> |
 
 
  * <b>Supervisor</b><br/>
  
- | Yanni SUN       |
+ | [Yanni SUN](https://yannisun.github.io/)       |
 |:-------------------------:|
 | <img width=120/ src="imgs/yanni.png?raw=true"> |
 
