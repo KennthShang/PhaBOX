@@ -1,4 +1,4 @@
-<img src='logo1.png'>
+<img src='imgs/logo1.png'>
 
 # Local version of [PhaBOX](https://phage.ee.cityu.edu.hk) web server
 
@@ -263,12 +263,13 @@ The PhaBOX pipelines are released under the terms of the [Academic Free License 
 ## 🤵&nbsp; Team
 
  * <b>Head of PhaBOX program</b><br/>
+
  | Jiayu SHANG       |
 |:-------------------------:|
-| <img width=120/ src="https://github.com/?raw=true"> |
+| <img width=120/ src="https://github.com/KennthShang/PhaBOX/tree/main/imgs/mine.pic.jpg?raw=true"> |
 
 | Cheng PENG       |
 |:-------------------------:|
-| <img width=120/ src="https://github.com/?raw=true"> |
+| <img width=120/ src="https://github.com/KennthShang/PhaBOX/tree/main/imgs/Wolf.jpg?raw=true"> |
 
 Our groupmates also provide many useful tools for bioinformatics analysis. Please check [Yanni's Group](https://yannisun.github.io/tools.html) for further information. Hope you will like them! 
