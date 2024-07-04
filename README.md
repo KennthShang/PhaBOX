@@ -269,7 +269,11 @@ The PhaBOX pipelines are released under the terms of the [Academic Free License 
 | <img width=120/ src="imgs/mine.pic.jpg?raw=true"> | <img width=120/ src="imgs/Wolf.jpg?raw=true"> |
 
 
-
+ * <b>Supervisor</b><br/>
+ 
+ | Yanni SUN       |
+|:-------------------------:|
+| <img width=120/ src="imgs/yanni.jpg?raw=true"> |
 
 
 Our groupmates also provide many useful tools for bioinformatics analysis. Please check [Yanni's Group](https://yannisun.github.io/tools.html) for further information. Hope you will like them! 
