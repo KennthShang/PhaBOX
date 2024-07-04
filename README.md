@@ -13,7 +13,7 @@ Phage BOX is a Python library for phage-related tasks:
 4. lifestyle prediction. 
 
 
-We integrate our previously published tools: PhaMer, PhaGCN, CHERRY, and PhaTYP, into one program. In addition, we optimized the functions in these programs to save computation resources and time and provided a one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
+We integrate our previously published tools: [PhaMer](https://github.com/KennthShang/PhaMer), [PhaGCN](https://github.com/KennthShang/PhaGCN_newICTV), [CHERRY](https://github.com/KennthShang/CHERRY), and [PhaTYP](https://github.com/KennthShang/PhaTYP), into one program. In addition, we optimized the functions in these programs to save computation resources and time and provided a one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
 
 
 If you have any suggestions or problems, feel free to contact me via email: jyshang2-c@my.cityu.edu.hk. Also, you can open an issue under this GitHub folder.
