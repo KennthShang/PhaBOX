@@ -1,6 +1,6 @@
 <img src='logo1.png'>
 
-# [PhaBOX](https://phage.ee.cityu.edu.hk) Webserver
+# Local version of [PhaBOX](https://phage.ee.cityu.edu.hk) web server
 
 
 
@@ -15,33 +15,45 @@ Phage BOX is a Python library for phage-related tasks:
 
 We integrate our previously published tools: [PhaMer](https://github.com/KennthShang/PhaMer), [PhaGCN](https://github.com/KennthShang/PhaGCN_newICTV), [CHERRY](https://github.com/KennthShang/CHERRY), and [PhaTYP](https://github.com/KennthShang/PhaTYP), into one program. In addition, we optimized the functions in these programs to save computation resources and time and provided a one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
 
+Table of Contents
+=================
+* [ &nbsp; News](#news)
+* [ &nbsp; Installation](#install)
+* [ &nbsp; Quick Start](#quick)
+* [ &nbsp; Usage](#usage)
+  * [ &nbsp; One-step command](#one-step)
+  * [ &nbsp; Run Pipeline Separately](#separately)
+  * [ &nbsp; Run Pipeline as Binary File](#binary)
+* [ &nbsp; Notifications  ](#results)
+* [ &nbsp; Possible Issues  ](#issues)
+* [ &nbsp; Update Logs ](#log)
+* [ &nbsp; Community and Contributions ](#community)
+* [ &nbsp; Have a question? ](#question)
+* [ &nbsp; License ](#license)
+* [ &nbsp; Citation ](#citation)
 
-If you have any suggestions or problems, feel free to contact me via email: jyshang2-c@my.cityu.edu.hk. Also, you can open an issue under this GitHub folder.
 
-## Latest update:
+
+
+
+<a name="news"></a>
+## &nbsp; News
 1. If you want to predict the phage-bacteria interaction using your own bacterial assemblies, please try: https://github.com/KennthShang/CHERRY_MAGs
 2. If you want to predict the host range (multiple hosts) of your phages or you only want to use CRISPRs for host prediction, please try: https://github.com/KennthShang/CHERRY_crispr_multihost
 
-# Overview
-
-## Required Dependencies
+<a name="install"></a>
+## &nbsp; Installation
 Detailed package information can be found in `webserver.yaml`
 
-If you want to use the GPU to accelerate the program, please install the packages below:
-* cuda
-* Pytorch-gpu
-
-Search [pytorch](https://pytorch.org/) to find the correct Cuda version based on your computer
-
-
-## Quick install
+<a name="quick"></a>
+## &nbsp; Quick Start
 *Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
 
 After cloning this repository, you can use conda to install the **webserver.yml**. This will install all packages you need with CPU mode. The command is: `conda env create -f webserver.yml -n phabox`
 
 
 ### Prepare the database and environment
-Due to the limited size of GitHub, we zip the database. Before using phabox, you need to unpack them using the following commands.
+Due to the limited size of GitHub, we zip the database. Before using PhaBOX, you need to unpack them using the following commands.
 
 1. When you use PhaBOX for the first time
 ```
@@ -60,7 +72,7 @@ gdown  --id 1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20
 unzip phagesuite_database.zip  > /dev/null
 unzip phagesuite_parameters.zip  > /dev/null
 
-# move the script to where the conda located
+# move the script to where the conda is located
 cp blastxml_to_tabular.py {path_to_conda}/envs/phabox/bin/blastxml_to_tabular.py
 chmod 777 {path_to_conda}/envs/phabox/bin/blastxml_to_tabular.py
 
@@ -70,20 +82,23 @@ chmod 777 ~/miniconda3/envs/phabox/bin/blastxml_to_tabular.py
 ```
 
 
-2. Then, you only need to activate your 'phabox' environment before using phabox in the next time.
+2. Then, you only need to activate your 'phabox' environment before using phabox next time.
 ```
 conda activate phabox
 ```
 
-**Notice:** If you are in Mainland China, please use VPN to download the file or you can try Baidu Cloud via the link below:
+**Notice:** If you are in Mainland China, please use a VPN to download the file, or you can try Baidu Cloud via the link below:
 
 ```
 Link: https://pan.baidu.com/s/18gx_p-Y4g22W5LcXvIyO_A pwd: uran
 Link: https://pan.baidu.com/s/1QJQAIr89xbt4e3pJr_QhaQ pwd: 2gjb
 ```
-## Usage 
 
-### Run all pipelines in one command:
+<a name="usage"></a>
+## &nbsp; Usage  
+
+<a name="one-step"></a> 
+### &nbsp; Run all pipelines in one command:
 
 ```
 python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [--rootpth ROOT_PTH] [--out OUTPUT_PTH]  [--midfolder MID_PTH] [--parampth PARAM_PTH] [--dbdir DR]
@@ -97,7 +112,7 @@ python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [-
       --threads NUM_THREAD
                             Number of threads to run PhaMer (default 8)
       --len MINIMUM_LEN
-                            predict only for sequence >= len bp (default 3000)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+                            predict only for sequence >= len bp (default 3000)                                                                                                
       --rootpth ROOT_PTH
                             The folder you want to store the outputs of PhaBOX (default user_0/)
       --out OUTPUT_PTH
@@ -121,8 +136,8 @@ Prediction on the example file:
 Then, Phage BOX will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
 
 
-
-### Run pipeline seperately:
+<a name="separately"></a>
+### &nbsp; pipeline separately
 
 The only difference between running all pipelines and running single pipelines is the name of the file. Below are the examples:
 
@@ -141,8 +156,8 @@ python Cherry_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootp
 ```
 
 
-
-## Running Phage BOX as a binary file
+<a name="binary"></a>
+### &nbsp; Running Phage BOX as a binary file
 
 We are sorry that Phage BOX currently do not support to run as an env in conda. However, you can still add the path of the *.py files to your system path and run them as binary files:
 
@@ -181,15 +196,30 @@ The current taxonomy is based on the NCBI RefSeq; if you want to use the GTDB ve
 python convert_refseq_gtdb.py --infile [PATH_TO_'cherry_prediction.csv']
 ```
 
-### Contact
 
-If you have any questions, please email us: jyshang2-c@my.cityu.edu.hk
+<a name="question"></a>
+## &nbsp; Have a question?
+
+We are happy to hear your question in our issues page [PhaBOX](https://github.com/KennthShang/PhaBOX/issues)! Obviously, if you have a private question or want to cooperate with us, you can always **reach out to us directly** via our email: jiayushang@cuhk.edu.hk 
+
+<a name="issues"></a>
+## &nbsp; Possible Issues (updated by July 17th 2023)
+1. Inputs should be in FASTA format.
+2. The contigs' accession should begin with a letter. Only number (such as >1, >2, >3) is not allowed.
+3. Special characters such as '|', '~', '&', '$', ':', and '/' are not allowed in the contigs' accession/ID/name.
+4. The sequences should be made up of CAPITAL LETTERS.
+5. It is recommended to only input phage contigs when using PhaGCN, PhaTYP and CHERRY.
 
 
 
+<a name="log"></a>
+## &nbsp; Update log
+* Oct. 23th 2023: Currently, if CHERRY finds the CRISPRs match of the input phages, CHERRY will no longer call the model-predict function for host prediction.
+* Oct. 25th 2023: According to our experimental results, to maintain the best precision, we revised the threshold for CRISPRs alignment to be: coverage > 0.95 and identity > 95
 
 
-# Citations
+<a name="citation"></a>
+## &nbsp; Citation
 
 If you use PhaBOX for your research, please use the citations listed below. 
 
@@ -222,15 +252,3 @@ Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction o
 Jiayu Shang, Xubo Tang, Yanni Sun, PhaTYP: predicting the lifestyle for bacteriophages using BERT, Briefings in Bioinformatics, 2022;, bbac487, https://doi.org/10.1093/bib/bbac487
 ```
 
-### Possible Issues (updated by July 17th 2023)
-1. Inputs should be in FASTA format.
-2. The contigs' accession should begin with a letter. Only number (such as >1, >2, >3) is not allowed.
-3. Special characters such as '|', '~', '&', '$', ':', and '/' are not allowed in the contigs' accession/ID/name.
-4. The sequences should be made up of CAPITAL LETTERS.
-5. It is recommended to only input phage contigs when using PhaGCN, PhaTYP and CHERRY.
-
-
-
-## Update log
-* Oct. 23th 2023: Currently, if CHERRY finds the CRISPRs match of the input phages, CHERRY will no longer call the model-predict function for host prediction.
-* Oct. 25th 2023: According to our experimental results, to maintain the best precision, we revised the threshold for CRISPRs alignment to be: coverage > 0.95 and identity > 95
