@@ -53,9 +53,9 @@ After cloning this repository, you can use conda to install the **webserver.yml*
 
 
 ### Prepare the database and environment
-Due to the limited size of GitHub, we zip the database. Before using PhaBOX, you need to unpack them using the following commands.
 
-1. When you use PhaBOX for the first time
+1. When you use PhaBOX for the first time, please `git clone https://github.com/KennthShang/PhaBOX.git` and follow the command below:
+
 ```
 cd PhaBOX/
 conda env create -f webserver.yml -n phabox
