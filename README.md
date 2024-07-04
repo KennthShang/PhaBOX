@@ -233,5 +233,5 @@ Jiayu Shang, Xubo Tang, Yanni Sun, PhaTYP: predicting the lifestyle for bacterio
 
 
 ## Update log
-Oct. 23th 2023: Currently, if CHERRY finds the CRISPRs match of the input phages, CHERRY will no longer call the model-predict function for host prediction.
-Oct. 25th 2023: According to our experimental results, we revised the threshold for CRISPRs alignment to be: coverage > 0.95 and identity > 95
+* Oct. 23th 2023: Currently, if CHERRY finds the CRISPRs match of the input phages, CHERRY will no longer call the model-predict function for host prediction.
+* Oct. 25th 2023: According to our experimental results, to maintain the best precision, we revised the threshold for CRISPRs alignment to be: coverage > 0.95 and identity > 95
