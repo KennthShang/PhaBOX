@@ -72,13 +72,6 @@ gdown  --id 1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20
 unzip phagesuite_database.zip  > /dev/null
 unzip phagesuite_parameters.zip  > /dev/null
 
-# move the script to where the conda is located
-cp blastxml_to_tabular.py {path_to_conda}/envs/phabox/bin/blastxml_to_tabular.py
-chmod 777 {path_to_conda}/envs/phabox/bin/blastxml_to_tabular.py
-
-# example
-cp blastxml_to_tabular.py ~/miniconda3/envs/phabox/bin/blastxml_to_tabular.py
-chmod 777 ~/miniconda3/envs/phabox/bin/blastxml_to_tabular.py
 ```
 
 
@@ -174,15 +167,19 @@ python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --
 python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/ --scriptpth home/PhaBOX/scripts/
 ```
 
-**Note**
 
 If you did not move **blastxml_to_tabular.py** to your conda env as introduced in the **Prepare the database and environment** section, you can use the parameter *--script* to pass a path of the folder.
 ```
+
 python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/ --scripts ~/PhaBOX/scripts
 
 #example
 python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/ --scripts home/PhaBOX/scripts
 ```
+
+
+
+
 
 <a name="output"></a>
 ## 📈&nbsp; Output format
