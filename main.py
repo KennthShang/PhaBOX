@@ -1446,12 +1446,14 @@ try:
     phatyp_score = []
     phagcn_score = []
     cherry_score = []
+    phage_contig_length = []
     for item in phage_contig:
         phamer_pred.append(phamer_df[phamer_df['Accession']==item]['Pred'].values[0])
         phatyp_pred.append(phatyp_df[phatyp_df['Accession']==item]['Pred'].values[0])
         phagcn_pred.append(phagcn_df[phagcn_df['Accession']==item]['Pred'].values[0])
         cherry_pred.append(cherry_df[cherry_df['Accession']==item]['Pred'].values[0])
         cherry_type.append(cherry_df[cherry_df['Accession']==item]['Type'].values[0])
+        phage_contig_length.append(phamer_df[phamer_df['Accession']==item]['Length'].values[0])
         value = phamer_df[phamer_df['Accession']==item]['Score'].values[0]
         phamer_score.append(f'{value:.3f}')
         value = phatyp_df[phatyp_df['Accession']==item]['Score'].values[0]
@@ -1460,12 +1462,7 @@ try:
         phagcn_score.append(f'{value:.3f}')
         value = cherry_df[cherry_df['Accession']==item]['Score'].values[0]
         cherry_score.append(f'{value:.3f}')
-    
-    seq_dict = {}
-    for record in SeqIO.parse(f'{contigs}', 'fasta'):
-        seq_dict[record.id] = str(record.seq)
-    
-    all_Seq = [seq_dict[item] for item in phage_contig]
+
     df = pd.DataFrame({"ID": [item+1 for item in range(len(phage_contig))], "Accession": phage_contig, "Length":phage_contig_length, "PhaMer": phamer_pred, "PhaMer_score":phamer_score, "PhaTYP": phatyp_pred,  "PhaTYP_score":phatyp_score, "PhaGCN":phagcn_pred,  "PhaGCN_score":phagcn_score, "CHERRY": cherry_pred, "CHERRY_score":cherry_score, "CHERRY_type": cherry_type})
     try:
         df.to_csv(f'{rootpth}/{out_dir}/prediction_summary.csv', index=False)
