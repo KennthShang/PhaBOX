@@ -38,8 +38,8 @@ Table of Contents
 
 <a name="news"></a>
 ## ⌛️&nbsp; News
-1. If you want to predict the phage-bacteria interaction using your own bacterial assemblies, please try: https://github.com/KennthShang/CHERRY_MAGs
-2. If you want to predict the host range (multiple hosts) of your phages or you only want to use CRISPRs for host prediction, please try: https://github.com/KennthShang/CHERRY_crispr_multihost
+1. If you want to predict the phage-bacteria interaction via CRISPR using **your own bacterial assemblies**, please try: [https://github.com/KennthShang/CHERRY_crispr](https://github.com/KennthShang/CHERRY_crispr)
+2. If you want to predict the phage-bacteria interaction via CRISPR using **GenBank database**, please try: [https://github.com/KennthShang/CHERRY_crispr_DATABASE](https://github.com/KennthShang/CHERRY_crispr_DATABASE)
 
 <a name="install"></a>
 ## 🚀&nbsp; Installation
