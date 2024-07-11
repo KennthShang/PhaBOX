@@ -38,7 +38,7 @@ Table of Contents
 
 <a name="news"></a>
 ## ⌛️&nbsp; News
-1. If you want to predict the phage-bacteria interaction via CRISPR using **your own bacterial assemblies**, please try: [https://github.com/KennthShang/CHERRY_crispr](https://github.com/KennthShang/CHERRY_crispr)
+1. If you want to predict the phage-bacteria interaction via CRISPR using **your own bacterial assemblies**, please try: [https://github.com/KennthShang/CHERRY_crispr_MAG](https://github.com/KennthShang/CHERRY_crispr_MAG)
 2. If you want to predict the phage-bacteria interaction via CRISPR using **GenBank database**, please try: [https://github.com/KennthShang/CHERRY_crispr_DATABASE](https://github.com/KennthShang/CHERRY_crispr_DATABASE)
 
 <a name="install"></a>
