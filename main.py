@@ -1433,7 +1433,7 @@ try:
     phatyp_df = pd.read_csv(f'{rootpth}/{out_dir}/phatyp_prediction.csv')
     phagcn_df = pd.read_csv(f'{rootpth}/{out_dir}/phagcn_prediction.csv')
     cherry_df = pd.read_csv(f'{rootpth}/{out_dir}/cherry_prediction.csv')
-
+    
     phage_contig = phamer_df[phamer_df['Pred']=='phage']['Accession'].values
     
     phamer_pred = []
@@ -1462,7 +1462,7 @@ try:
         cherry_score.append(f'{value:.3f}')
     
     seq_dict = {}
-    for record in SeqIO.parse(f'{rootpth}/{contigs}', 'fasta'):
+    for record in SeqIO.parse(f'{contigs}', 'fasta'):
         seq_dict[record.id] = str(record.seq)
     
     all_Seq = [seq_dict[item] for item in phage_contig]
