@@ -702,9 +702,9 @@ else:
 
             train_label = torch.from_numpy(y_train).long().to(device)
             num_classes = max(labels)+1
-            train_mask = torch.from_numpy(train_mask.astype(np.bool)).to(device)
+            train_mask = torch.from_numpy(train_mask.astype(bool)).to(device)
             test_label = torch.from_numpy(y_test).long().to(device)
-            test_mask = torch.from_numpy(test_mask.astype(np.bool)).to(device)
+            test_mask = torch.from_numpy(test_mask.astype(bool)).to(device)
 
             i = torch.from_numpy(features[0]).long().to(device)
             v = torch.from_numpy(features[1]).to(device)
