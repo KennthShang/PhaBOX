@@ -11,7 +11,7 @@ setup(
         'prodigal',
         'pprodigal',
         'biopython',
-        'pytorch',
+        'torch',
         'networkx',
         'transformers',
         'pyarrow',
