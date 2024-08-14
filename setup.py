@@ -8,7 +8,6 @@ setup(
         'numpy',
         'pandas',
         'scipy',
-        'prodigal',
         'pprodigal',
         'biopython',
         'torch',
