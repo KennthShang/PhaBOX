@@ -8,6 +8,8 @@ setup(
         'numpy==1.21.2',
         'pandas==1.3.4',
         'scipy==1.7.1',
+        'attrs==21.4.0',
+        'aiohttp==3.8.1',
         'torch',
         'networkx',
         'transformers[torch]',
