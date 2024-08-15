@@ -5,9 +5,9 @@ setup(
     version='1.0',
     packages=find_packages(),
     install_requires=[
-        'numpy=1.21.2',
-        'pandas=1.3.4',
-        'scipy=1.7.1',
+        'numpy==1.21.2',
+        'pandas==1.3.4',
+        'scipy==1.7.1',
         'torch',
         'networkx',
         'transformers[torch]',
