@@ -58,15 +58,19 @@ After cloning this repository, you can use conda to install the **webserver.yml*
 
 ```
 cd PhaBOX/
+
+# install environment
+## option1 (more reliable):
+conda create -n PhaBOX phabox=1.1 -c bioconda -c conda-forage -c pytorch -c jyshang2
+
+## option2 (some time will change the version of packages):
 conda env create -f webserver.yml -n phabox
+
 conda activate phabox
 
-
-# database
+# download database
 pip install gdown
 gdown  --id 1hjACPsIOqqcS5emGaduYvYrCzrIpt2_9
-
-# initial files
 gdown  --id 1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20
 
 unzip phagesuite_database.zip  > /dev/null
