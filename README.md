@@ -61,7 +61,7 @@ cd PhaBOX/
 
 # install environment
 ## option1 (more reliable):
-conda create -n PhaBOX phabox=1.1 -c bioconda -c conda-forage -c pytorch -c jyshang2
+conda create -n PhaBOX phabox=1.1 -c bioconda -c conda-forge -c pytorch -c jyshang2
 
 ## option2 (some time will change the version of packages):
 conda env create -f webserver.yml -n phabox
