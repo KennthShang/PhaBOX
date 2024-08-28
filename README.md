@@ -38,6 +38,19 @@ Table of Contents
 
 <a name="news"></a>
 ## ⌛️&nbsp; News
+
+We are preparing to upgrade PhaBOX 1.1 to PhaBOX 2.0 in the coming months. There are some major components, including:
+
+1. Provide a contamination and prophage detection module
+2. Provide a more comprehensive taxonomy classification (latest ICTV 2024), faster speed, and complete taxonomy lineage (down to genus level)
+3. Provide a genus-level clustering for potential new genus
+4. Provide a protein annotation function and marker searching module for the phylogenetic tree
+5. Allowing the use of the host prediction function in a more flexible way (only use CRISPRs for prediction,  MAGs' CRISPR detection, etc.)
+
+If you have further suggestions, feel free to let me know! You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome any suggestions.
+
+
+
 1. If you want to predict the phage-bacteria interaction via CRISPR using **your own bacterial assemblies**, please try: [https://github.com/KennthShang/CHERRY_crispr_MAG](https://github.com/KennthShang/CHERRY_crispr_MAG)
 2. If you want to predict the phage-bacteria interaction via CRISPR using **GenBank database**, please try: [https://github.com/KennthShang/CHERRY_crispr_DATABASE](https://github.com/KennthShang/CHERRY_crispr_DATABASE)
 
@@ -49,7 +62,7 @@ Detailed package information can be found in `webserver.yaml`
 ## 🚀&nbsp; Quick Start
 *Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
 
-After cloning this repository, you can use conda to install the **webserver.yml**. This will install all packages you need with CPU mode. The command is: `conda env create -f webserver.yml -n phabox`
+After cloning this repository, you can use conda to install the **webserver.yml**. This will install all the packages you need with CPU mode. The command is: `conda env create -f webserver.yml -n phabox`
 
 
 ### Prepare the database and environment
