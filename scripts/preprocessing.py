@@ -1,35 +1,171 @@
 import os
+import re
+import sys
 import pandas as pd
 import numpy as np
 import pickle as pkl
 import subprocess
-import argparse
 import shutil
 from shutil import which
 from collections import Counter
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
 from xml.etree import ElementTree as ElementTree
 
 
-#############################################################
-######################  translateion   ######################
-#############################################################
+def blastxml_to_tabular(in_file, out_file):
+    output_handle = open(out_file, "w")
+    if not os.path.isfile(in_file):
+        sys.exit("Input BLAST XML file not found: %s" % in_file)
 
 
-def translation(inpth, outpth, infile, outfile, threads, proteins):
-    if proteins is None:
-        prodigal = "prodigal"
-        # check if pprodigal is available
-        if which("pprodigal") is not None:
-            print("Using parallelized prodigal...")
-            prodigal = f'pprodigal -T {threads}'
+    re_default_query_id = re.compile(r"^Query_\d+$")
+    assert re_default_query_id.match(r"Query_101")
+    assert not re_default_query_id.match(r"Query_101a")
+    assert not re_default_query_id.match(r"MyQuery_101")
+    re_default_subject_id = re.compile(r"^Subject_\d+$")
+    assert re_default_subject_id.match(r"Subject_1")
+    assert not re_default_subject_id.match(r"Subject_")
+    assert not re_default_subject_id.match(r"Subject_12a")
+    assert not re_default_subject_id.match(r"TheSubject_1")
 
-        prodigal_cmd = f'{prodigal} -i {inpth}/{infile} -a {outpth}/{outfile} -f gff -p meta'
-        print("Running prodigal...")
-        _ = subprocess.check_call(prodigal_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    else:
-        shutil.copyfile(proteins, f'{out_fn}/{outfile}')
+    # get an iterable
+    try:
+        parser = ElementTree.XMLParser(encoding="utf-8")
+        context = ElementTree.iterparse(in_file, events=("start", "end"), parser=parser)
+    except Exception:
+        sys.exit("Invalid data format.")
+    # turn it into an iterator
+    context = iter(context)
+    # get the root element
+    try:
+        event, root = next(context)
+    except Exception:
+        sys.exit("Invalid data format.")
+    for event, elem in context:
+        if event == "end" and elem.tag == "BlastOutput_program":
+            blast_program = elem.text
+        # for every <Iteration> tag
+        if event == "end" and elem.tag == "Iteration":
+            qseqid = elem.findtext("Iteration_query-ID")
+            if re_default_query_id.match(qseqid):
+                # Place holder ID, take the first word of the query definition
+                qseqid = elem.findtext("Iteration_query-def").split(None, 1)[0]
+            qlen = int(elem.findtext("Iteration_query-len"))
+
+            # for every <Hit> within <Iteration>
+            for hit in elem.findall("Iteration_hits/Hit"):
+                sseqid = hit.findtext("Hit_id").split(None, 1)[0]
+                hit_def = sseqid + " " + hit.findtext("Hit_def")
+                if re_default_subject_id.match(sseqid) and sseqid == hit.findtext(
+                    "Hit_accession"
+                ):
+                    # Place holder ID, take the first word of the subject definition
+                    hit_def = hit.findtext("Hit_def")
+                    sseqid = hit_def.split(None, 1)[0]
+                if sseqid.startswith(
+                    "gnl|BL_ORD_ID|"
+                ) and sseqid == "gnl|BL_ORD_ID|" + hit.findtext("Hit_accession"):
+                    # Alternative place holder ID, again take the first word of hit_def
+                    hit_def = hit.findtext("Hit_def")
+                    sseqid = hit_def.split(None, 1)[0]
+                # for every <Hsp> within <Hit>
+                for hsp in hit.findall("Hit_hsps/Hsp"):
+                    nident = hsp.findtext("Hsp_identity")
+                    length = hsp.findtext("Hsp_align-len")
+                    # As of NCBI BLAST+ 2.4.0 this is given to 3dp (not 2dp)
+                    pident = "%0.3f" % (100 * float(nident) / float(length))
+
+                    q_seq = hsp.findtext("Hsp_qseq")
+                    h_seq = hsp.findtext("Hsp_hseq")
+                    m_seq = hsp.findtext("Hsp_midline")
+                    assert len(q_seq) == len(h_seq) == len(m_seq) == int(length)
+                    gapopen = str(
+                        len(q_seq.replace("-", " ").split())
+                        - 1
+                        + len(h_seq.replace("-", " ").split())
+                        - 1
+                    )
+
+                    mismatch = (
+                        m_seq.count(" ")
+                        + m_seq.count("+")
+                        - q_seq.count("-")
+                        - h_seq.count("-")
+                    )
+                    expected_mismatch = len(q_seq) - sum(
+                        1
+                        for q, h in zip(q_seq, h_seq)
+                        if q == h or q == "-" or h == "-"
+                    )
+                    xx = sum(1 for q, h in zip(q_seq, h_seq) if q == "X" and h == "X")
+                    if not (
+                        expected_mismatch - q_seq.count("X")
+                        <= int(mismatch)
+                        <= expected_mismatch + xx
+                    ):
+                        sys.exit(
+                            "%s vs %s mismatches, expected %i <= %i <= %i"
+                            % (
+                                qseqid,
+                                sseqid,
+                                expected_mismatch - q_seq.count("X"),
+                                int(mismatch),
+                                expected_mismatch,
+                            )
+                        )
+
+                    expected_identity = sum(1 for q, h in zip(q_seq, h_seq) if q == h)
+                    if not (
+                        expected_identity - xx
+                        <= int(nident)
+                        <= expected_identity + q_seq.count("X")
+                    ):
+                        sys.exit(
+                            "%s vs %s identities, expected %i <= %i <= %i"
+                            % (
+                                qseqid,
+                                sseqid,
+                                expected_identity,
+                                int(nident),
+                                expected_identity + q_seq.count("X"),
+                            )
+                        )
+
+                    evalue = hsp.findtext("Hsp_evalue")
+                    if evalue == "0":
+                        evalue = "0.0"
+                    else:
+                        evalue = "%0.0e" % float(evalue)
+
+                    bitscore = float(hsp.findtext("Hsp_bit-score"))
+                    if bitscore < 100:
+                        # Seems to show one decimal place for lower scores
+                        bitscore = "%0.1f" % bitscore
+                    else:
+                        # Note BLAST does not round to nearest int, it truncates
+                        bitscore = "%i" % bitscore
+
+                    values = [
+                        qseqid,
+                        sseqid,
+                        pident,
+                        length,  # hsp.findtext("Hsp_align-len")
+                        str(mismatch),
+                        gapopen,
+                        hsp.findtext("Hsp_query-from"),  # qstart,
+                        hsp.findtext("Hsp_query-to"),  # qend,
+                        hsp.findtext("Hsp_hit-from"),  # sstart,
+                        hsp.findtext("Hsp_hit-to"),  # send,
+                        evalue,  # hsp.findtext("Hsp_evalue") in scientific notation
+                        bitscore,  # hsp.findtext("Hsp_bit-score") rounded
+                    ]
+                    output_handle.write("\t".join(values) + "\n")
+            # prevents ElementTree from growing large datastructure
+            root.clear()
+            elem.clear()
+    output_handle.close()
+    return
+
 
 
 #############################################################
@@ -39,8 +175,8 @@ def translation(inpth, outpth, infile, outfile, threads, proteins):
 def run_diamond(diamond_db, outpth, infile, tool, threads):
     try:
         # running alignment
-        diamond_cmd = f'diamond blastp --outfmt 5 --threads {threads} --sensitive -d {diamond_db} -q {outpth}/{infile} -o {outpth}/{tool}_results.xml -k 5'
-        print("Running Diamond...")
+        diamond_cmd = f'diamond blastp --outfmt 5 --threads {threads} -d {diamond_db} -q {outpth}/{infile} -o {outpth}/{tool}_results.xml -k 25 --quiet'
+        #print("Running Diamond...")
         _ = subprocess.check_call(diamond_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         content = open(f'{outpth}/{tool}_results.xml', 'r').read()
         content = content.replace('&', '')
@@ -51,19 +187,13 @@ def run_diamond(diamond_db, outpth, infile, tool, threads):
         print("diamond blastp failed")
         exit(1)
 
-def convert_xml(outpth, tool, scripts='scripts/'):
+def convert_xml(outpth, tool):
+    blastxml_to_tabular(f'{outpth}/{tool}_results.xml', f'{outpth}/{tool}_results.tab')
     try:
-        # running alignment
-        try:
-            diamond_cmd = f'python {scripts}/blastxml_to_tabular.py -o {outpth}/{tool}_results.tab -c qseqid,sseqid,pident,length,mismatch,gapopen,qstart,qend,sstart,send,evalue {outpth}/{tool}_results.xml'
-        except:
-            diamond_cmd = f'blastxml_to_tabular.py -o {outpth}/{tool}_results.tab -c qseqid,sseqid,pident,length,mismatch,gapopen,qstart,qend,sstart,send,evalue {outpth}/{tool}_results.xml'
-        _ = subprocess.check_call(diamond_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         diamond_out_fp = f"{outpth}/{tool}_results.tab"
         database_abc_fp = f"{outpth}/{tool}_results.abc"
-        _ = subprocess.check_call("awk '$1!=$2 {{print $1,$2,$11}}' {0} > {1}".format(diamond_out_fp, database_abc_fp), shell=True)
+        _ = subprocess.check_call("awk '{{print $1,$2,$12}}' {0} > {1}".format(diamond_out_fp, database_abc_fp), shell=True)
     except:
-        print(diamond_cmd)
         print("convert xml failed")
         exit(1)
 
@@ -182,24 +312,28 @@ def parse_position(outpth):
 ####################  Contig2Sentence  ######################
 #############################################################
 
-def contig2sentence(db_dir, outpth, infile, tool):
+def contig2sentence(db_dir, outpth, genomes):
     # Load dictonary and BLAST results
-    proteins_df = pd.read_csv(f'{db_dir}/proteins.csv')
-    proteins_df.dropna(axis=0, how='any', inplace=True)
-    pc2wordsid = {pc: idx for idx, pc in enumerate(sorted(set(proteins_df['cluster'].values)))}
-    protein2pc = {protein: pc for protein, pc in zip(proteins_df['protein_id'].values, proteins_df['cluster'].values)}
-    blast_df = pd.read_csv(f"{outpth}/{tool}_results.abc", sep=' ', names=['query', 'ref', 'evalue'])
+    #proteins_df = pd.read_csv(f'{db_dir}/proteins.csv')
+    #proteins_df.dropna(axis=0, how='any', inplace=True)
+    #pc2wordsid = {pc: idx for idx, pc in enumerate(sorted(set(proteins_df['cluster'].values)))}
+    #protein2pc = {protein: pc for protein, pc in zip(proteins_df['protein_id'].values, proteins_df['cluster'].values)}
+    protein2pc = pkl.load(open(f'{db_dir}/protein2token.pkl', 'rb'))
+    pc2wordsid = pkl.load(open(f'{db_dir}/pc2wordsid.pkl', 'rb'))
+    blast_df = pd.read_csv(f"{outpth}/db_results.abc", sep=' ', names=['query', 'ref', 'pident', 'evalue'])
+    blast_df = blast_df.drop_duplicates('query', keep='first')
+    blast_df['genome'] = blast_df['query'].apply(lambda x: x.rsplit('_', 1)[0])
+    blast_df = blast_df[blast_df['genome'].isin(genomes.keys())]
 
     # Parse the DIAMOND results
     contig2pcs = {}
-    old_query = ''
     for query, ref, evalue in zip(blast_df['query'].values, blast_df['ref'].values, blast_df['evalue'].values):
-        if old_query == query:
+        try:
+            pc = pc2wordsid[protein2pc[ref]]
+        except:
             continue
-        old_query = query
         conitg = query.rsplit('_', 1)[0]
         idx    = query.rsplit('_', 1)[1]
-        pc     = pc2wordsid[protein2pc[ref]]
         try:
             contig2pcs[conitg].append((idx, pc, evalue))
         except:
@@ -208,8 +342,6 @@ def contig2sentence(db_dir, outpth, infile, tool):
     # Sorted by position
     for contig in contig2pcs:
         contig2pcs[contig] = sorted(contig2pcs[contig], key=lambda tup: tup[0])
-
-
 
     # Contigs2sentence
     contig2id = {contig:idx for idx, contig in enumerate(contig2pcs.keys())}
@@ -229,27 +361,30 @@ def contig2sentence(db_dir, outpth, infile, tool):
 
     # propotion
     rec = []
-    for key in set(blast_df['query'].values):
+    for key in blast_df['query'].unique():
         name = key.rsplit('_', 1)[0]
         rec.append(name)
     counter = Counter(rec)
     mapped_num = np.array([counter[item] for item in id2contig.values()])
 
-    rec = []
-    for record in SeqIO.parse(f'{outpth}/{infile}', 'fasta'):
-        name = record.id
-        name = name.rsplit('_', 1)[0]
-        rec.append(name)
-    counter = Counter(rec)
-    total_num = np.array([counter[item] for item in id2contig.values()])
+    #rec = []
+    #for record in SeqIO.parse(f'{outpth}/query_protein.fa', 'fasta'):
+    #    name = record.id
+    #    name = name.rsplit('_', 1)[0]
+    #    rec.append(name)
+    #counter = Counter(rec)
+    #total_num = np.array([counter[item] for item in id2contig.values()])
+    total_num = np.array([len(genomes[item].genes) for item in id2contig.values()])
     proportion = mapped_num/total_num
 
 
     # Store the parameters
-    pkl.dump(sentence,        open(f'{outpth}/{tool}_sentence.feat', 'wb'))
-    pkl.dump(id2contig,       open(f'{outpth}/{tool}_sentence_id2contig.dict', 'wb'))
-    pkl.dump(proportion,      open(f'{outpth}/{tool}_sentence_proportion.feat', 'wb'))
-    pkl.dump(pc2wordsid,      open(f'{outpth}/{tool}_pc2wordsid.dict', 'wb'))
+    #pkl.dump(sentence,        open(f'{outpth}/sentence.feat', 'wb'))
+    #pkl.dump(id2contig,       open(f'{outpth}/sentence_id2contig.dict', 'wb'))
+    #pkl.dump(proportion,      open(f'{outpth}/sentence_proportion.feat', 'wb'))
+    #pkl.dump(pc2wordsid,      open(f'{outpth}/pc2wordsid.dict', 'wb'))
+
+    return sentence, id2contig, proportion, pc2wordsid
 
 
 
@@ -258,9 +393,9 @@ def contig2sentence(db_dir, outpth, infile, tool):
 #################  Convert2BERT input  ######################
 #############################################################
 
-def generate_bert_input(db_dir, inpth, outpth, tool):
-    feat = pkl.load(open(f'{inpth}/{tool}_sentence.feat', 'rb'))
-    pcs = pkl.load(open(f'{inpth}/{tool}_pc2wordsid.dict', 'rb'))
+def generate_bert_input(outpth, feat, pcs):
+    #feat = pkl.load(open(f'{inpth}/sentence.feat', 'rb'))
+    #pcs = pkl.load(open(f'{inpth}/pc2wordsid.dict', 'rb'))
     id2pcs = {item: key for key, item in pcs.items()}
     text = []
     label = []
@@ -279,6 +414,6 @@ def generate_bert_input(db_dir, inpth, outpth, tool):
         label.append(1)
 
     feat_df = pd.DataFrame({'label':label, 'text':text})
-    feat_df.to_csv(f'{outpth}/{tool}_bert_feat.csv', index=None)
+    feat_df.to_csv(f'{outpth}/bert_feat.csv', index=None)
 
 

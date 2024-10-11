@@ -1,32 +1,19 @@
 <img src='imgs/logo1.png'>
 
-# Local version of [PhaBOX](https://phage.ee.cityu.edu.hk) web server
+# Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
 
+This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk). Please note that this stand-alone version is only available on Linux systems.
 
-
-This is the source code of our website [Phage BOX](https://phage.ee.cityu.edu.hk). Please note that this stand-alone version is only available on Linux systems.
-
-Phage BOX is a Python library for phage-related tasks: 
-1. phage identification
+PhaBOX2 is a Python library for virus-related tasks: 
+1. virus identification
 2. taxonomy classification
 3. host prediction
-4. lifestyle prediction. 
-
-
-We integrate our previously published tools: [PhaMer](https://academic.oup.com/bib/article/23/4/bbac258/6620872), [PhaGCN](https://academic.oup.com/bioinformatics/article/37/Supplement_1/i25/6319660), [CHERRY](https://academic.oup.com/bib/article/23/5/bbac182/6589865), and [PhaTYP](https://academic.oup.com/bib/article/24/1/bbac487/6842869), into one program. In addition, we optimized the functions in these programs to save computation resources and time and provided a one-shot mode to run all the pipelines using one command.  Hope you will enjoy it.
+4. lifestyle prediction (for prokaryotic virus). 
 
 Table of Contents
 =================
 * [ ⌛️&nbsp; News](#news)
-* [ 🚀&nbsp; Installation](#install)
 * [ 🚀&nbsp; Quick Start](#quick)
-* [ ⌛️&nbsp; Usage](#usage)
-  * [ 📊&nbsp; One-step command](#one-step)
-  * [ 📊&nbsp; Run Pipeline Separately](#separately)
-  * [ 📊&nbsp; Run Pipeline as Binary File](#binary)
-* [ 📈&nbsp; Output Format  ](#output)
-* [ 📘&nbsp; Possible Issues  ](#issues)
-* [ 📘&nbsp; Update Logs ](#log)
 * [ 📫&nbsp; Have a question? ](#question)
 * [ ✏️&nbsp; Citation ](#citation)
 * [ ⌛️&nbsp; License ](#license)
@@ -34,216 +21,44 @@ Table of Contents
 
 
 
-
-
 <a name="news"></a>
 ## ⌛️&nbsp; News
 
-We are preparing to upgrade PhaBOX 1.1 to PhaBOX 2.0 in the coming months. There are some major components, including:
+PhaBOX has now been upgraded to the 2.0 version!!! There are some major components, including:
 
-1. Provide a contamination and prophage detection module
-2. Provide a more comprehensive taxonomy classification (latest ICTV 2024), faster speed, and complete taxonomy lineage (down to genus level)
-3. Provide a genus-level clustering for potential new genus
-4. Provide a protein annotation function and marker searching module for the phylogenetic tree
-5. Allowing the use of the host prediction function in a more flexible way (only use CRISPRs for prediction,  MAGs' CRISPR detection, etc.)
+1. Generalize for all kinds of viruses with faster speed! But we will call it PhaBOX2, not VirBOX, for a better inheritance ：) 
+2. Provide a more comprehensive taxonomy classification (latest ICTV 2024) and complete taxonomy lineage
+3. Provide a genus-level clustering for potential new genus (genus-level vOTU)!
+4. Provide a protein annotation function!
+5. Provide a contamination and prophage detection module!
+6. More user-friendly commands!
+
+The web server is still upgrading; please be patient
+
+The following functions will be coming soon!
+1. Provide a marker-searching module for the phylogenetic tree
+2. Allowing the use of the host prediction function in a more flexible way (only use CRISPRs for prediction; MAGs' CRISPR detection, etc.). Currently, if you want to predict the phage-bacteria interaction via CRISPR using **your own bacterial assemblies**, please try: [https://github.com/KennthShang/CHERRY_crispr_MAG](https://github.com/KennthShang/CHERRY_crispr_MAG)
 
 If you have further suggestions, feel free to let me know! You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome any suggestions.
 
 
-
-1. If you want to predict the phage-bacteria interaction via CRISPR using **your own bacterial assemblies**, please try: [https://github.com/KennthShang/CHERRY_crispr_MAG](https://github.com/KennthShang/CHERRY_crispr_MAG)
-2. If you want to predict the phage-bacteria interaction via CRISPR using **GenBank database**, please try: [https://github.com/KennthShang/CHERRY_crispr_DATABASE](https://github.com/KennthShang/CHERRY_crispr_DATABASE)
-
-<a name="install"></a>
-## 🚀&nbsp; Installation
-Detailed package information can be found in `webserver.yaml`
-
-<a name="quick"></a>
 ## 🚀&nbsp; Quick Start
-*Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
+Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page! We also provide a Tutorial for you to quickly get started and understand the usage of phabox2. Hope you will enjoy it!
 
-After cloning this repository, you can use conda to install the **webserver.yml**. This will install all the packages you need with CPU mode. The command is: `conda env create -f webserver.yml -n phabox`
-
-
-### Prepare the database and environment
-
-1. When you use PhaBOX for the first time, please `git clone https://github.com/KennthShang/PhaBOX.git` and follow the command below:
-
-```
-cd PhaBOX/
-
-# install environment
-## option1 (more reliable):
-conda create -n PhaBOX phabox=1.1 -c bioconda -c conda-forge -c pytorch -c jyshang2
-
-## option2 (some time will change the version of packages):
-conda env create -f webserver.yml -n phabox
-
-conda activate phabox
-
-# download database
-pip install gdown
-gdown  --id 1hjACPsIOqqcS5emGaduYvYrCzrIpt2_9
-gdown  --id 1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20
-
-unzip phagesuite_database.zip  > /dev/null
-unzip phagesuite_parameters.zip  > /dev/null
-
-```
-
-
-2. Then, you only need to activate your 'phabox' environment before using phabox next time.
-```
-conda activate phabox
-```
-
-**Notice:** If you are in Mainland China, please use a VPN to download the file, or you can try Baidu Cloud via the link below:
-
-```
-Link: https://pan.baidu.com/s/18gx_p-Y4g22W5LcXvIyO_A pwd: uran
-Link: https://pan.baidu.com/s/1QJQAIr89xbt4e3pJr_QhaQ pwd: 2gjb
-```
-
-<a name="usage"></a>
-## ⌛️&nbsp; Usage  
-
-<a name="one-step"></a> 
-### 📊&nbsp; Run all pipelines in one command:
-
-```
-python main.py [--contigs INPUT_FA] [--threads NUM_THREAD][--len MINIMUM_LEN] [--rootpth ROOT_PTH] [--out OUTPUT_PTH]  [--midfolder MID_PTH] [--parampth PARAM_PTH] [--dbdir DR]
-```
-
-**Options**
-
-
-      --contigs INPUT_FA
-                            input fasta file
-      --threads NUM_THREAD
-                            Number of threads to run PhaMer (default 8)
-      --len MINIMUM_LEN
-                            predict only for sequence >= len bp (default 3000)                                                                                                
-      --rootpth ROOT_PTH
-                            The folder you want to store the outputs of PhaBOX (default user_0/)
-      --out OUTPUT_PTH
-                            The output folder under rootpth. All the prediction will be stored in this folder. (default out/)
-      --midfolder MID_PTH
-                            The midfolder under rootpth. All the intermediate files will be stored in this folder. (default midfolder/)
-      --parampth PARAM_PTH 
-                            The pth you store your parameters (default parameters/)
-      --scriptpth PARAM_PTH 
-                            The pth you store your scripts (default scripts/)
-      --dbdir DR
-                            An optional path to store the database directory (default database/)
-
-
-**Example**
-
-Prediction on the example file:
-
-    python main.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
-
-Then, Phage BOX will run all the sub-functions to generate predictions under the `simple_test/out/` foder:  `phamer_prediction.csv` (phage identification), `phagcn_prediction.csv` (taxonomy classification), `cherry_prediction.csv` (host prediction), and `phatyp_prediction.csv` (lifestyle prediction). 
-
-
-<a name="separately"></a>
-### 📊&nbsp; pipeline separately
-
-The only difference between running all pipelines and running single pipelines is the name of the file. Below are the examples:
-
-```
-# run PhaMer
-python PhaMer_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
-
-# run PhaTYP
-python PhaTYP_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
-
-# run PhaGCN
-python PhaGCN_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
-
-# run CHERRY
-python Cherry_single.py --contigs test_contigs.fa --threads 8 --len 3000 --rootpth simple_test --out out/ --dbdir database/ --parampth parameters/ --scriptpth scripts/
-```
-
-
-<a name="binary"></a>
-### 📊&nbsp; Running Phage BOX as a binary file
-
-We are sorry that Phage BOX currently do not support to run as an env in conda. However, you can still add the path of the *.py files to your system path and run them as binary files:
-
-```
-export PATH="{path of the *py files}:$PATH"
-```
-
-However, if you do not want to revise the system path, you can run Phage BOX by passing absolute path. For example, if you placed PhaBOX/ folder under your home path (home/PhaBOX/) and your database and parameters are store under PhaBOX/ (home/PhaBOX/database/ and home/PhaBOX/parameters/), then you can run the command line as below:
-
-```
-python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/ --scriptpth ~/PhaBOX/scripts/
-
-#example
-python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/ --scriptpth home/PhaBOX/scripts/
-```
-
-
-If you did not move **blastxml_to_tabular.py** to your conda env as introduced in the **Prepare the database and environment** section, you can use the parameter *--script* to pass a path of the folder.
-```
-
-python ~/PhaBOX/main.py --contigs {where your fasta file located} --threads 8 --len 3000 --rootpth {where you want to store the result} --out out/ --dbdir ~/PhaBOX/database/ --parampth ~/PhaBOX/parameters/ --scripts ~/PhaBOX/scripts
-
-#example
-python home/PhaBOX/main.py --contigs /computenodes/node35/team3/my_contigs.fasta --threads 8 --len 3000 --rootpth home/my_contigs_result/ --out out/ --dbdir home/PhaBOX/database/ --parampth home/PhaBOX/parameters/ --scripts home/PhaBOX/scripts
-```
-
-
-
-
-
-<a name="output"></a>
-## 📈&nbsp; Output format
-
-The explanation of the output format can be found via: [PhaBOX Example Result](https://phage.ee.cityu.edu.hk/example_result#part1)
-
-
-**Note for the prediction of CHERRY (host prediction part)** -- released on July 17th, 2023
-
-The current taxonomy is based on the NCBI RefSeq; if you want to use the GTDB version, we provide a script (in the GTDB folder) to convert.
-```
-python convert_refseq_gtdb.py --infile [PATH_TO_'cherry_prediction.csv']
-```
-
-
-
-
-<a name="issues"></a>
-## 📘&nbsp; Possible Issues (updated by July 17th 2023)
-1. Inputs should be in FASTA format.
-2. The contigs' accession should begin with a letter. Only number (such as >1, >2, >3) is not allowed.
-3. Special characters such as '|', '~', '&', '$', ':', and '/' are not allowed in the contigs' accession/ID/name.
-4. The sequences should be made up of CAPITAL LETTERS.
-5. It is recommended to only input phage contigs when using PhaGCN, PhaTYP and CHERRY.
-
-
-
-<a name="log"></a>
-## 📘&nbsp; Update log
-* Oct. 23th 2023: Currently, if CHERRY finds the CRISPRs match of the input phages, CHERRY will no longer call the model-predict function for host prediction.
-* Oct. 25th 2023: According to our experimental results, to maintain the best precision, we revised the threshold for CRISPRs alignment to be: coverage > 0.95 and identity > 95
-
-<a name="question"></a>
-## 📫&nbsp; Have a question?
-
-We are happy to hear your question on our issues page [PhaBOX](https://github.com/KennthShang/PhaBOX/issues)! Obviously, if you have a private question or want to cooperate with us, you can always **reach out to us directly** via our email: jiayushang@cuhk.edu.hk 
 
 <a name="citation"></a>
 ## ✏️&nbsp; Citation
 
-If you use PhaBOX for your research, please use the citations listed below. 
+The PhaBOX2 have not been formally published. But if you use PhaBOX for your research, feel free to use the citations listed below:
 
 * PhaBOX (Whole pipeline)
 
 ```
 Jiayu Shang, Cheng Peng, Herui Liao, Xubo Tang, Yanni Sun, PhaBOX: a web server for identifying and characterizing phage contigs in metagenomic data, Bioinformatics Advances, Volume 3, Issue 1, 2023, vbad101, https://doi.org/10.1093/bioadv/vbad101
 ```
+
+Since we integrate our previously published tools: [PhaMer](https://academic.oup.com/bib/article/23/4/bbac258/6620872), [PhaGCN](https://academic.oup.com/bioinformatics/article/37/Supplement_1/i25/6319660), [CHERRY](https://academic.oup.com/bib/article/23/5/bbac182/6589865), and [PhaTYP](https://academic.oup.com/bib/article/24/1/bbac487/6842869), into the program. You can also cite them as below:
+
 * PhaMer (phage identification)
 
 ```
@@ -267,6 +82,13 @@ Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction o
 ```
 Jiayu Shang, Xubo Tang, Yanni Sun, PhaTYP: predicting the lifestyle for bacteriophages using BERT, Briefings in Bioinformatics, 2022;, bbac487, https://doi.org/10.1093/bib/bbac487
 ```
+
+If you used the contamination module, please also cite:
+```
+Nayfach, S., Camargo, A. P., Schulz, F., Eloe-Fadrosh, E., Roux, S., & Kyrpides, N. C. (2021). CheckV assesses the quality and completeness of metagenome-assembled viral genomes. Nature biotechnology, 39(5), 578-585.
+```
+
+
 <a name="license"></a>
 
 ## 📘&nbsp; License

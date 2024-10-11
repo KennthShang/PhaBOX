@@ -1,31 +1,158 @@
 import  os
 import  re
-import  sys
 import shutil
 import  numpy as np
 import  pandas as pd
 import  pickle as pkl
-import  argparse
-import  datasets
-import subprocess
-import  pyarrow as pa
 from Bio import SeqIO
-import scipy.stats as stats
-import scipy.sparse as sparse
-import scipy as sp
-import networkx as nx
+import warnings
+
+# Ignore all warnings
+warnings.filterwarnings("ignore")
+import pyarrow as pa
 import  torch
 from    torch import nn
-from    torch.nn import functional as F
 from    torch import optim
-import  torch.utils.data as Data
 from collections import Counter
-from transformers import AutoTokenizer
-from transformers import DataCollatorWithPadding
 from transformers import AutoModelForSequenceClassification
-from transformers import BertTokenizer, LineByLineTextDataset
-from transformers import BertConfig, BertForMaskedLM, DataCollatorForLanguageModeling
 from transformers import TrainingArguments, Trainer
+import kcounter
+import datasets
+from transformers import BertTokenizer
+from transformers import DataCollatorWithPadding
+from transformers import logging as transformers_logging
+
+# Set logging level to ERROR
+transformers_logging.set_verbosity_error()
+import logging
+logging.getLogger("transformers.modeling_utils").setLevel(logging.ERROR)
+logging.getLogger("transformers.trainer").setLevel(logging.ERROR)
+
+
+import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+import seaborn as sns
+import math
+
+# draw network for phagcn and cherry
+def draw_network(in_fn = './', out_fn='./', task='phagcn'):
+    if task == 'phagcn':
+        label = 'Genus'
+    elif task == 'cherry':
+        label = 'Host'
+    else:
+        print(f'Wrong task name: {task}, ONLY phagcn and cherry is available')
+        exit(1)
+
+    # Load data
+    edges_df = pd.read_csv(f'{in_fn}/{task}_network_edges.tsv', sep='\t')
+    nodes_df = pd.read_csv(f'{in_fn}/{task}_network_nodes.tsv', sep='\t')
+    nodes_df = nodes_df.fillna('-')
+
+    # Get unique category and assign colors
+    category = nodes_df[label].fillna('-').unique()
+    palette = sns.color_palette('hsv', len(category))
+    color_map = {item: palette[i] for i, item in enumerate(category)}
+    color_map['-'] = 'grey'
+
+    acc2label = {acc: label for acc, label in zip(nodes_df['Accession'], nodes_df[label])}
+    acc2type = {acc: node_type for acc, node_type in zip(nodes_df['Accession'], nodes_df['TYPE'])}
+
+    # Create a main graph
+    G_main = nx.Graph()
+
+    # Add edges to the graph
+    for _, row in edges_df.iterrows():
+        if row['Source'] != row['Target']:
+            G_main.add_edge(row['Source'], row['Target'], weight=2)
+
+    # Find connected components and sort by size
+    connected_components = sorted(nx.connected_components(G_main), key=len, reverse=True)
+
+    # Filter components to ensure they contain 'Query' nodes
+    largest_subgraphs = []
+    for component in connected_components:
+        subgraph = G_main.subgraph(component).copy()
+        #largest_subgraphs.append(subgraph)
+        if any(acc2type[node] == 'Query' for node in subgraph.nodes()):
+            largest_subgraphs.append(subgraph)
+        if len(largest_subgraphs) == 10:
+            break
+
+    # Determine subplot grid size
+    num_subgraphs = len(largest_subgraphs)
+    cols = 5
+    rows = math.ceil(num_subgraphs / cols)
+
+    # Create a figure with subplots
+    fig, axes = plt.subplots(rows, cols, figsize=(20, 4 * rows))
+    axes = axes.flatten()
+
+    # Collect category used in the plot
+    used_category = set()
+
+    for i, ax in enumerate(axes):
+        if i < num_subgraphs:
+            subgraph = largest_subgraphs[i]
+            positions = nx.spring_layout(subgraph, seed=0, k=0.5)
+
+            # Draw edges
+            nx.draw_networkx_edges(subgraph, positions, alpha=0.08, width=0.8, ax=ax)
+
+            # Draw nodes with different shapes and sizes
+            ref_nodes = [node for node in subgraph.nodes() if acc2type[node] == 'Ref']
+            query_nodes = [node for node in subgraph.nodes() if acc2type[node] == 'Query']
+
+            ref_colors = [color_map[acc2label[node]] for node in ref_nodes]
+            query_colors = [color_map[acc2label[node]] for node in query_nodes]
+
+            nx.draw_networkx_nodes(subgraph, positions, nodelist=ref_nodes, node_size=50, node_color=ref_colors, ax=ax, node_shape='o')
+            nx.draw_networkx_nodes(subgraph, positions, nodelist=query_nodes, node_size=100, node_color=query_colors, ax=ax, node_shape='^')
+
+            ax.set_title(f"Subgraph {i + 1}", fontsize=12)
+            ax.axis('off')
+
+            # Collect used category
+            used_category.update(acc2label[node] for node in subgraph.nodes())
+        else:
+            ax.axis('off')
+
+    # Create a single legend with used colors
+    handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color_map[label], markersize=10) for label in used_category]
+    labels = [label if label != '-' else 'Unclassified' for label in used_category]
+
+    # Add the legend below the subplots
+    fig.legend(handles, labels, loc='lower center', title=label, fontsize='large', ncol=5, title_fontsize='large')
+
+    # Adjust layout to make space for the legend
+    plt.subplots_adjust(bottom=0.2)
+
+    # Show the plot
+    #plt.show()
+    plt.savefig(f'{out_fn}/{task}.png',dpi=300)
+    plt.close() 
+
+# logger for user feedback
+def get_logger():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter(fmt="%(message)s")
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.handlers.clear()
+    logger.addHandler(stream_handler)
+    return logger
+
+
+class Genome:
+    def __init__(self):
+        pass
+
+
+class Gene:
+    def __init__(self):
+        pass
 
 
 
@@ -47,18 +174,6 @@ def reset_model(Transformer, src_vocab_size, device):
     return model, optimizer, loss_func
 
 
-def return_batch(train_sentence, label, flag):
-    X_train = torch.from_numpy(train_sentence).to(device)
-    y_train = torch.from_numpy(label).float().to(device)
-    train_dataset = Data.TensorDataset(X_train, y_train)
-    training_loader = Data.DataLoader(
-        dataset=train_dataset,    
-        batch_size=200,
-        shuffle=flag,               
-        num_workers=0,              
-    )
-    return training_loader
-
 def return_tensor(var, device):
     return torch.from_numpy(var).to(device)
 
@@ -69,42 +184,27 @@ def reject_prophage(all_pred, weight, reject):
     return all_pred
 
 
-def masked_loss(out, label, mask, device):
-    w = torch.Tensor([1,1,2,3,3,3,3,3,3,3,10,10,10,10,10,10,10,10,10]).to(device)
-    loss = F.cross_entropy(out, label, w, reduction='none')
-    
-    mask = mask.float()
-    mask = mask / mask.mean()
-    loss *= mask
-    loss = loss.mean()
-    return loss
+def preprocess_function(examples, tokenizer):
+    return tokenizer(examples["text"], truncation=True)
 
 
-def masked_acc(out, label, mask):
-    # [node, f]
-    pred = out.argmax(dim=1)
-    correct = torch.eq(pred, label).float()
-    mask = mask.float()
-    mask = mask / mask.mean()
-    correct *= mask
-    acc = correct.mean()
-    return acc
+def init_bert(rootpth, midfolder, parampth):
 
-def phagcn_accuracy(out, mask, labels):
-    pred = np.argmax(out, axis = 1)
-    mask_pred = np.array([pred[i] for i in range(len(labels)) if mask[i] == True])
-    mask_label = np.array([labels[i] for i in range(len(labels)) if mask[i] == True])
-    return np.sum(mask_label == mask_pred)/len(mask_pred)
+    bert_feat = pd.read_csv(f'{rootpth}/{midfolder}/bert_feat.csv')
+    test  = pa.Table.from_pandas(bert_feat)
+    test  = datasets.Dataset(test)
+    data = datasets.DatasetDict({"test": test})
 
 
+    tokenizer = BertTokenizer.from_pretrained(f'{parampth}/bert_config', do_basic_tokenize=False)
+    tokenized_data = data.map(lambda examples: preprocess_function(examples, tokenizer), batched=True, desc="")
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
-def init_bert(midpth, bert_feat, model_pth, tokenizer, tokenized_data, data_collator):
-    
-    model = AutoModelForSequenceClassification.from_pretrained(model_pth, num_labels=2)
+    model = AutoModelForSequenceClassification.from_pretrained(f'{parampth}/bert', num_labels=2)
 
 
     training_args = TrainingArguments(
-        output_dir=f'{midpth}/ber_model_out',
+        output_dir=f'{rootpth}/{midfolder}/bert_model_out',
         overwrite_output_dir=False,
         do_train=True,
         do_eval=True,
@@ -113,6 +213,7 @@ def init_bert(midpth, bert_feat, model_pth, tokenizer, tokenized_data, data_coll
         per_device_train_batch_size=32,
         per_device_eval_batch_size=32,
         weight_decay=0.01,
+        disable_tqdm=True
     )
 
     trainer = Trainer(
@@ -124,7 +225,7 @@ def init_bert(midpth, bert_feat, model_pth, tokenizer, tokenized_data, data_coll
         data_collator=data_collator,
     )
 
-    return trainer
+    return trainer, tokenized_data
 
 
 def special_match(strg, search=re.compile(r'[^ACGT]').search):
@@ -179,21 +280,8 @@ def generate_gene2genome(inpth, outpth, tool, rootpth):
     gene2genome.to_csv(f"{outpth}/{tool}_contig_gene_to_genome.csv", index=None)
 
 
-
+"""
 def make_protein_clusters_mcl(abc_fp, out_p, inflation=2):
-    """
-    Args: 
-        blast_fp (str): Path to blast results file
-        inflation (float): MCL inflation value
-        out_p (str): Output directory path
-    Returns:
-        str: fp for MCL clustering file
-    """
-    #logger.debug("Generating abc file...")
-    #blast_fn = os.path.basename(blast_fp)
-    #abc_fn = '{}.abc'.format(blast_fn)
-    #abc_fp = os.path.join(out_p, abc_fn)
-    #subprocess.check_call("awk '$1!=$2 {{print $1,$2,$11}}' {0} > {1}".format(blast_fp, abc_fp), shell=True)
     print("Running MCL...")
     abc_fn = "merged"
     mci_fn = '{}.mci'.format(abc_fn)
@@ -211,15 +299,6 @@ def make_protein_clusters_mcl(abc_fp, out_p, inflation=2):
 
 
 def load_mcl_clusters(fi):
-    """
-    Load given clusters file
-    
-    Args:
-        fi (str): path to clusters file
-        proteins_df (dataframe): A dataframe giving the protein and its contig.
-    Returns: 
-        tuple: dataframe proteins and dataframe clusters
-    """
     # Read MCL
     with open(fi) as f:
         c = [line.rstrip("\n").split("\t") for line in f]
@@ -233,16 +312,6 @@ def load_mcl_clusters(fi):
 
 
 def build_clusters(fp, gene2genome):
-    """
-        Build clusters given clusters file
-
-        Args:
-            fp (str): filepath of clusters file
-            gene2genome (dataframe): A dataframe giving the protein and its genome.
-            mode (str): clustering method
-        Returns:
-            tuple: dataframe of proteins, clusters, profiles and contigs
-        """
     # Read MCL
     clusters_df, name, c = load_mcl_clusters(fp)
     print("Using MCL to generate PCs.")
@@ -281,17 +350,6 @@ def build_clusters(fp, gene2genome):
 
 
 def build_pc_matrices(profiles, contigs, pcs):
-    """
-    Build the pc profiles matrices (shared & singletons) from dataframes.
-
-    Args:
-        profiles (dataframe): required fields are contig_id and pc_id. # pos, contig_id, pc_id
-        contigs (dataframe): contigs info, required field are proteins, pos and id. # pos, contig_id, proteins
-        pcs (dataframe): pcs info, required field are pos and id.  # pos, id, size, annotated
-
-    Returns:
-        (tuple of sparse matrix): Shared PCs and singletons matrix.
-    """
     pc_by_cont = profiles.groupby("contig_id").count().pc_id
     pc_by_cont = pd.merge(contigs.sort_values("pos").loc[:, ["pos", "contig_id", "proteins"]], pc_by_cont.to_frame(), how="left",
                           left_on="contig_id", right_on="contig_id").fillna(0)
@@ -311,19 +369,6 @@ def build_pc_matrices(profiles, contigs, pcs):
     return matrix.tocsr(), singletons.tocsr()
 
 def create_network(matrix, singletons, thres=1, max_sig=1000):
-    """
-    Compute the hypergeometric-similarity contig network.
-
-    Args:
-        matrix (scipy.sparse)x: contigs x protein clusters :
-            M(c,p) == True <-> PC p is in Contig c.
-        thres (float): Minimal significativity to store an edge value.
-        max_sig (int): Maximum significance score
-        
-    Return
-        scipy.sparse: S symmetric lil matrix, contigs x contigs.
-        S(c,c) = sig(link)
-    """
     contigs, pcs = matrix.shape
     pcs += singletons.sum()
     # Number of comparisons
@@ -366,19 +411,6 @@ def create_network(matrix, singletons, thres=1, max_sig=1000):
 
 
 def to_clusterer(matrix, fi, contigs=None,names=None):
-    """Save a network in a file ready for MCL and/or ClusterONE
-
-    Args:
-        matrix (scipy.sparse_matrix): network.
-        fi (str): filename .
-        names (pandas.dataframe): with the columns
-            "pos":  (int) is the position in the matrix.
-            "id": (str) column contain the id of the node.
-            If None, self.contigs is used.
-
-    Returns:
-        str: filename
-    """
     names = contigs if names is None else names
     names = names.set_index("pos").contig_id
     with open(fi, "wt") as f:
@@ -423,7 +455,7 @@ def return_4mer(file_in_fn):
     for i in range(len(feature)):
         norm_feature[i] = (feature[i] - np.min(feature[i]))/(np.max(feature[i]) - np.min(feature[i]))
     return norm_feature, file2idx
-
+"""
 
 #############################################################
 ########################  output  ###########################
@@ -442,7 +474,7 @@ def convert_output_evalue(num):
 ##############################################################
 #####################  PhaGCN exception ######################
 ##############################################################
-
+"""
 def phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs, fasta='filtered_contigs.fa'):
     if os.path.getsize(f'{rootpth}/{midfolder}/unknown_out.tab') != 0:
         with open(f'{rootpth}/{midfolder}/unknown_out.tab') as file_out:
@@ -548,8 +580,9 @@ def phagcn_exception(rootpth, midfolder, visual, out_dir, ID2length, inputs, fas
             file_out.write('no_family_flag\n')
         with open(f'{rootpth}/{visual}/phage_flag.txt', 'w') as file_out:
             file_out.write('phage_flag\n')
+"""
 
-
+"""
 def phagcn_exception_no_visual(rootpth, midfolder, out_dir, ID2length, inputs, fasta='filtered_contigs.fa'):
     if os.path.getsize(f'{rootpth}/{midfolder}/unknown_out.tab') != 0:
         with open(f'{rootpth}/{midfolder}/unknown_out.tab') as file_out:
@@ -626,6 +659,331 @@ def phagcn_exception_no_visual(rootpth, midfolder, out_dir, ID2length, inputs, f
         
         df = pd.DataFrame({"Accession": Accession, "Pred":['unknown']*len(Accession), "Score":[0]*len(Accession)})
         df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.csv", index = None)
+"""
 
 
+
+def compute_aai(pth, file_name, genome_size):
+    # load the diamond output
+    df = pd.read_csv(f'{pth}/{file_name}.abc', sep=' ', names=['qseqid', 'sseqid', 'pident', 'bitscore'])
+    if file_name == 'db_results':
+        swapped_df = df.copy()
+        swapped_df['qseqid'], swapped_df['sseqid'] = df['sseqid'], df['qseqid']
+        # Append the new entries to the original DataFrame
+        df = pd.concat([df, swapped_df], ignore_index=True)
+    # add the genome information for both query and target
+    df['query'] = df['qseqid'].apply(lambda x: x.rsplit('_', 1)[0])
+    df['target'] = df['sseqid'].apply(lambda x: x.rsplit('_', 1)[0])
+    # maintain the best hit
+    df = df.drop_duplicates(['query', 'target', 'qseqid'], keep='first')
+    # group by query and target and compute AAI and shared genes
+    tmp_df = df.groupby(['query', 'target']).agg({'pident': 'mean', 'qseqid': 'count'}).reset_index()
+    # replace name pident and qseqid into aai and sgenes
+    tmp_df = tmp_df.rename(columns={'pident': 'aai', 'qseqid': 'sgenes'})
+    # compute coverage
+    # Calculate qcov and tcov vectorized
+    tmp_df['qcov'] = 100.0 * tmp_df['sgenes'] / tmp_df['query'].map(genome_size)
+    tmp_df['tcov'] = 100.0 * tmp_df['sgenes'] / tmp_df['target'].map(genome_size)
+    # Add query_genes and target_genes vectorized
+    tmp_df['qgenes'] = tmp_df['query'].map(genome_size)
+    tmp_df['tgenes'] = tmp_df['target'].map(genome_size)
+    tmp_df.to_csv(f'{pth}/{file_name}_aai.tsv', sep='\t', index=False)
+
+
+
+def parse_alignment(alignment_file):
+    # Read the TSV file with column names
+    df = pd.read_csv(alignment_file, sep=" ", names=['qseqid', 'sseqid', 'pident', 'bitscore'])
+    df['bitscore'] = df['bitscore'].astype(float)
+    ORF2hits = {}
+    all_hits = set()
+    # Group by the 'qseqid' column
+    grouped = df.groupby('qseqid')
+    for ORF, group in grouped:
+        top_bitscore = group['bitscore'].max()
+        hits = group[group['bitscore'] >= 0.9 * top_bitscore]
+        ORF2hits[ORF] = list(zip(hits['sseqid'], hits['bitscore']))
+        all_hits.update(hits['sseqid'])
+    return ORF2hits, all_hits
+    
+
+
+
+
+
+def import_nodes(nodes_dmp):
+    # Read the file into a DataFrame
+    # df = pd.read_csv(nodes_dmp, sep="\t|\t", engine='python', header=None, usecols=[0, 2, 4])
+    # Assign column names
+    # df.columns = ['taxid', 'parent', 'rank']
+    # Create dictionaries
+    df = pd.read_csv(nodes_dmp)
+    taxid2parent = df.set_index('taxid')['parent'].to_dict()
+    taxid2rank = df.set_index('taxid')['rank'].to_dict()
+    return taxid2parent, taxid2rank
+
+
+
+def import_names(names_dmp):
+    # Read the file into a DataFrame
+    # df = pd.read_csv(names_dmp, sep="\t|\t", engine='python', header=None, usecols=[0, 2, 4])
+    # Assign column names
+    # df.columns = ['taxid', 'name', 'rank']
+    # Create dictionaries
+    df = pd.read_csv(names_dmp)
+    taxid2name = df.set_index('taxid')['name'].to_dict()
+    return taxid2name
+
+
+def find_lineage(taxid, taxid2parent):
+    lineage = []
+    while True:
+        lineage.append(taxid)
+        parent = taxid2parent[taxid]
+        if parent == taxid:
+            break
+        taxid = parent
+    return lineage
+
+
+
+
+def find_LCA_for_ORF(hits, fastaid2LCAtaxid, taxid2parent):
+    list_of_lineages = []
+    top_bitscore = 0
+    for hit, bitscore in hits:
+        if bitscore > top_bitscore:
+            top_bitscore = bitscore
+        taxid = fastaid2LCAtaxid.get(hit)
+        if taxid:
+            lineage = find_lineage(taxid, taxid2parent)
+            list_of_lineages.append(lineage)
+
+    if not list_of_lineages:
+        return ("no taxid found ({0})".format(";".join([i[0] for i in hits])), top_bitscore)
+    # Find the intersection of all lineages
+    overlap = set.intersection(*map(set, list_of_lineages))
+    # Return the first common taxid
+    for taxid in list_of_lineages[0]:
+        if taxid in overlap:
+            return (taxid, top_bitscore)
+
+    return ("no common ancestor found", top_bitscore)
+
+
+
+def find_weighted_LCA(orf_hits, taxid2parent, threshold):
+    # Store lineages and corresponding bit scores
+    lineages = []
+    bit_scores = []
+    total_bit_score = 0
+    # Process each ORF hit
+    for taxid, bit_score in orf_hits:
+        if type(taxid) == int:
+            lineage = find_lineage(taxid, taxid2parent)
+            lineages.append(lineage)
+            bit_scores.append(bit_score)
+            total_bit_score += bit_score
+    # Check if any lineages were found
+    if not lineages:
+        return "no ORFs with taxids found.", None
+    # Calculate cumulative bit scores for each taxid
+    taxid_to_cumulative_score = {}
+    for lineage, bit_score in zip(lineages, bit_scores):
+        for taxid in lineage:
+            taxid_to_cumulative_score[taxid] = taxid_to_cumulative_score.get(taxid, 0) + bit_score
+    # Filter lineages based on threshold
+    valid_lineages = []
+    for taxid in taxid_to_cumulative_score:
+        cumulative_score = taxid_to_cumulative_score[taxid] / total_bit_score
+        if cumulative_score > threshold:
+            lineage = find_lineage(taxid, taxid2parent)
+            scores = [taxid_to_cumulative_score[t] / total_bit_score for t in lineage]
+            valid_lineages.append((lineage, scores))
+    # Check if any valid lineages were found
+    if not valid_lineages:
+        return "no lineage larger than threshold.", None
+    # Sort by length and score, then select the best lineage
+    valid_lineages.sort(key=lambda x: (len(x[0]), sum(x[1])), reverse=True)
+    best_lineage, best_score = valid_lineages[0]
+    return best_lineage, best_score[::-1]
+
+
+
+
+def convert_lineage_to_names(lineage, taxid2name, taxid2rank):
+    named_lineage = []
+    for taxid in lineage:
+        if taxid == 1:
+            continue
+        name = taxid2name.get(taxid, 'unknown')
+        if name == 'Tailed phages':
+            name = 'Caudoviricetes'
+        rank = taxid2rank.get(taxid, 'unknown')
+        if rank == 'species':
+            continue
+        if rank == 'no rank':
+            continue
+        named_lineage.append(f"{rank}:{name}")
+    return ";".join(named_lineage[::-1])
+
+
+
+def annotate_genes(hmm_info_df, genomes, genes, align_df):
+    # Define the label for each category
+    label = {"viral": 1, "microbial": -1}
+    for query, target, evalue in zip(align_df["query"], align_df["target"], align_df["evalue"]):
+        try:
+            gene = genes[query]
+            gene.label = label[hmm_info_df[target]['category']]
+            gene.hmm_hit = {'target': target, 'evalue': evalue, 'function': hmm_info_df[target]['function']}
+        except KeyError:
+            pass
+        
+    # Count the number of viral and host genes in each genome
+    for genome in genomes.values():
+        genome.count_viral = sum(genes[_].label == 1 for _ in genome.genes)
+        genome.count_host = sum(genes[_].label == -1 for _ in genome.genes)
+
+
+def compute_delta(my_genes, s1, e1, s2, e2, gc_weight):
+    # Extend windows to ensure at least 1 annotated gene
+    if all(g.label == 0 for g in my_genes[s1:e1]):
+        s1 = next((j for j in range(s1 - 1, -1, -1) if my_genes[j].label != 0), s1)
+    if all(g.label == 0 for g in my_genes[s2:e2]):
+        e2 = next((j for j in range(e2 + 1, len(my_genes)) if my_genes[j].label != 0), e2)
+
+    # Get gene values for 2 windows
+    win1 = my_genes[s1:e1]
+    win2 = my_genes[s2:e2]
+    v1 = [g.label for g in win1 if g.label != 0]
+    v2 = [g.label for g in win2 if g.label != 0]
+    g1 = [g.gc for g in win1]
+    g2 = [g.gc for g in win2]
+
+    # Compute delta between windows
+    if v1 and v2:
+        delta_v = np.mean(v1) - np.mean(v2)
+        delta_g = abs(np.mean(g1) - np.mean(g2))
+        delta = (abs(delta_v) + delta_g * gc_weight) * np.sign(delta_v)
+    else:
+        delta = 0
+
+    # Store results
+    d = {
+        "delta": delta,
+        "coords": [s1, e1, s2, e2],
+        "v1": v1,
+        "v2": v2,
+        "v1_len": len(v1),
+        "v2_len": len(v2),
+        "win1_len": len(win1),
+        "win2_len": len(win2),
+        "win1_fract_host": len([_ for _ in v1 if _ == -1]) / len(win1) if win1 else 0,
+        "win2_fract_host": len([_ for _ in v2 if _ == -1]) / len(win2) if win2 else 0,
+    }
+
+    return d
+
+
+def define_regions(genome, genes, gc_weight, delta_cutoff, min_host_fract, min_host_genes, min_viral_genes):
+    # Fetch genes
+    my_genes = [genes[_] for _ in genome.genes]
+
+    # Determine window size
+    win_size = min(max(15, round(0.30 * len(my_genes))), 50)
+
+    # Identify breakpoints
+    breaks = []
+    while True:
+        s1 = 0 if not breaks else breaks[-1]["coords"][-2]
+
+        # Determine window coordinates (gene indexes)
+        coords = [
+            [s1, i, i, min(i + win_size, len(my_genes))]
+            for i in range(1, len(my_genes))
+            if (i - s1 >= win_size or s1 == 0) and (min(i + win_size, len(my_genes)) - i >= win_size or min(i + win_size, len(my_genes)) == len(my_genes))
+        ]
+
+        # Score each possible breakpoint
+        deltas = [compute_delta(my_genes, s1, e1, s2, e2, gc_weight) for s1, e1, s2, e2 in coords]
+
+        # Filter each possible breakpoint
+        filtered = [
+            d for d in deltas
+            if (
+                abs(d["delta"]) >= delta_cutoff and
+                ((d["delta"] < 0 and d["v1"].count(-1) > 0 and d["v2"].count(1) > 0) or
+                 (d["delta"] > 0 and d["v1"].count(1) > 0 and d["v2"].count(-1) > 0)) and
+                (d["delta"] < 0 and d["v1"].count(-1) >= min_host_genes or
+                 d["delta"] > 0 and d["v2"].count(-1) >= min_host_genes or
+                 len(my_genes) <= 10) and
+                (d["delta"] > 0 and d["v1"].count(1) >= min_viral_genes or
+                 d["delta"] < 0 and d["v2"].count(1) >= min_viral_genes or
+                 len(my_genes) <= 10) and
+                (d["win1_fract_host"] >= min_host_fract or d["win2_fract_host"] >= min_host_fract)
+            )
+        ]
+
+        # Select breakpoint
+        selected = None
+        for d in filtered:
+            if selected is None or (np.sign(d["delta"]) == np.sign(selected["delta"]) and abs(d["delta"]) > abs(selected["delta"])):
+                selected = d
+            else:
+                break
+
+        if selected is None:
+            break
+        else:
+            breaks.append(selected)
+
+    # Update last break so end coord is contig end
+    if breaks:
+        breaks[-1]["coords"][-1] = len(my_genes)
+
+    # Define regions based on breakpoints
+    regions = []
+    for b in breaks:
+        s1, e1, s2, e2 = b["coords"]
+        d = compute_delta(my_genes, s1, e1, s2, e2, gc_weight)
+        region = {
+            "delta": d["delta"],
+            "type": "host" if d["delta"] < 0 else "viral",
+            "start_gene": s1,
+            "end_gene": e1,
+            "start_pos": regions[-1]["end_pos"] + 1 if regions else 1,
+            "end_pos": my_genes[e1 - 1].end,
+            "size": e1 - s1,
+            "length": my_genes[e1 - 1].end - (regions[-1]["end_pos"] + 1 if regions else 1) + 1,
+            "host_genes": d["v1"].count(-1),
+            "viral_genes": d["v1"].count(1),
+        }
+        regions.append(region)
+
+    # Handle last region
+    if regions:
+        s1, e1 = regions[-1]["start_gene"], regions[-1]["end_gene"]
+        s2, e2 = e1, len(genome.genes)
+        d = compute_delta(my_genes, s1, e1, s2, e2, gc_weight)
+        region = {
+            "type": "viral" if regions[-1]["type"] == "host" else "host",
+            "start_gene": s2,
+            "end_gene": e2,
+            "start_pos": regions[-1]["end_pos"] + 1,
+            "end_pos": genome.length,
+            "size": e2 - s2,
+            "length": genome.length - (regions[-1]["end_pos"] + 1) + 1,
+            "host_genes": d["v2"].count(-1),
+            "viral_genes": d["v2"].count(1),
+        }
+        regions.append(region)
+
+    return regions
+
+
+
+def get_average_kmer_freq(genome):
+    counts = list(kcounter.count_kmers(genome.seq, 21, canonical_kmers=True).values())
+    return round(np.mean(counts), 2)
 
