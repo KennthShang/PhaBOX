@@ -14,7 +14,6 @@ Table of Contents
 =================
 * [ ⌛️&nbsp; News](#news)
 * [ 🚀&nbsp; Quick Start](#quick)
-* [ 📫&nbsp; Have a question? ](#question)
 * [ ✏️&nbsp; Citation ](#citation)
 * [ ⌛️&nbsp; License ](#license)
 * [ 🤵&nbsp; Team ](#team)
