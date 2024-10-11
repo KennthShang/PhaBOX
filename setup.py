@@ -81,6 +81,11 @@ setup(
     'yarl==1.13.1',
     'zipp==3.20.2',
     ],
+    entry_points={
+        'console_scripts': [
+            'phabox2=phabox2:main',
+        ],
+    },
     author='SHANG JIAYU',
     author_email='jiayushang@cuhk.edu.hk',
     description='Local version of the phage identification and analysis web server',
