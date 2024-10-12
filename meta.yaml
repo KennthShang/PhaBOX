@@ -9,7 +9,7 @@ source:
 build:
   noarch: python
   entry_points:
-    - phabox2=src.phabox2.phabox2:main
+    - phabox2= dphabox2.phabox2:main
 
 requirements:
   host:

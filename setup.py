@@ -84,7 +84,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'phabox2=phabox2:main',
+            'phabox2=phabox2.phabox2:main',
         ],
     },
     author='SHANG JIAYU',
