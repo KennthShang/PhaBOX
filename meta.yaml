@@ -301,10 +301,10 @@ extra:
     - PENG Cheng
 
 channels:
-  - defaults
-  - conda-forge
+  - pytorch
   - huggingface
   - bioconda
-  - pytorch
+  - conda-forge
+  - defaults
 
   # Add other channels as needed
