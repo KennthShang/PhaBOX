@@ -25,12 +25,17 @@ Table of Contents
 
 PhaBOX has now been upgraded to the 2.0 version!!! There are some major components, including:
 
-🎉 Generalize for all kinds of viruses with faster speed! But we will call it PhaBOX2, not VirBOX, for a better inheritance ：) 
-🎉 Provide a more comprehensive taxonomy classification (latest ICTV 2024) and complete taxonomy lineage
-🎉 Provide a genus-level clustering for potential new genus (genus-level vOTU)!
-🎉 Provide a protein annotation function!
-🎉 Provide a contamination and prophage detection module!
-🎉 More user-friendly commands!
+  🎉 Generalize for all kinds of viruses with faster speed! But we will call it PhaBOX2, not VirBOX, for a better inheritance ：) 
+
+  🎉 Provide a more comprehensive taxonomy classification (latest ICTV 2024) and complete taxonomy lineage
+
+  🎉 Provide a genus-level clustering for potential new genus (genus-level vOTU)!
+
+  🎉 Provide a protein annotation function!
+
+  🎉 Provide a contamination and prophage detection module!
+
+  🎉 More user-friendly commands!
 
 The web server is still upgrading; please be patient
 
