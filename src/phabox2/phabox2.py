@@ -9,7 +9,7 @@ import os
 import pandas as pd
 from  .scripts.ulity import *
 
-
+__version__ = "2.0.0"
 
 
 def main():

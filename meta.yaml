@@ -1,6 +1,9 @@
+{% set name = "phabox" %}
+{% set version = "2.0.0" %}
+
 package:
-  name: phabox
-  version: 2.0.0
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
 
 source:
   git_url: https://github.com/KennthShang/PhaBOX.git
@@ -8,8 +11,9 @@ source:
 
 build:
   noarch: python
+  script: "{{ PYTHON }} -m pip install . -vv"
   entry_points:
-    - phabox2= phabox2.phabox2:main
+    - phabox2=src.phabox2.phabox2:main
 
 requirements:
   host:
