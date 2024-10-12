@@ -61,7 +61,7 @@ conda create -n phabox2 phabox=2.0 -c pytorch -c huggingface -c bioconda -c cond
 # Downloading the database using wget (or go to the release page)
 wget https://github.com/KennthShang/PhaBOX/releases/download/v2.0.0/phabox_db_v2.0.0.zip
 
-unzip database.zip  > /dev/null
+unzip phabox_db_v2.0.0.zip  > /dev/null
 ```
 
 2. Then, you only need to activate your 'phabox2' environment before using phabox next time.
