@@ -1,4 +1,3 @@
-# Still under maintenance the upgrade ！！！ We will fix the environmental problem today!!!
 <img src='imgs/logo.png'>
 
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
@@ -43,6 +42,27 @@ If you have further suggestions, feel free to let me know! You can post an issue
 
 
 ## 🚀&nbsp; Quick Start
+*Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
+
+### Prepare the database and environment
+1. When you use PhaBOX for the first time, please follow the commands below:
+```bash
+# install environment
+conda create -n phabox2 phabox=2.0 -c jyshang2
+
+# Downloading the database using wget (or go to the release page)
+wget https://github.com/KennthShang/PhaBOX/releases/download/v2.0.0/phabox_db_v2.0.0.zip
+
+unzip database.zip  > /dev/null
+```
+
+2. Then, you only need to activate your 'phabox2' environment before using phabox next time.
+```bash
+conda activate phabox2
+phabox2 --help
+```
+
+
 Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page! We also provide a Tutorial for you to quickly get started and understand the usage of phabox2. Hope you will enjoy it!
 
 
