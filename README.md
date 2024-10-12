@@ -45,6 +45,9 @@ If you have further suggestions, feel free to let me know! You can post an issue
 *Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
 
 ### Prepare the database and environment
+
+#### Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial for you to get started quickly and understand the usage of phabox2. Hope you will enjoy it!
+
 1. When you use PhaBOX for the first time, please follow the commands below:
 ```bash
 # install environment
@@ -61,9 +64,6 @@ unzip database.zip  > /dev/null
 conda activate phabox2
 phabox2 --help
 ```
-
-
-Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page! We also provide a Tutorial for you to quickly get started and understand the usage of phabox2. Hope you will enjoy it!
 
 
 <a name="citation"></a>
