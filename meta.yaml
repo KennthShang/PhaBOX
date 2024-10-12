@@ -303,4 +303,8 @@ extra:
 channels:
   - defaults
   - conda-forge
+  - huggingface
+  - bioconda
+  - pytorch
+
   # Add other channels as needed
