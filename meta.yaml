@@ -53,7 +53,6 @@ requirements:
     - brotli-bin=1.0.9=h166bdaf_9
     - brotli-python=1.0.9=py39h5a03fae_9
     - bzip2=1.0.8=h4bc722e_7
-    - c-ares=1.33.1=heb4867d_0
     - ca-certificates=2024.8.30=hbcca054_0
     - certifi=2024.8.30=pyhd8ed1ab_0
     - cffi=1.17.1=py39h15c3d72_0
