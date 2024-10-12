@@ -1,42 +1,37 @@
 #!/usr/bin/env python
 import os
-import time
 import pandas as pd
-import pickle as pkl
-
-
-from scripts.ulity import *
-from scripts.preprocessing import *
-from scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
+from .scripts.ulity import *
+from .scripts.preprocessing import *
+from .scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
 from Bio import SeqIO
-from Bio.Blast.Applications import NcbiblastnCommandline
 from collections import defaultdict
+import time
 from tqdm import tqdm
+from collections import Counter
+
+
 
 def run(inputs):
     logger = get_logger()
-    logger.info("Running program: CHERRY (Host prediction)")
+    logger.info("Running program: PhaGCN (taxonomy classification)")
     program_start = time.time()
+
 
     contigs   = inputs.contigs
     midfolder = inputs.midfolder
     out_dir   = 'final_prediction/'
     rootpth   = inputs.outpth
     db_dir    = inputs.dbdir
+    aai       = inputs.aai
+    pcov      = inputs.pcov
+    share     = inputs.share
     threads   = inputs.threads
-    length    = inputs.len
-    pident     = inputs.pident
-    cov        = inputs.cov/100
-    aai        = inputs.aai
-    pcov       = inputs.pcov
-    share      = inputs.share
-    blast      = inputs.blast
-
 
 
     if not os.path.isfile(contigs):
-        print('cannot find the file')
-        exit(1)
+        exit()
+
 
     if not os.path.exists(db_dir):
         print(f'Database directory {db_dir} missing or unreadable')
@@ -45,10 +40,11 @@ def run(inputs):
     check_path(os.path.join(rootpth, out_dir))
     check_path(os.path.join(rootpth, midfolder))
 
+
+
     ###############################################################
     #######################  Filter length ########################
     ###############################################################
-    
     genomes = {}
     if os.path.exists(f'{rootpth}/filtered_contigs.fa'):
         logger.info("[1/8] reusing existing filtered contigs...")
@@ -75,54 +71,19 @@ def run(inputs):
                 genomes[genome.id] = genome
         # FLAGS: no contigs passed the length filter
         if not rec:
-            with open(f'{rootpth}/{out_dir}/cherry_prediction.tsv', 'w') as file_out:
-                file_out.write("Accession\tLength\tHost\tCHERRYScore\tMethod\n")
+            with open(f'{rootpth}/{out_dir}/phagcn_prediction.tsv', 'w') as file_out:
+                file_out.write("Accession\tLength\tLineage\tPhaGCNScore\tGenus\tGenusCluster\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id},{len({record.seq})},filtered,0,-\n')
-            logger.info(f"Cherry finished! please check the results in {os.path.join(rootpth,out_dir, 'cherry_prediction.tsv')}")
+                    file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\t-\t-\n')
+            logger.info(f"PhaGCN finished! please check the results in {os.path.join(rootpth,out_dir, 'phagcn_prediction.tsv')}")
             exit()
+
 
         SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 
     ###############################################################
-    ########################## CRISPRs  ###########################
+    ##################### PhaGCN (clustering)  ####################
     ###############################################################
-    logger.info("[2/8] predicting CRISPRs...")
-    query_file = f"{rootpth}/filtered_contigs.fa"
-    db_host_crispr_prefix = f"{db_dir}/crispr_db/allCRISPRs"
-    output_file = f"{rootpth}/{midfolder}/crispr_out.tab"
-
-    if blast == 'blastn-short':
-        crispr_call = NcbiblastnCommandline(query=query_file,db=db_host_crispr_prefix,out=output_file,outfmt="6 qseqid sseqid evalue pident length slen", evalue=1,gapopen=10,penalty=-1,
-                                    gapextend=2,word_size=7,dust='no', max_target_seqs=5,
-                                    task=f'blastn-short',perc_identity=90,num_threads=threads)
-    elif blast == 'blastn':
-        crispr_call = NcbiblastnCommandline(query=query_file,db=db_host_crispr_prefix,out=output_file,outfmt="6 qseqid sseqid evalue pident length slen", evalue=1,
-                                    task='blastn', max_target_seqs=1, perc_identity=90,num_threads=threads)
-
-
-    crispr_call()
-
-
-
-    crispr_pred = {}
-    with open(output_file) as file_out:
-        for line in file_out.readlines():
-            parse = line.replace("\n", "").split("\t")
-            virus = parse[0]
-            prokaryote = parse[1].split('|')[1]
-            prokaryote = prokaryote.split('.')[0]
-            ident = float(parse[-3])
-            length = float(parse[-2])
-            slen = float(parse[-1])
-            if virus not in crispr_pred:
-                if length/slen > cov or ident > pident:
-                    crispr_pred[virus] = {'pred': prokaryote, 'ident': round(ident/100, 2)}
-
-    pkl.dump(crispr_pred, open(f'{rootpth}/{midfolder}/crispr_pred.dict', 'wb'))
-
-
-
     if os.path.exists(f'{inputs.proteins}'):
         logger.info("[2/8] using provided protein file...")
         rec = []
@@ -137,64 +98,41 @@ def run(inputs):
             SeqIO.write(rec, f'{rootpth}/{midfolder}/query_protein.fa', 'fasta')
         else:
             logger.info("WARNING: no proteins found in the provided file.\nPlease check whether the genes is called by the prodigal.")
-            logger.info("Calling genes with prodigal...")
+            logger.info("[2/8] calling genes with prodigal...")
             parallel_prodigal_gv(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/query_protein.fa', threads)
     elif os.path.exists(f'{rootpth}/{midfolder}/query_protein.fa'):
-        logger.info("[3/8] reusing existing protein file...")
+        logger.info("[2/8] reusing existing protein file...")
     else:
-        logger.info("[3/8] calling genes with prodigal...")
+        logger.info("[2/8] calling genes with prodigal...")
         parallel_prodigal_gv(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/query_protein.fa', threads)
     
-    if os.path.exists(f'{rootpth}/{midfolder}/self_results.abc') and os.path.exists(f'{rootpth}/{midfolder}/db_results.abc'):
-        logger.info("[4/8] reusing all-against-all alignment from PhaGCN...")
-    else:
-        logger.info("[4/8] running all-against-all alignment...")
-        # combine the database with the predicted proteins
-        _ = os.system(f"cat {db_dir}/RefVirus.faa {rootpth}/{midfolder}/query_protein.fa > {rootpth}/{midfolder}/ALLprotein.fa")
-        # generate the diamond database
-        _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --quiet")
-        # align to the database
+    # combine the database with the predicted proteins
+    _ = os.system(f"cat {db_dir}/RefVirus.faa {rootpth}/{midfolder}/query_protein.fa > {rootpth}/{midfolder}/ALLprotein.fa")
+    # generate the diamond database
+    _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --quiet")
+    # run diamond
+    # align to the database
+    if os.path.exists(f'{rootpth}/{midfolder}/db_results.tab'):
+        logger.info("[3/8] using existing all-against-all alignment results...")
+    else:  
+        logger.info("[3/8] running all-against-all alignment...")
         _ = os.system(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
         _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
-        # align to itself
-        _ = os.system(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
-        _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
+    # align to itself
+    _ = os.system(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+    _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
 
-
-    logger.info("[5/8] generating cherry networks...")
+    logger.info("[4/8] generating phagcn networks...")
     # FLAGS: no proteins aligned to the database
     if os.path.getsize(f'{rootpth}/{midfolder}/db_results.abc') == 0:
-        if os.path.getsize(f'{rootpth}/{midfolder}/crispr_pred.dict') == 0:
-            Accession = []
-            Length_list = []
-            for record in SeqIO.parse(f'{contigs}', 'fasta'):
-                Accession.append(record.id)
-                Length_list.append(len(record.seq))
-            df = pd.DataFrame({"Accession": Accession, "Host":['unknown']*len(Accession), "CHERRYScore":[0]*len(Accession), "Method":['-']*len(Accession)})
-            df.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index = None, sep='\t')
-            exit()
-        else:
-            crispr_pred = pkl.load(open(f'{rootpth}/{midfolder}/crispr_pred.dict', 'rb'))
-            CRISPRs_acc2host = pkl.load(open(f'{db_dir}/CRISPRs_acc2host.pkl', 'rb'))
-            Accession = []
-            Length_list = []
-            Pred = []
-            Score = []
-            Method = []
-            for record in SeqIO.parse(f'{contigs}', 'fasta'):
-                Accession.append(record.id)
-                Length_list.append(len(record.seq))
-                try:
-                    Pred.append(CRISPRs_acc2host[crispr_pred[record.id]['pred']])
-                    Score.append(crispr_pred[record.id]['ident'])
-                    Method.append('CRISPR-based')
-                except:
-                    Pred.append('-')
-                    Score.append(0.0)
-                    Method.append('-')
-            df = pd.DataFrame({"Accession": Accession, "Length": Length_list, "Host":Pred, "CHERRYScore": Score, "Method": Method})
-            df.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index = None, sep='\t')
-            exit()
+        Accession = []
+        Length_list = []
+        for record in SeqIO.parse(f'{contigs}', 'fasta'):
+            Accession.append(record.id)
+            Length_list.append(len(record.seq))
+        df = pd.DataFrame({"Accession": Accession, "Length": Length_list,  "Lineage":['unknown']*len(Accession), "PhaGCNScore":[0]*len(Accession), "Genus": ['-']*len(Accession), "GenusCluster": ['-']*len(Accession)})
+        df.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.tsv", index = None, sep='\t')
+        exit()
 
     # add the genome size
     genome_size = defaultdict(int)
@@ -203,29 +141,32 @@ def run(inputs):
         genome_size[genome_id] += 1
 
 
+
+    compute_aai(f'{rootpth}/{midfolder}', 'db_results', genome_size)
+    compute_aai(f'{rootpth}/{midfolder}', 'self_results', genome_size)
+
+
     # filter the network
-    if os.path.exists(f'{rootpth}/{midfolder}/phagcn_network.tsv'):
-        cherry_network = f'phagcn_network.tsv'
-        _ = os.system(f'cp {rootpth}/{out_dir}/phagcn_network_edges.tsv {rootpth}/{out_dir}/cherry_network_edges.tsv')
-    else:
-        cherry_network = f'cherry_network.tsv'
-        compute_aai(f'{rootpth}/{midfolder}', 'db_results', genome_size)
-        compute_aai(f'{rootpth}/{midfolder}', 'self_results', genome_size)
-        df1 = pd.read_csv(f'{rootpth}/{midfolder}/db_results_aai.tsv', sep='\t')
-        df2 = pd.read_csv(f'{rootpth}/{midfolder}/self_results_aai.tsv', sep='\t')
-        df3 = pd.read_csv(f'{db_dir}/database_aai.tsv', sep='\t')
-        df = pd.concat([df1, df2, df3])
-        sub_df = df[((df['aai']>=aai)&((df['qcov']>=pcov)|(df['tcov']>=pcov)|(df['sgenes']>=share)))].copy()
-        sub_df['score'] = sub_df['aai']/100.0 * sub_df[['qcov', 'tcov']].max(axis=1)/100.0
-        # write the network
-        sub_df.drop(['qcov', 'tcov', 'qgenes', 'tgenes', 'sgenes', 'aai'], axis=1, inplace=True)
-        sub_df.to_csv(f'{rootpth}/{midfolder}/{cherry_network}', sep='\t', index=False, header=False)
-        sub_df.rename(columns={'query':'Source', 'target':'Target', 'score':'Weight'}, inplace=True)
-        sub_df.to_csv(f"{rootpth}/{out_dir}/cherry_network_edges.tsv", index=False, sep='\t')
-    
-    _ = os.system(f'mcl {rootpth}/{midfolder}/{cherry_network} -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/cherry_genus_clusters.txt > /dev/null 2>&1')
+    df1 = pd.read_csv(f'{rootpth}/{midfolder}/db_results_aai.tsv', sep='\t')
+    df2 = pd.read_csv(f'{rootpth}/{midfolder}/self_results_aai.tsv', sep='\t')
+    df3 = pd.read_csv(f'{db_dir}/database_aai.tsv', sep='\t')
+    df = pd.concat([df1, df2, df3])
+    sub_df = df[((df['aai']>=aai)&((df['qcov']>=pcov)|(df['tcov']>=pcov)|(df['sgenes']>=share)))].copy()
+    sub_df['score'] = sub_df['aai']/100.0 * sub_df[['qcov', 'tcov']].max(axis=1)/100.0
+
+    # write the network
+    sub_df.drop(['qcov', 'tcov', 'qgenes', 'tgenes', 'sgenes', 'aai'], axis=1, inplace=True)
+    sub_df.to_csv(f'{rootpth}/{midfolder}/phagcn_network.tsv', sep='\t', index=False, header=False)
+    #### drop network
+    sub_df.rename(columns={'query':'Source', 'target':'Target', 'score':'Weight'}, inplace=True)
+    sub_df.to_csv(f"{rootpth}/{out_dir}/phagcn_network_edges.tsv", index=False, sep='\t')
+    _ = os.system(f'mcl {rootpth}/{midfolder}/phagcn_network.tsv -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/phagcn_genus_clusters.txt > /dev/null 2>&1')
 
 
+    ###############################################################
+    ##################### PhaGCN (prediction)  ####################
+    ###############################################################
+    logger.info("[5/8] predicting the taxonomy...")
     contig2ORFs = {}
     for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', "fasta"):
         contig = record.id.rsplit("_", 1)[0]
@@ -277,7 +218,7 @@ def run(inputs):
             lineage_str = convert_lineage_to_names(lineages, taxid2name, taxid2rank)
             scores_str = ";".join(f"{score:.2f}" for score in lineages_scores)
             results.append([contig, lineage_str, scores_str])
-
+            
 
     # Convert results to a DataFrame and save as CSV
     df = pd.DataFrame(results, columns=["Accession", "Lineage", "Score"])
@@ -293,40 +234,27 @@ def run(inputs):
 
     df['Genus'] = Genus
 
-    df.to_csv(f'{rootpth}/{midfolder}/cherry_clustering.tsv', index=False, sep='\t')
+    df.to_csv(f'{rootpth}/{midfolder}/phagcn_classification.tsv', index=False, sep='\t')
 
-    
-    logger.info("[6/8] predicting the host...")
-    #query_df = pd.read_csv(f'{rootpth}/{midfolder}/cherry_clustering.tsv')
+
+    ###############################################################
+    #################### summarize results ########################
+    ###############################################################
+
+    logger.info("[6/8] summarizing the results...")
+    #query_df = pd.read_csv(f'{rootpth}/{midfolder}/phagcn_classification.csv', sep='\t')
     query_df = df.copy()
     ref_df = pd.read_csv(f'{db_dir}/RefVirus.csv')
+    refacc2genus = {acc: genus for acc, genus in zip(ref_df['Accession'], ref_df['Genus'])}
     acc2score = {acc: score for acc, score in zip(query_df['Accession'], query_df['Score'])}
     query_df = query_df[['Accession', 'Lineage', 'Length', 'Genus']]
     ref_df = ref_df[['Accession', 'Lineage', 'Length', 'Genus']]
     cluster_df = pd.concat([query_df, ref_df])
-    genus2host = pkl.load(open(f'{db_dir}/genus2host.pkl', 'rb'))
-
-    
-    cluster_df['Host'] = cluster_df['Genus'].apply(lambda x: genus2host[x] if x in genus2host else '-')
-    ref_df = cluster_df[cluster_df['Accession'].isin(ref_df['Accession'])]
-    refacc2host = {acc:host for acc, host in zip(ref_df['Accession'], ref_df['Host'])}
-
-    #prokaryote_df = pd.read_csv(f'{db_dir}/prokaryote.csv')
-    CRISPRs_acc2host = pkl.load(open(f'{db_dir}/CRISPRs_acc2host.pkl', 'rb'))
-    crispr2host = {}
-    for acc in crispr_pred:
-        host = CRISPRs_acc2host[crispr_pred[acc]['pred']]
-        crispr2host[acc] = host
-
-    # add crispr information to df['Crispr']
-    cluster_df['Crispr'] = cluster_df['Accession'].apply(lambda x: crispr2host[x] if x in crispr2host else '-')
-    cluster_df['Crispr_score'] = cluster_df['Accession'].apply(lambda x: crispr_pred[x]['ident'] if x in crispr_pred else 0.0)
-
 
 
     seq2cluster = {}
     cluster2seq = {}
-    for index, line in enumerate(open(f'{rootpth}/{midfolder}/cherry_genus_clusters.txt')):
+    for index, line in enumerate(open(f'{rootpth}/{midfolder}/phagcn_genus_clusters.txt')):
         aln = line.split()
         for seqs in aln:
             seq2cluster[seqs] = index
@@ -341,7 +269,7 @@ def run(inputs):
     cluster_df.loc[cluster_df['cluster'] == -1, 'cluster'] = range(cluster_df['cluster'].max() + 1, cluster_df['cluster'].max() + 1 + len(cluster_df[cluster_df['cluster'] == -1]))
     cluster_df.reset_index(drop=True, inplace=True)
 
-
+    logger.info("[7/8] generating genus level clusters...")
     # assign the Lineage according to the entry with longest length
     groups = cluster_df.groupby('cluster')
     for cluster, group in groups:
@@ -354,8 +282,6 @@ def run(inputs):
         cluster_df.loc[group.index, 'Lineage'] = Lineage
         Genus = group.loc[idx, 'Genus']
         cluster_df.loc[group.index, 'Genus'] = Genus
-        Host = group.loc[idx, 'Host']
-        cluster_df.loc[group.index, 'Host'] = Host
 
     # assign the Lineage according to the entry in database
     for cluster, group in groups:
@@ -370,50 +296,34 @@ def run(inputs):
             cluster_df.loc[query_group.index, 'Lineage'] = Lineage
             Genus = ref_group['Genus'].values[0]
             cluster_df.loc[group.index, 'Genus'] = Genus
-            Host = ref_group['Host'].values[0]
-            cluster_df.loc[group.index, 'Host'] = Host
-        else:
-            # assign the host for the query group accoding to the genus
-            for idx, row in query_group[query_group['Genus'] != '-'].iterrows():
-                try:
-                    cluster_df.loc[idx, 'Host'] = genus2host[row['Genus']]
-                except:
-                    pass
 
 
     df = cluster_df[cluster_df['Accession'].isin(genomes.keys())].copy()
     df = df.reset_index(drop=True)
 
-    logger.info("[7/8] summarizing the results...")
-    predicted = df[df['Host'] != '-']
-    unpredicted = df[df['Host'] == '-']
 
-    df.loc[predicted.index, 'Score'] = [acc2score[acc].split(';')[-1] for acc in predicted['Accession']]
-    # Update 'Method' column where 'Host' is not '-'
-    df.loc[predicted.index, 'Method'] = 'AAI-based'
-
+    predicted = df[df['Genus'] != '-']
+    unpredicted = df[df['Genus'] == '-']
+    df.loc[predicted.index, 'cluster'] = 'known_genus'
 
     groups = unpredicted.groupby('cluster')
     cluster_idx = 0
     for cluster, group in groups:
-        idx = group['Crispr_score'].idxmax()
-        host = group.loc[idx, 'Crispr']
-        df.loc[group.index, 'Host'] = host.replace(' ', '_')
-        df.loc[group.index, 'Score'] = group.loc[idx, 'Crispr_score']
-        if host == '-':
-            df.loc[group.index, 'Method'] = '-'
+        if group.shape[0] == 1:
+            df.loc[group.index, 'cluster'] = 'singleton'
         else:
-            df.loc[group.index, 'Method'] = 'CRISPR-based'
+            df.loc[group.index, 'cluster'] = f'group_{cluster_idx}'
+            cluster_idx += 1
 
-    df = df.sort_values('Accession', ascending=False)
-
-    df = df[['Accession', 'Length', 'Host', 'Score', 'Method']]
-    df.to_csv(f'{rootpth}/{midfolder}/cherry_prediction.tsv', index=False, sep='\t')
+    df = df.sort_values('Accession')
+    df.rename(columns={'cluster':'GenusCluster', 'Lineage': 'Pred'}, inplace=True)
+    df['Score'] = [acc2score[acc] for acc in df['Accession']]
+    df.to_csv(f'{rootpth}/{midfolder}/phagcn_prediction.tsv', index=False, sep='\t')
 
 
     ###############################################################
     ####################### dump results ##########################
-    ###############################################################\
+    ###############################################################
     logger.info("[8/8] writing the results...")
     df = df.reset_index(drop=True)
 
@@ -433,43 +343,49 @@ def run(inputs):
             unpredicted_length.append(len(record.seq))
 
 
-
     # Create lists by combining existing data with new entries
     all_contigs = df['Accession'].tolist() + filtered_contig + unpredicted_contig
-    all_pred = df['Host'].tolist() + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+    all_pred = df['Pred'].tolist() + ['filtered'] * len(filtered_contig) + ['unpredicted'] * len(unpredicted_contig)
     all_score = df['Score'].tolist() + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
     all_length = df['Length'].tolist() + filtered_lenth + unpredicted_length
-    all_method = df['Method'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+    all_genus = df['Genus'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+    all_cluster = df['GenusCluster'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
 
     # Create DataFrame directly from lists
     contig_to_pred = pd.DataFrame({
         'Accession': all_contigs,
         'Length': all_length,
-        'Host': all_pred,
-        'CHERRYScore': all_score,
-        'Method': all_method
+        'Lineage': all_pred,
+        'PhaGCNScore': all_score,
+        'Genus': all_genus,
+        'GenusCluster': all_cluster
     })
 
     # Filter genus for a specific condition
     # all_pie = contig_to_pred['Genus'][contig_to_pred['Genus'] != '-']
 
     # Save DataFrame to CSV
-    contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index=False, sep='\t')
-    query2host = {acc: genus for acc, genus in zip(df['Accession'], df['Host'])}
+    contig_to_pred.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.tsv", index=False, sep='\t')
+    query2genus = {acc: genus for acc, genus in zip(df['Accession'], df['Genus'])}
 
 
-    cherry_node = pd.DataFrame({
-        'Accession': list(refacc2host.keys()) + list(query2host.keys()), 
-        'Host': list(refacc2host.values()) + list(query2host.values()), 
-        'TYPE': ['Ref']*len(refacc2host) + ['Query']*len(query2host)
+    phagcn_node = pd.DataFrame({
+        'Accession': list(refacc2genus.keys()) + list(query2genus.keys()), 
+        'Genus': list(refacc2genus.values()) + list(query2genus.values()), 
+        'TYPE': ['Ref']*len(refacc2genus) + ['Query']*len(query2genus)
         })
     
-    cherry_node.to_csv(f"{rootpth}/{out_dir}/cherry_network_nodes.tsv", index=False, sep='\t')
+    phagcn_node.to_csv(f"{rootpth}/{out_dir}/phagcn_network_nodes.tsv", index=False, sep='\t')
 
     if inputs.draw == 'Y':
-        draw_network(f'{rootpth}/{out_dir}', f'{rootpth}/{out_dir}', 'cherry')
-    
+        draw_network(f'{rootpth}/{out_dir}', f'{rootpth}/{out_dir}', 'phagcn')
+
+
     if inputs.task != 'end_to_end':
+        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/all_predicted_protein.fa")
+        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/alignment_results.tab")
+        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue" {rootpth}/{out_dir}/alignment_results.tab')
+
         genes = {}
         for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
             gene = Gene()
@@ -483,12 +399,6 @@ def run(inputs):
             gene.anno = 'hypothetical protein'
             genes[gene.id] = gene
             genomes[gene.genome_id].genes.append(gene.id)
-
-
-        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/all_predicted_protein.fa")
-        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/alignment_results.tab")
-        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue" {rootpth}/{out_dir}/alignment_results.tab')
-
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
         # protein annotation
         for ORF in ORF2hits:
@@ -500,7 +410,7 @@ def run(inputs):
                     pass
             if annotations:
                 genes[ORF].anno = Counter(annotations).most_common()[0][0]
-
+        
         # write the gene annotation by genomes
         with open(f'{rootpth}/{out_dir}/gene_annotation.tsv', 'w') as f:
             f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\n')

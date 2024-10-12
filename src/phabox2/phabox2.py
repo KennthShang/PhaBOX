@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-import phamer
-import phatyp
-import phagcn
-import cherry
-import contamination
+from . import phamer
+from . import phatyp
+from . import phagcn
+from . import cherry
+from . import contamination
 import argparse
 import os
 import pandas as pd
-from scripts.ulity import *
+from  .scripts.ulity import *
 
 
 
@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--draw', help='Draw network examples for the query virus relationship: Y or N (phagcn and cherry) || (default N)', default = 'N')
     inputs = parser.parse_args()
     logger = get_logger()
-    logger(f"PhaBOX2 is running with: {inputs.threads} threads!")
+    logger.info(f"PhaBOX2 is running with: {inputs.threads} threads!")
     
     if inputs.task == "end_to_end":
         phamer.run(inputs)

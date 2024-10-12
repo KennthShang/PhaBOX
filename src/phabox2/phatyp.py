@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 import pickle as pkl
 
-from scripts.ulity import *
-from scripts.preprocessing import *
-from scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
+from .scripts.ulity import *
+from .scripts.preprocessing import *
+from .scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
 from Bio import SeqIO
 from scipy.special import softmax
 

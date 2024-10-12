@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import os
-from scripts.ulity import *
-from scripts.preprocessing import *
-from scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
+from .scripts.ulity import *
+from .scripts.preprocessing import *
+from .scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord

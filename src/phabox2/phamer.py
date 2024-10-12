@@ -4,10 +4,10 @@ import os
 import pandas as pd
 import pickle as pkl
 
-from scripts.ulity import *
-from scripts.preprocessing import *
-from scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
-from models.phamer import Transformer
+from .scripts.ulity import *
+from .scripts.preprocessing import *
+from .scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
+from .models.phamer import Transformer
 import time
 from tqdm import tqdm
 
