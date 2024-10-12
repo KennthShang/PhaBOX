@@ -270,4 +270,4 @@ dependencies:
   - zlib=1.2.13=h4ab18f5_6
   - zstandard=0.23.0=py39h08a7858_1
   - zstd=1.5.6=ha6fb4c9_0
-prefix: phabox2
+prefix: /lustre/home/acct-weifengshi/weifengshi/JingkaiJi/software/miniconda3/envs/phabox2
