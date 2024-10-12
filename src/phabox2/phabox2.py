@@ -1,13 +1,9 @@
 #!/usr/bin/env python
-from . import phamer
-from . import phatyp
-from . import phagcn
-from . import cherry
-from . import contamination
+from phabox2 import phamer, phatyp, phagcn, cherry, contamination
 import argparse
 import os
 import pandas as pd
-from  .scripts.ulity import *
+from  phabox2.scripts.ulity import *
 
 __version__ = "2.0.0"
 
