@@ -1,4 +1,3 @@
-# Still under maintenance the upgrade ！！！ We will fix the environmental problem today!!!
 <img src='imgs/logo.png'>
 
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
@@ -26,12 +25,17 @@ Table of Contents
 
 PhaBOX has now been upgraded to the 2.0 version!!! There are some major components, including:
 
-1. Generalize for all kinds of viruses with faster speed! But we will call it PhaBOX2, not VirBOX, for a better inheritance ：) 
-2. Provide a more comprehensive taxonomy classification (latest ICTV 2024) and complete taxonomy lineage
-3. Provide a genus-level clustering for potential new genus (genus-level vOTU)!
-4. Provide a protein annotation function!
-5. Provide a contamination and prophage detection module!
-6. More user-friendly commands!
+  🎉 Generalize for all kinds of viruses with faster speed! But we will call it PhaBOX2, not VirBOX, for a better inheritance ：) 
+
+  🎉 Provide a more comprehensive taxonomy classification (latest ICTV 2024) and complete taxonomy lineage
+
+  🎉 Provide a genus-level clustering for potential new genus (genus-level vOTU)!
+
+  🎉 Provide a protein annotation function!
+
+  🎉 Provide a contamination and prophage detection module!
+
+  🎉 More user-friendly commands!
 
 The web server is still upgrading; please be patient
 
@@ -43,7 +47,28 @@ If you have further suggestions, feel free to let me know! You can post an issue
 
 
 ## 🚀&nbsp; Quick Start
-Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page! We also provide a Tutorial for you to quickly get started and understand the usage of phabox2. Hope you will enjoy it!
+*Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
+
+### Prepare the database and environment
+
+#### Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial for you to get started quickly and understand the usage of phabox2. Hope you will enjoy it!
+
+1. When you use PhaBOX for the first time, please follow the commands below:
+```bash
+# install environment
+conda create -n phabox2 phabox=2.0 -c pytorch -c huggingface -c bioconda -c conda-forge -c jyshang2 -y
+
+# Downloading the database using wget (or go to the release page)
+wget https://github.com/KennthShang/PhaBOX/releases/download/v2.0.0/phabox_db_v2.0.0.zip
+
+unzip database.zip  > /dev/null
+```
+
+2. Then, you only need to activate your 'phabox2' environment before using phabox next time.
+```bash
+conda activate phabox2
+phabox2 --help
+```
 
 
 <a name="citation"></a>
