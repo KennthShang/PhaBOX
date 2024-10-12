@@ -6,9 +6,9 @@ package:
   version: "{{ version }}"
 
 source:
-  path: .
-  #git_url: https://github.com/KennthShang/PhaBOX.git
-  #git_rev: main  # or a specific commit/tag
+  #path: .
+  git_url: https://github.com/KennthShang/PhaBOX.git
+  git_rev: main  # or a specific commit/tag
 
 build:
   number: 0
