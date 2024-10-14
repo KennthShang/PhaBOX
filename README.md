@@ -56,7 +56,7 @@ If you have further suggestions, feel free to let me know! You can post an issue
 1. When you use PhaBOX for the first time, please follow the commands below:
 ```bash
 # install environment
-conda create -n phabox2 phabox=2.0 -c pytorch -c huggingface -c bioconda -c conda-forge -c jyshang2 -y
+conda create -n phabox2 phabox=2.0 -c jyshang2 -c pytorch -c huggingface -c bioconda -c conda-forge  -y
 
 # Downloading the database using wget (or go to the release page)
 wget https://github.com/KennthShang/PhaBOX/releases/download/v2.0.0/phabox_db_v2.0.0.zip
