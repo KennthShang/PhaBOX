@@ -45,6 +45,7 @@ def run(inputs):
         genome.seq = str(record.seq)
         genome.viral_hits = {}
         genome.regions = None
+        genome.proportion = None
         genomes[genome.id] = genome
 
     logger.info("[1/5] calling genes with prodigal...")

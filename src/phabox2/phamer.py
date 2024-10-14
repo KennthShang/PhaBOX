@@ -56,6 +56,7 @@ def run(inputs):
             genome.genes = []
             genome.viral_hits = {}
             genome.regions = None
+            genome.proportion = None
             genomes[genome.id] = genome
 
     if not rec:
@@ -203,11 +204,24 @@ def run(inputs):
                 all_proportion.append(0)
                 all_confidence.append('rejected')
                 continue
-            contigs_add.append(record.id)
-            all_pred.append('non-virus')
-            all_score.append(0)
-            all_proportion.append(0)
-            all_confidence.append('rejected')
+            if genomes[record.id].proportion < reject:
+                contigs_add.append(record.id)
+                all_pred.append('non-virus')
+                all_score.append(0)
+                all_proportion.append(0)
+                all_confidence.append('non-virus')
+            else:
+                contigs_add.append(record.id)
+                all_pred.append('virus')
+                all_score.append(float('{:.2f}'.format(genomes[record.id].proportion)))
+                all_proportion.append(float('{:.2f}'.format(genomes[record.id].proportion)))
+                all_confidence.append('')
+                if pro > 0.75:
+                    all_confidence.append('high-confidence')
+                elif pro > 0.25:
+                    all_confidence.append('medium-confidence')
+                else:
+                    all_confidence.append('low-confidence')
 
 
 

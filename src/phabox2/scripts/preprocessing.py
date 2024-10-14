@@ -365,15 +365,13 @@ def contig2sentence(db_dir, outpth, genomes):
         name = key.rsplit('_', 1)[0]
         rec.append(name)
     counter = Counter(rec)
+
+    for genome in counter.keys():
+        genomes[genome].proportion = counter[genome]/len(genomes[genome].genes)
+
+
     mapped_num = np.array([counter[item] for item in id2contig.values()])
 
-    #rec = []
-    #for record in SeqIO.parse(f'{outpth}/query_protein.fa', 'fasta'):
-    #    name = record.id
-    #    name = name.rsplit('_', 1)[0]
-    #    rec.append(name)
-    #counter = Counter(rec)
-    #total_num = np.array([counter[item] for item in id2contig.values()])
     total_num = np.array([len(genomes[item].genes) for item in id2contig.values()])
     proportion = mapped_num/total_num
 
