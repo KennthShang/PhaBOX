@@ -293,7 +293,7 @@ test:
 about:
   home: https://github.com/KennthShang/PhaBOX
   license: MIT
-  summary: Local version of the phage identification and analysis web server (tool set)
+  summary: Virus identification and analysis web server (tool set)
 
 extra:
   recipe-maintainers:
