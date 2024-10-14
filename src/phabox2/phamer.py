@@ -215,7 +215,6 @@ def run(inputs):
                 all_pred.append('virus')
                 all_score.append(float('{:.2f}'.format(genomes[record.id].proportion)))
                 all_proportion.append(float('{:.2f}'.format(genomes[record.id].proportion)))
-                all_confidence.append('')
                 if genomes[record.id].proportion > 0.75:
                     all_confidence.append('high-confidence')
                 elif genomes[record.id].proportion > 0.25:
