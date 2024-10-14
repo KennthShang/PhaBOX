@@ -216,9 +216,9 @@ def run(inputs):
                 all_score.append(float('{:.2f}'.format(genomes[record.id].proportion)))
                 all_proportion.append(float('{:.2f}'.format(genomes[record.id].proportion)))
                 all_confidence.append('')
-                if pro > 0.75:
+                if genomes[record.id].proportion > 0.75:
                     all_confidence.append('high-confidence')
-                elif pro > 0.25:
+                elif genomes[record.id].proportion > 0.25:
                     all_confidence.append('medium-confidence')
                 else:
                     all_confidence.append('low-confidence')
