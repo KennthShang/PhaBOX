@@ -2,7 +2,7 @@
 
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
 
-This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk). Please note that this stand-alone version is only available on Linux systems.
+This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk).
 
 PhaBOX2 is a Python library for virus-related tasks: 
 1. virus identification
