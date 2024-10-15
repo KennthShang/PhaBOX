@@ -59,7 +59,7 @@ def run(inputs):
             genome.genes = []
             genome.viral_hits = {}
             genome.regions = None
-            genome.proportion = None
+            genome.proportion = 0
             genomes[genome.id] = genome
     else:
         logger.info("[1/8] filtering the length of contigs...")

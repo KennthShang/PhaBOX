@@ -56,7 +56,7 @@ def run(inputs):
             genome.genes = []
             genome.viral_hits = {}
             genome.regions = None
-            genome.proportion = None
+            genome.proportion = 0
             genomes[genome.id] = genome
 
     if not rec:
