@@ -70,6 +70,11 @@ conda activate phabox2
 phabox2 --help
 ```
 
+If you are in mainland CHINA and cannot reach the file, try the Baidu Cloud to download the database
+```
+Link for example_contigs.fa:  https://pan.baidu.com/s/1zNNt9fURiIuobkuUy0xfiA PWD: d5py 
+Link for the database: https://pan.baidu.com/s/115tXk6tHBBHh28T-t8b99w PWD: q1mc 
+```
 
 <a name="citation"></a>
 ## ✏️&nbsp; Citation
