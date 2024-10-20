@@ -47,34 +47,13 @@ If you have further suggestions, feel free to let me know! You can post an issue
 
 
 ## 🚀&nbsp; Quick Start
-*Note*: we suggest you install all the packages using conda (both [miniconda](https://docs.conda.io/en/latest/miniconda.html) and [Anaconda](https://anaconda.org/) are ok).
 
-### Prepare the database and environment
 
-#### Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial for you to get started quickly and understand the usage of phabox2. Hope you will enjoy it!
 
-1. When you use PhaBOX for the first time, please follow the commands below:
-```bash
-# install environment
-conda create -n phabox2 phabox=2.0 -c jyshang2 -c pytorch -c huggingface -c bioconda -c conda-forge  -y
+### Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial for you to get started quickly and understand the usage of phabox2. Hope you will enjoy it!
 
-# Downloading the database using wget (or go to the release page)
-wget https://github.com/KennthShang/PhaBOX/releases/download/v2.0.0/phabox_db_v2.0.0.zip
 
-unzip phabox_db_v2.0.0.zip  > /dev/null
-```
 
-2. Then, you only need to activate your 'phabox2' environment before using phabox next time.
-```bash
-conda activate phabox2
-phabox2 --help
-```
-
-If you are in mainland CHINA and cannot reach the file, try the Baidu Cloud to download the database
-```
-Link for example_contigs.fa:  https://pan.baidu.com/s/1zNNt9fURiIuobkuUy0xfiA PWD: d5py 
-Link for the database: https://pan.baidu.com/s/115tXk6tHBBHh28T-t8b99w PWD: q1mc 
-```
 
 <a name="citation"></a>
 ## ✏️&nbsp; Citation
@@ -89,33 +68,20 @@ Jiayu Shang, Cheng Peng, Herui Liao, Xubo Tang, Yanni Sun, PhaBOX: a web server 
 
 Since we integrate our previously published tools: [PhaMer](https://academic.oup.com/bib/article/23/4/bbac258/6620872), [PhaGCN](https://academic.oup.com/bioinformatics/article/37/Supplement_1/i25/6319660), [CHERRY](https://academic.oup.com/bib/article/23/5/bbac182/6589865), and [PhaTYP](https://academic.oup.com/bib/article/24/1/bbac487/6842869), into the program. You can also cite them as below:
 
-* PhaMer (phage identification)
+* 
 
 ```
+# PhaMer (phage identification)
 Jiayu Shang, Xubo Tang, Ruocheng Guo, Yanni Sun, Accurate identification of bacteriophages from metagenomic data using Transformer, Briefings in Bioinformatics, 2022;, bbac258, https://doi.org/10.1093/bib/bbac258
-```
 
-* PhaGCN (taxonomy classification)
-
-```
+# PhaGCN (taxonomy classification)
 Jiayu Shang, Jingzhe Jiang, Yanni Sun, Bacteriophage classification for assembled contigs using graph convolutional network, Bioinformatics, Volume 37, Issue Supplement_1, July 2021, Pages i25–i33, https://doi.org/10.1093/bioinformatics/btab293
-```
 
-* Cherry (host prediction)
-
-```
+# Cherry (host prediction)
 Jiayu Shang, Yanni Sun, CHERRY: a Computational metHod for accuratE pRediction of virus–pRokarYotic interactions using a graph encoder–decoder model, Briefings in Bioinformatics, 2022;, bbac182, https://doi.org/10.1093/bib/bbac182
-```
 
-* PhaTYP (Lifestyle prediction)
-
-```
+# PhaTYP (Lifestyle prediction)
 Jiayu Shang, Xubo Tang, Yanni Sun, PhaTYP: predicting the lifestyle for bacteriophages using BERT, Briefings in Bioinformatics, 2022;, bbac487, https://doi.org/10.1093/bib/bbac487
-```
-
-If you used the contamination module, please also cite:
-```
-Nayfach, S., Camargo, A. P., Schulz, F., Eloe-Fadrosh, E., Roux, S., & Kyrpides, N. C. (2021). CheckV assesses the quality and completeness of metagenome-assembled viral genomes. Nature biotechnology, 39(5), 578-585.
 ```
 
 
