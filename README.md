@@ -58,5 +58,3 @@ If you have further suggestions, feel free to let me know! You can post an issue
 
 ## 📘&nbsp; License
 The PhaBOX pipelines are released under the terms of the [Academic Free License v3.0 License](https://choosealicense.com/licenses/afl-3.0/).
-
-Our groupmates also provide many useful tools for bioinformatics analysis. Please check [Yanni's Group](https://yannisun.github.io/tools.html) for further information. Hope you will like them! 
