@@ -59,22 +59,4 @@ If you have further suggestions, feel free to let me know! You can post an issue
 ## 📘&nbsp; License
 The PhaBOX pipelines are released under the terms of the [Academic Free License v3.0 License](https://choosealicense.com/licenses/afl-3.0/).
 
-
-<a name="team"></a>
-## 🤵&nbsp; Team
-
- * <b>Head of PhaBOX program</b><br/>
-
- | [Jiayu SHANG](https://kennthshang.github.io/)       | [Cheng PENG](https://github.com/ChengPENG-wolf)       |
-|:-------------------------:|:-------------------------:|
-| <img width=120/ src="imgs/mine.pic.jpg?raw=true"> | <img width=120/ src="imgs/Wolf.jpg?raw=true"> |
-
-
- * <b>Supervisor</b><br/>
- 
- | [Yanni SUN](https://yannisun.github.io/)       |
-|:-------------------------:|
-| <img width=120/ src="imgs/yanni.png?raw=true"> |
-
-
 Our groupmates also provide many useful tools for bioinformatics analysis. Please check [Yanni's Group](https://yannisun.github.io/tools.html) for further information. Hope you will like them! 
