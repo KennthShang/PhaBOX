@@ -438,7 +438,7 @@ def run(inputs):
     #query_df = pd.read_csv(f'{rootpth}/{midfolder}/cherry_clustering.tsv')
     query_df = df.copy()
     ref_df = pd.read_csv(f'{db_dir}/RefVirus.csv')
-    acc2score = {acc: score for acc, score in zip(query_df['Accession'], query_df['Score'])}
+    genus2score = {genus: score for genus, score in zip(query_df['Genus'], query_df['Score']) if genus != '-' }
     query_df = query_df[['Accession', 'Lineage', 'Length', 'Genus']]
     ref_df = ref_df[['Accession', 'Lineage', 'Length', 'Genus']]
     cluster_df = pd.concat([query_df, ref_df])
@@ -532,7 +532,7 @@ def run(inputs):
     predicted = df[df['Host'] != '-']
     unpredicted = df[df['Host'] == '-']
 
-    df.loc[predicted.index, 'Score'] = [acc2score[acc].split(';')[-1] for acc in predicted['Accession']]
+    df.loc[predicted.index, 'Score'] = [genus2score[acc].split(';')[-1] for acc in predicted['Genus']]
     # Update 'Method' column where 'Host' is not '-'
     df.loc[predicted.index, 'Method'] = 'AAI-based'
 
