@@ -28,19 +28,20 @@ PhaBOX has now been upgraded to the 2.0 version!!! There are some major componen
 
   🎉 Provide a more comprehensive taxonomy classification (latest ICTV 2024) and complete taxonomy lineage
 
-  🎉 Provide a genus-level clustering for potential new genus (genus-level vOTU)!
+  🎉 Provide a genus-level clustering for potential new genera (genus-level vOTU)!
 
   🎉 Provide a protein annotation function!
 
   🎉 Provide a contamination and prophage detection module!
 
+  🎉 Allowing to predict host using bacterial MAGs
+
+  🎉 Provide a vOTU grouping module
+
+  🎉 Provide a marker-searching module for the phylogenetic tree
+
   🎉 More user-friendly commands!
 
-The web server is still upgrading; please be patient
-
-The following functions will be coming soon!
-1. Provide a marker-searching module for the phylogenetic tree
-2. Allowing the use of the host prediction function in a more flexible way (only use CRISPRs for prediction; MAGs' CRISPR detection, etc.). Currently, if you want to predict the phage-bacteria interaction via CRISPR using **your own bacterial assemblies**, please try: [https://github.com/KennthShang/CHERRY_crispr_MAG](https://github.com/KennthShang/CHERRY_crispr_MAG)
 
 If you have further suggestions, feel free to let me know! You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome any suggestions.
 
