@@ -1,27 +1,9 @@
-{% set name = "phabox" %}
-{% set version = "2.0.0" %}
-
-package:
-  name: "{{ name|lower }}"
-  version: "{{ version }}"
-
-source:
-  #path: .
-  git_url: https://github.com/KennthShang/PhaBOX.git
-  git_rev: main  # or a specific commit/tag
-
-build:
-  number: 0
-  noarch: python
-  script: "{{ PYTHON }} -m pip install . -vv"
-  entry_points:
-    - phabox2=phabox2.phabox2:main
-
-requirements:
-  host:
-    - python
-    - setuptools
-  run:
+name: phabox2_dev
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_kmp_llvm
   - accelerate=1.0.1=pyhd8ed1ab_0
@@ -294,24 +276,4 @@ requirements:
   - zlib=1.2.13=h4ab18f5_6
   - zstandard=0.23.0=py310ha39cb0e_1
   - zstd=1.5.6=ha6fb4c9_0
-
-test:
-  commands:
-    - phabox2 --help
-
-about:
-  home: https://github.com/KennthShang/PhaBOX
-  license: MIT
-  summary: Virus identification and analysis web server (tool set)
-
-extra:
-  recipe-maintainers:
-    - SHANG Jiayu
-    - PENG Cheng
-
-channels:
-  - bioconda
-  - conda-forge
-  - defaults
-
-  # Add other channels as needed
+prefix: /home/jyshang2/miniconda3/envs/phabox2_dev
