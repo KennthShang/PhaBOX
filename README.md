@@ -34,7 +34,7 @@ PhaBOX has now been upgraded to the 2.0 version!!! There are some major componen
 
   🎉 Provide a contamination and prophage detection module!
 
-  🎉 Allowing to predict host using bacterial MAGs
+  🎉 Allowing to predict host using your bacterial MAGs
 
   🎉 Provide a vOTU grouping module
 
