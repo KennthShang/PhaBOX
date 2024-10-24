@@ -8,10 +8,12 @@ import pickle as pkl
 from .scripts.ulity import *
 from .scripts.preprocessing import *
 from .scripts.parallel_prodigal_gv import main as parallel_prodigal_gv
-from Bio import SeqIO
-from Bio.Blast.Applications import NcbiblastnCommandline
 from collections import defaultdict
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 def run(inputs):
     logger = get_logger()
@@ -25,17 +27,26 @@ def run(inputs):
     db_dir    = inputs.dbdir
     threads   = inputs.threads
     length    = inputs.len
-    pident     = inputs.pident
-    cov        = inputs.cov/100
-    aai        = inputs.aai
-    pcov       = inputs.pcov
-    share      = inputs.share
-    blast      = inputs.blast
+    pident    = inputs.cpident
+    cov       = inputs.ccov/100
+    aai       = inputs.aai
+    pcov      = inputs.pcov
+    share     = inputs.share
+    blast     = inputs.blast
+    bfolder   = inputs.bfolder
+    magonly   = inputs.magonly
 
+    if magonly == 'Y':
+        jy = 4
+    else:
+        jy = 8
 
+    if bfolder == 'None' and magonly == 'Y':
+        print('In consistent input, please provide the MAGs folder or set the magonly flag to False.')
+        exit(1)
 
     if not os.path.isfile(contigs):
-        print('cannot find the file')
+        print('cannot find the input contigs file')
         exit(1)
 
     if not os.path.exists(db_dir):
@@ -43,7 +54,10 @@ def run(inputs):
         exit(1)
 
     check_path(os.path.join(rootpth, out_dir))
+    check_path(os.path.join(rootpth, out_dir, 'cherry_supplementary'))
     check_path(os.path.join(rootpth, midfolder))
+
+
 
     ###############################################################
     #######################  Filter length ########################
@@ -51,7 +65,7 @@ def run(inputs):
     
     genomes = {}
     if os.path.exists(f'{rootpth}/filtered_contigs.fa'):
-        logger.info("[1/8] reusing existing filtered contigs...")
+        logger.info(f"[1/{jy}] reusing existing filtered contigs...")
         for record in SeqIO.parse(f'{rootpth}/filtered_contigs.fa', 'fasta'):
             genome = Genome()
             genome.id = record.id
@@ -62,7 +76,7 @@ def run(inputs):
             genome.proportion = 0
             genomes[genome.id] = genome
     else:
-        logger.info("[1/8] filtering the length of contigs...")
+        logger.info(f"[1/{jy}] filtering the length of contigs...")
         rec = []
         for record in SeqIO.parse(contigs, 'fasta'):
             if len(record.seq) > inputs.len:
@@ -83,49 +97,168 @@ def run(inputs):
             logger.info(f"Cherry finished! please check the results in {os.path.join(rootpth,out_dir, 'cherry_prediction.tsv')}")
             exit()
 
-        SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
+        _ = SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
+
+
 
     ###############################################################
-    ########################## CRISPRs  ###########################
+    ######################  CRISPRs (MAG)  ########################
     ###############################################################
-    logger.info("[2/8] predicting CRISPRs...")
-    query_file = f"{rootpth}/filtered_contigs.fa"
-    db_host_crispr_prefix = f"{db_dir}/crispr_db/allCRISPRs"
-    output_file = f"{rootpth}/{midfolder}/crispr_out.tab"
+    if bfolder != 'None':
+        # running CRT
+        logger.info(f"[2/{jy}] finding CRISPRs from MAGs...")
+        check_path(f"{rootpth}/{midfolder}/crispr_tmp")
+        check_path(f"{rootpth}/{midfolder}/crispr_fa")
+
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = {
+                executor.submit(
+                    run_crt,
+                    db_dir,
+                    os.path.join(bfolder, bfile),
+                    os.path.join(rootpth, midfolder, 'crispr_tmp', bfile.rsplit('.', 1)[0] + '.crispr'),
+                    bfile
+                ): bfile for bfile in os.listdir(bfolder)
+            }
+            
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    logger.info(f"Error in running CRT for MAG: {result}")
+                    logger.info("Please check the MAGs, currently it is ignored.")
+
+
+
+        # write the CRISPRs to fasta
+        total_rec = []
+        for bfile in os.listdir(f'{bfolder}'):
+            prefix = bfile.rsplit('.', 1)[0]
+            outputfile = prefix + '.crispr'
+            crispr_rec = []
+            cnt = 0
+            with open(f'{rootpth}/{midfolder}/crispr_tmp/{outputfile}') as file_in:
+                for line in file_in:
+                    tmp_list = line.split("\t")
+                    try:
+                        _ = int(tmp_list[0])
+                    except:
+                        continue
+                    if tmp_list[3] == '\n':
+                        continue
+                    if not is_valid_dna_sequence(tmp_list[3]):
+                        logger.info(f"Invalid DNA sequence found in MAG: {prefix}.")
+                        logger.info(f'Please check the format of the MAGs.')
+                        continue
+                    rec = SeqRecord(Seq(tmp_list[3]), id=f'{prefix}_CRISPR_{cnt}', description='')
+                    cnt += 1
+                    crispr_rec.append(rec)
+                    total_rec.append(rec)
+                            
+            if crispr_rec:
+                SeqIO.write(crispr_rec, f"{rootpth}/{midfolder}/crispr_fa/{prefix}_CRISPRs.fa", 'fasta')
+
+        if not total_rec:
+            logger.info('No CRISPRs found in the MAGs.')
+            if magonly == 'Y':
+                logger.info('Please check the MAGs or set the magonly flag to False.')
+                exit(1)
+        else:
+            SeqIO.write(total_rec, f"{rootpth}/{midfolder}/CRISPRs.fa", 'fasta')
+            _ = os.system(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_MAGs.fa")
+            check_path(os.path.join(rootpth, midfolder, 'crispr_db'))
+            _ = os.system(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPR > /dev/null 2>&1')
+
+
+            logger.info(f"[3/{jy}] predicting MAG CRISPRs...")
+
+            if blast == 'blastn-short':
+                _ = os.system(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+            elif blast == 'blastn':
+                _ = os.system(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+                
+
+            crispr_df = pd.read_csv(f"{rootpth}/{midfolder}/crispr_out.tab", sep='\t', names = ['qseqid', 'sseqid', 'evalue', 'pident', 'length', 'slen'])
+            crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
+            crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
+            crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv", sep = '\t', index = False)
+            _ = os.system(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_MAG.tsv")
+            best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
+            crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
+            pkl.dump(crispr_pred_mag, open(f'{rootpth}/{midfolder}/crispr_pred_mag.dict', 'wb'))
+        
+
+            unpredicted = []
+            filtered_contig = []
+            filtered_lenth = []
+            unpredicted_contig = []
+            unpredicted_length = []
+            for record in SeqIO.parse(f'{contigs}', 'fasta'):
+                try:
+                    _ = crispr_pred_mag[record.id]
+                except:
+                    if len(record.seq) < inputs.len:
+                        filtered_contig.append(record.id)
+                        filtered_lenth.append(len(record.seq))
+                    unpredicted.append(record)
+                    unpredicted_contig.append(record.id)
+                    unpredicted_length.append(len(record.seq))
+        
+            if magonly == 'Y' or not unpredicted:
+                logger.info(f"[4/{jy}] writing the results...")
+                # Create lists by combining existing data with new entries
+                all_contigs = list(crispr_pred_mag.keys()) + filtered_contig + unpredicted_contig
+                all_pred = [crispr_pred_mag[item]['pred'] for item in crispr_pred_mag] + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+                all_score = [crispr_pred_mag[item]['ident'] for item in crispr_pred_mag] + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
+                all_length = [genomes[item].length for item in crispr_pred_mag] + filtered_lenth + unpredicted_length
+                all_method = ['CIRPSR-based (MAG)']*len(crispr_pred_mag) + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+
+                contig_to_pred = pd.DataFrame({
+                    'Accession': all_contigs,
+                    'Length': all_length,
+                    'Host': all_pred,
+                    'CHERRYScore': all_score,
+                    'Method': all_method
+                })
+                contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index=False, sep='\t')
+                logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))
+                return()
+    else:
+        logger.info(f"[2/{jy}] no MAGs provided, skipping MAG CRISPRs prediction...")
+        logger.info(f"[3/{jy}] will continue running CHERRY with database bersion...")
+    
+
+    ###############################################################
+    ######################## CRISPRs DB  ##########################
+    ###############################################################
+    logger.info(f"[4/{jy}] predicting DB CRISPRs...")
 
     if blast == 'blastn-short':
-        crispr_call = NcbiblastnCommandline(query=query_file,db=db_host_crispr_prefix,out=output_file,outfmt="6 qseqid sseqid evalue pident length slen", evalue=1,gapopen=10,penalty=-1,
-                                    gapextend=2,word_size=7,dust='no', max_target_seqs=5,
-                                    task=f'blastn-short',perc_identity=90,num_threads=threads)
+        _ = os.system(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {db_dir}/crispr_db/allCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
     elif blast == 'blastn':
-        crispr_call = NcbiblastnCommandline(query=query_file,db=db_host_crispr_prefix,out=output_file,outfmt="6 qseqid sseqid evalue pident length slen", evalue=1,
-                                    task='blastn', max_target_seqs=1, perc_identity=90,num_threads=threads)
+        _ = os.system(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {db_dir}/crispr_db/allCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
 
 
-    crispr_call()
+    crispr_df = pd.read_csv(f"{rootpth}/{midfolder}/crispr_out.tab", sep='\t', names = ['qseqid', 'sseqid', 'evalue', 'pident', 'length', 'slen'])
+    crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
+    crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
+    crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv", sep = '\t', index = False)
+    _ = os.system(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_DB.tsv")
+    best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
+    #crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
+    crispr_pred_db = {}
+    for index, row in best_hit.iterrows():
+        for item in row['sseqid'].split('|'):
+            if 'GC' in item:
+                prokaryote = item.split('.')[0]
+                crispr_pred_db[row['qseqid']] = {'pred': prokaryote, 'ident': round(row['pident']/100, 2)}
+                break
+    pkl.dump(crispr_pred_db, open(f'{rootpth}/{midfolder}/crispr_pred_db.dict', 'wb'))
 
 
-
-    crispr_pred = {}
-    with open(output_file) as file_out:
-        for line in file_out.readlines():
-            parse = line.replace("\n", "").split("\t")
-            virus = parse[0]
-            prokaryote = parse[1].split('|')[1]
-            prokaryote = prokaryote.split('.')[0]
-            ident = float(parse[-3])
-            length = float(parse[-2])
-            slen = float(parse[-1])
-            if virus not in crispr_pred:
-                if length/slen > cov or ident > pident:
-                    crispr_pred[virus] = {'pred': prokaryote, 'ident': round(ident/100, 2)}
-
-    pkl.dump(crispr_pred, open(f'{rootpth}/{midfolder}/crispr_pred.dict', 'wb'))
-
-
+    
 
     if os.path.exists(f'{inputs.proteins}'):
-        logger.info("[2/8] using provided protein file...")
+        logger.info(f"[5/{jy}] using provided protein file...")
         rec = []
         for record in SeqIO.parse(inputs.proteins, 'fasta'):
             genome_id = record.id.rsplit('_', 1)[0]
@@ -141,19 +274,19 @@ def run(inputs):
             logger.info("Calling genes with prodigal...")
             parallel_prodigal_gv(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/query_protein.fa', threads)
     elif os.path.exists(f'{rootpth}/{midfolder}/query_protein.fa'):
-        logger.info("[3/8] reusing existing protein file...")
+        logger.info(f"[5/{jy}] reusing existing protein file...")
     else:
-        logger.info("[3/8] calling genes with prodigal...")
+        logger.info(f"[5/{jy}] calling genes with prodigal...")
         parallel_prodigal_gv(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/query_protein.fa', threads)
     
     if os.path.exists(f'{rootpth}/{midfolder}/self_results.abc') and os.path.exists(f'{rootpth}/{midfolder}/db_results.abc'):
-        logger.info("[4/8] reusing all-against-all alignment from PhaGCN...")
+        logger.info(f"[5/{jy}] reusing all-against-all alignment from PhaGCN...")
     else:
-        logger.info("[4/8] running all-against-all alignment...")
+        logger.info(f"[5/{jy}] running all-against-all alignment...")
         # combine the database with the predicted proteins
         _ = os.system(f"cat {db_dir}/RefVirus.faa {rootpth}/{midfolder}/query_protein.fa > {rootpth}/{midfolder}/ALLprotein.fa")
         # generate the diamond database
-        _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --quiet")
+        _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --threads {threads} --quiet")
         # align to the database
         _ = os.system(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
         _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
@@ -162,10 +295,10 @@ def run(inputs):
         _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
 
 
-    logger.info("[5/8] generating cherry networks...")
+    logger.info(f"[6/{jy}] generating cherry networks...")
     # FLAGS: no proteins aligned to the database
     if os.path.getsize(f'{rootpth}/{midfolder}/db_results.abc') == 0:
-        if os.path.getsize(f'{rootpth}/{midfolder}/crispr_pred.dict') == 0:
+        if len(crispr_pred_db) == 0 and len(crispr_pred_mag) == 0:
             Accession = []
             Length_list = []
             for record in SeqIO.parse(f'{contigs}', 'fasta'):
@@ -175,7 +308,6 @@ def run(inputs):
             df.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index = None, sep='\t')
             exit()
         else:
-            crispr_pred = pkl.load(open(f'{rootpth}/{midfolder}/crispr_pred.dict', 'rb'))
             CRISPRs_acc2host = pkl.load(open(f'{db_dir}/CRISPRs_acc2host.pkl', 'rb'))
             Accession = []
             Length_list = []
@@ -186,13 +318,18 @@ def run(inputs):
                 Accession.append(record.id)
                 Length_list.append(len(record.seq))
                 try:
-                    Pred.append(CRISPRs_acc2host[crispr_pred[record.id]['pred']])
-                    Score.append(crispr_pred[record.id]['ident'])
-                    Method.append('CRISPR-based')
+                    Pred.append(CRISPRs_acc2host[crispr_pred_db[record.id]['pred']])
+                    Score.append(crispr_pred_db[record.id]['ident'])
+                    Method.append('CRISPR-based (DB)')
                 except:
-                    Pred.append('-')
-                    Score.append(0.0)
-                    Method.append('-')
+                    try:
+                        Pred.append(crispr_pred_mag[record.id]['pred'])
+                        Score.append(crispr_pred_mag[record.id]['ident'])
+                        Method.append('CRISPR-based (MAG)')
+                    except:
+                        Pred.append('-')
+                        Score.append(0.0)
+                        Method.append('-')
             df = pd.DataFrame({"Accession": Accession, "Length": Length_list, "Host":Pred, "CHERRYScore": Score, "Method": Method})
             df.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index = None, sep='\t')
             exit()
@@ -207,7 +344,7 @@ def run(inputs):
     # filter the network
     if os.path.exists(f'{rootpth}/{midfolder}/phagcn_network.tsv'):
         cherry_network = f'phagcn_network.tsv'
-        _ = os.system(f'cp {rootpth}/{out_dir}/phagcn_network_edges.tsv {rootpth}/{out_dir}/cherry_network_edges.tsv')
+        _ = os.system(f'cp {rootpth}/{out_dir}/phagcn_supplementary/phagcn_network_edges.tsv {rootpth}/{out_dir}/cherry_supplementary/cherry_network_edges.tsv')
     else:
         cherry_network = f'cherry_network.tsv'
         compute_aai(f'{rootpth}/{midfolder}', 'db_results', genome_size)
@@ -222,7 +359,7 @@ def run(inputs):
         sub_df.drop(['qcov', 'tcov', 'qgenes', 'tgenes', 'sgenes', 'aai'], axis=1, inplace=True)
         sub_df.to_csv(f'{rootpth}/{midfolder}/{cherry_network}', sep='\t', index=False, header=False)
         sub_df.rename(columns={'query':'Source', 'target':'Target', 'score':'Weight'}, inplace=True)
-        sub_df.to_csv(f"{rootpth}/{out_dir}/cherry_network_edges.tsv", index=False, sep='\t')
+        sub_df.to_csv(f"{rootpth}/{out_dir}/cherry_supplementary/cherry_network_edges.tsv", index=False, sep='\t')
     
     _ = os.system(f'mcl {rootpth}/{midfolder}/{cherry_network} -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/cherry_genus_clusters.txt > /dev/null 2>&1')
 
@@ -297,7 +434,7 @@ def run(inputs):
     df.to_csv(f'{rootpth}/{midfolder}/cherry_clustering.tsv', index=False, sep='\t')
 
     
-    logger.info("[6/8] predicting the host...")
+    logger.info(f"[6/{jy}] predicting the host...")
     #query_df = pd.read_csv(f'{rootpth}/{midfolder}/cherry_clustering.tsv')
     query_df = df.copy()
     ref_df = pd.read_csv(f'{db_dir}/RefVirus.csv')
@@ -315,13 +452,19 @@ def run(inputs):
     #prokaryote_df = pd.read_csv(f'{db_dir}/prokaryote.csv')
     CRISPRs_acc2host = pkl.load(open(f'{db_dir}/CRISPRs_acc2host.pkl', 'rb'))
     crispr2host = {}
-    for acc in crispr_pred:
-        host = CRISPRs_acc2host[crispr_pred[acc]['pred']]
+    for acc in crispr_pred_db:
+        host = CRISPRs_acc2host[crispr_pred_db[acc]['pred']]
         crispr2host[acc] = host
 
     # add crispr information to df['Crispr']
-    cluster_df['Crispr'] = cluster_df['Accession'].apply(lambda x: crispr2host[x] if x in crispr2host else '-')
-    cluster_df['Crispr_score'] = cluster_df['Accession'].apply(lambda x: crispr_pred[x]['ident'] if x in crispr_pred else 0.0)
+    try:
+        crispr_pred_mag = pkl.load(open(f'{rootpth}/{midfolder}/crispr_pred_mag.dict', 'rb'))
+    except:
+        crispr_pred_mag = {}
+    cluster_df['Crispr_db'] = cluster_df['Accession'].apply(lambda x: crispr2host[x] if x in crispr2host else '-')
+    cluster_df['Crispr_score_db'] = cluster_df['Accession'].apply(lambda x: crispr_pred_db[x]['ident'] if x in crispr_pred_db else 0.0)
+    cluster_df['Crispr_mag'] = cluster_df['Accession'].apply(lambda x: crispr_pred_mag[x]['pred'] if x in crispr_pred_mag else '-')
+    cluster_df['Crispr_score_mag'] = cluster_df['Accession'].apply(lambda x: crispr_pred_mag[x]['ident'] if x in crispr_pred_mag else 0.0)
 
 
 
@@ -347,8 +490,8 @@ def run(inputs):
     groups = cluster_df.groupby('cluster')
     for cluster, group in groups:
         acc_list = group['Accession']
-        # check whether  NCBI accession (NC_) exist
-        if any('NC_' in acc for acc in acc_list):
+        # check whether  NCBI accession exist
+        if any('phabox' in acc for acc in acc_list):
             continue
         idx = group['Length'].idxmax()
         Lineage = group.loc[idx, 'Lineage']
@@ -361,10 +504,10 @@ def run(inputs):
     # assign the Lineage according to the entry in database
     for cluster, group in groups:
         acc_list = group['Accession']
-        # check whether  NCBI accession (NC_) exist
-        if not any('NC_' in acc for acc in acc_list):
+        # check whether  NCBI accession exist
+        if not any('phabox' in acc for acc in acc_list):
             continue
-        ref_group = group[group['Accession'].apply(lambda x: 'NC_' in x)]
+        ref_group = group[group['Accession'].apply(lambda x: 'phabox' in x)]
         query_group = group[group['Accession'].isin(query_df['Accession'])]
         if len(ref_group[ref_group['Genus'] != '-']['Genus'].unique()) == 1:
             Lineage = ref_group['Lineage'].values[0]
@@ -385,7 +528,7 @@ def run(inputs):
     df = cluster_df[cluster_df['Accession'].isin(genomes.keys())].copy()
     df = df.reset_index(drop=True)
 
-    logger.info("[7/8] summarizing the results...")
+    logger.info(f"[7/{jy}] summarizing the results...")
     predicted = df[df['Host'] != '-']
     unpredicted = df[df['Host'] == '-']
 
@@ -393,18 +536,37 @@ def run(inputs):
     # Update 'Method' column where 'Host' is not '-'
     df.loc[predicted.index, 'Method'] = 'AAI-based'
 
+    groups = predicted.groupby('cluster')
+    for cluster, group in groups:
+        idx = group['Crispr_score_mag'].idxmax()
+        host = group.loc[idx, 'Crispr_mag']
+        if host == '-':
+            continue
+        df.loc[group.index, 'Host'] = host
+        df.loc[group.index, 'Score'] = group.loc[idx, 'Crispr_score_mag']
+        df.loc[group.index, 'Method'] = 'CRISPR-based (MAG)'
+
+
 
     groups = unpredicted.groupby('cluster')
-    cluster_idx = 0
     for cluster, group in groups:
-        idx = group['Crispr_score'].idxmax()
-        host = group.loc[idx, 'Crispr']
-        df.loc[group.index, 'Host'] = host.replace(' ', '_')
-        df.loc[group.index, 'Score'] = group.loc[idx, 'Crispr_score']
-        if host == '-':
+        idx_mag = group['Crispr_score_mag'].idxmax()
+        mag_host = group.loc[idx_mag, 'Crispr_mag']
+        idx_db = group['Crispr_score_db'].idxmax()
+        db_host  = group.loc[idx_db, 'Crispr_db']  
+        if mag_host == '-' and db_host == '-':
             df.loc[group.index, 'Method'] = '-'
-        else:
-            df.loc[group.index, 'Method'] = 'CRISPR-based'
+        elif mag_host != '-':
+            host = mag_host
+            df.loc[group.index, 'Host'] = host
+            df.loc[group.index, 'Score'] = group.loc[idx_mag, 'Crispr_score_mag']
+            df.loc[group.index, 'Method'] = 'CRISPR-based (MAG)'
+        elif db_host != '-':
+            host = db_host
+            df.loc[group.index, 'Host'] = host
+            df.loc[group.index, 'Score'] = group.loc[idx_db, 'Crispr_score_db']
+            df.loc[group.index, 'Method'] = 'CRISPR-based (DB)'
+
 
     df = df.sort_values('Accession', ascending=False)
 
@@ -415,7 +577,7 @@ def run(inputs):
     ###############################################################
     ####################### dump results ##########################
     ###############################################################\
-    logger.info("[8/8] writing the results...")
+    logger.info(f"[8/{jy}] writing the results...")
     df = df.reset_index(drop=True)
 
     contigs_list = {item:1 for item in list(df['Accession'])}
@@ -430,8 +592,9 @@ def run(inputs):
             if len(record.seq) < inputs.len:
                 filtered_contig.append(record.id)
                 filtered_lenth.append(len(record.seq))
-            unpredicted_contig.append(record.id)
-            unpredicted_length.append(len(record.seq))
+            else:
+                unpredicted_contig.append(record.id)
+                unpredicted_length.append(len(record.seq))
 
 
 
@@ -465,10 +628,10 @@ def run(inputs):
         'TYPE': ['Ref']*len(refacc2host) + ['Query']*len(query2host)
         })
     
-    cherry_node.to_csv(f"{rootpth}/{out_dir}/cherry_network_nodes.tsv", index=False, sep='\t')
+    cherry_node.to_csv(f"{rootpth}/{out_dir}/cherry_supplementary/cherry_network_nodes.tsv", index=False, sep='\t')
 
     if inputs.draw == 'Y':
-        draw_network(f'{rootpth}/{out_dir}', f'{rootpth}/{out_dir}', 'cherry')
+        draw_network(f'{rootpth}/{out_dir}/cherry_supplementary/', f'{rootpth}/{out_dir}/cherry_supplementary', 'cherry')
     
     if inputs.task != 'end_to_end':
         genes = {}
@@ -486,9 +649,9 @@ def run(inputs):
             genomes[gene.genome_id].genes.append(gene.id)
 
 
-        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/all_predicted_protein.fa")
-        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/alignment_results.tab")
-        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue" {rootpth}/{out_dir}/alignment_results.tab')
+        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_protein.fa")
+        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
+        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue" {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab')
 
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
         # protein annotation
@@ -503,7 +666,7 @@ def run(inputs):
                 genes[ORF].anno = Counter(annotations).most_common()[0][0]
 
         # write the gene annotation by genomes
-        with open(f'{rootpth}/{out_dir}/gene_annotation.tsv', 'w') as f:
+        with open(f'{rootpth}/{out_dir}/cherry_supplementary/gene_annotation.tsv', 'w') as f:
             f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\n')
             for genome in genomes:
                 for gene in genomes[genome].genes:

@@ -37,6 +37,7 @@ def run(inputs):
         exit(1)
 
     check_path(os.path.join(rootpth, out_dir))
+    check_path(os.path.join(rootpth, out_dir, 'phatyp_supplementary'))
     check_path(os.path.join(rootpth, midfolder))
 
 
@@ -84,7 +85,7 @@ def run(inputs):
             logger.info(f"PhaTYP finished! please check the results in {os.path.join(rootpth,out_dir, 'phatyp_prediction.tsv')}")
             exit()
 
-        SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
+        _ = SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 
 
     ###############################################################
@@ -202,10 +203,10 @@ def run(inputs):
                 contigs_add.append(record.id)
                 all_pred.append('filtered')
                 all_score.append('0')
-                continue
-            contigs_add.append(record.id)
-            all_pred.append('unpredicted')
-            all_score.append('0')
+            else:
+                contigs_add.append(record.id)
+                all_pred.append('unpredicted')
+                all_score.append('0')
 
     contigs_list = list(contigs_list.keys()) + contigs_add
     length_list = [length_dict[item] for item in contigs_list]
@@ -225,9 +226,9 @@ def run(inputs):
     pred_csv.to_csv(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', index = False, sep='\t')
 
     if inputs.task != 'end_to_end':
-        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/all_predicted_protein.fa")
-        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/alignment_results.tab")
-        _ = os.system(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue' {rootpth}/{out_dir}/alignment_results.tab")
+        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/phatyp_supplementary/all_predicted_protein.fa")
+        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/phatyp_supplementary/alignment_results.tab")
+        _ = os.system(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue' {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
         
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
             # protein annotation
@@ -243,7 +244,7 @@ def run(inputs):
                 genes[ORF].anno = Counter(annotations).most_common()[0][0]
         
         # write the gene annotation by genomes
-        with open(f'{rootpth}/{out_dir}/gene_annotation.tsv', 'w') as f:
+        with open(f'{rootpth}/{out_dir}/cherry_supplementary/gene_annotation.tsv', 'w') as f:
             f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\n')
             for genome in genomes:
                 for gene in genomes[genome].genes:

@@ -28,6 +28,7 @@ def run(inputs):
 
     check_path(os.path.join(rootpth, out_dir))
     check_path(os.path.join(rootpth, midfolder))
+    check_path(os.path.join(rootpth, out_dir, 'contamination_supplementary'))
 
 
 
@@ -124,9 +125,9 @@ def run(inputs):
 
     # Open all files
     logger.info("[5/5] writing the results...")
-    with open(f'{rootpth}/{out_dir}/contamination.tsv', 'w') as f1, \
-        open(f'{rootpth}/{out_dir}/candidate_prophage.tsv', 'w') as f2, \
-        open(f'{rootpth}/{out_dir}/marker_gene_from_contamination_search.tsv', 'w') as f3:
+    with open(f'{rootpth}/{out_dir}/contamination_prediction.tsv', 'w') as f1, \
+        open(f'{rootpth}/{out_dir}/contamination_supplementary/candidate_prophage.tsv', 'w') as f2, \
+        open(f'{rootpth}/{out_dir}/contamination_supplementary/marker_gene_from_contamination_search.tsv', 'w') as f3:
 
         # Write headers
         f1.write(contamination_header)
@@ -178,5 +179,5 @@ def run(inputs):
                 records.append(record)
 
     # Write FASTA file
-    SeqIO.write(records, f"{rootpth}/{out_dir}/proviruses.fa", "fasta")
+    SeqIO.write(records, f"{rootpth}/{out_dir}/contamination_supplementary/proviruses.fa", "fasta")
     logger.info("Run time: %s seconds" % round(time.time() - program_start, 2))

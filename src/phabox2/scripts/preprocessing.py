@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 import pickle as pkl
 import subprocess
-import shutil
 from shutil import which
 from collections import Counter
 from Bio import SeqIO

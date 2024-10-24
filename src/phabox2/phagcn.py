@@ -38,6 +38,7 @@ def run(inputs):
         exit(1)
 
     check_path(os.path.join(rootpth, out_dir))
+    check_path(os.path.join(rootpth, out_dir, 'phagcn_supplementary'))
     check_path(os.path.join(rootpth, midfolder))
 
 
@@ -80,7 +81,7 @@ def run(inputs):
             exit()
 
 
-        SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
+        _ = SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
 
     ###############################################################
     ##################### PhaGCN (clustering)  ####################
@@ -110,7 +111,7 @@ def run(inputs):
     # combine the database with the predicted proteins
     _ = os.system(f"cat {db_dir}/RefVirus.faa {rootpth}/{midfolder}/query_protein.fa > {rootpth}/{midfolder}/ALLprotein.fa")
     # generate the diamond database
-    _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --quiet")
+    _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --threads {threads} --quiet")
     # run diamond
     # align to the database
     if os.path.exists(f'{rootpth}/{midfolder}/db_results.tab'):
@@ -160,7 +161,7 @@ def run(inputs):
     sub_df.to_csv(f'{rootpth}/{midfolder}/phagcn_network.tsv', sep='\t', index=False, header=False)
     #### drop network
     sub_df.rename(columns={'query':'Source', 'target':'Target', 'score':'Weight'}, inplace=True)
-    sub_df.to_csv(f"{rootpth}/{out_dir}/phagcn_network_edges.tsv", index=False, sep='\t')
+    sub_df.to_csv(f"{rootpth}/{out_dir}/phagcn_supplementary/phagcn_network_edges.tsv", index=False, sep='\t')
     _ = os.system(f'mcl {rootpth}/{midfolder}/phagcn_network.tsv -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/phagcn_genus_clusters.txt > /dev/null 2>&1')
 
 
@@ -275,8 +276,8 @@ def run(inputs):
     groups = cluster_df.groupby('cluster')
     for cluster, group in groups:
         acc_list = group['Accession']
-        # check whether  NCBI accession (NC_) exist
-        if any('NC_' in acc for acc in acc_list):
+        # check whether  NCBI accession (phabox) exist
+        if any('phabox' in acc for acc in acc_list):
             continue
         idx = group['Length'].idxmax()
         Lineage = group.loc[idx, 'Lineage']
@@ -287,10 +288,10 @@ def run(inputs):
     # assign the Lineage according to the entry in database
     for cluster, group in groups:
         acc_list = group['Accession']
-        # check whether  NCBI accession (NC_) exist
-        if not any('NC_' in acc for acc in acc_list):
+        # check whether  NCBI accession (phabox) exist
+        if not any('phabox' in acc for acc in acc_list):
             continue
-        ref_group = group[group['Accession'].apply(lambda x: 'NC_' in x)]
+        ref_group = group[group['Accession'].apply(lambda x: 'phabox' in x)]
         query_group = group[group['Accession'].isin(query_df['Accession'])]
         if len(ref_group[ref_group['Genus'] != '-']['Genus'].unique()) == 1:
             Lineage = ref_group['Lineage'].values[0]
@@ -340,13 +341,14 @@ def run(inputs):
             if len(record.seq) < inputs.len:
                 filtered_contig.append(record.id)
                 filtered_lenth.append(len(record.seq))
-            unpredicted_contig.append(record.id)
-            unpredicted_length.append(len(record.seq))
+            else:
+                unpredicted_contig.append(record.id)
+                unpredicted_length.append(len(record.seq))
 
 
     # Create lists by combining existing data with new entries
     all_contigs = df['Accession'].tolist() + filtered_contig + unpredicted_contig
-    all_pred = df['Pred'].tolist() + ['filtered'] * len(filtered_contig) + ['unpredicted'] * len(unpredicted_contig)
+    all_pred = df['Pred'].tolist() + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
     all_score = df['Score'].tolist() + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
     all_length = df['Length'].tolist() + filtered_lenth + unpredicted_length
     all_genus = df['Genus'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
@@ -376,16 +378,16 @@ def run(inputs):
         'TYPE': ['Ref']*len(refacc2genus) + ['Query']*len(query2genus)
         })
     
-    phagcn_node.to_csv(f"{rootpth}/{out_dir}/phagcn_network_nodes.tsv", index=False, sep='\t')
+    phagcn_node.to_csv(f"{rootpth}/{out_dir}/phagcn_supplementary/phagcn_network_nodes.tsv", index=False, sep='\t')
 
     if inputs.draw == 'Y':
-        draw_network(f'{rootpth}/{out_dir}', f'{rootpth}/{out_dir}', 'phagcn')
+        draw_network(f'{rootpth}/{out_dir}/phagcn_supplementary/', f'{rootpth}/{out_dir}/phagcn_supplementary/', 'phagcn')
 
 
     if inputs.task != 'end_to_end':
-        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/all_predicted_protein.fa")
-        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/alignment_results.tab")
-        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue" {rootpth}/{out_dir}/alignment_results.tab')
+        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/phagcn_supplementary/all_predicted_protein.fa")
+        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/phagcn_supplementary/alignment_results.tab")
+        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue" {rootpth}/{out_dir}/phagcn_supplementary/alignment_results.tab')
 
         genes = {}
         for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
@@ -413,7 +415,7 @@ def run(inputs):
                 genes[ORF].anno = Counter(annotations).most_common()[0][0]
         
         # write the gene annotation by genomes
-        with open(f'{rootpth}/{out_dir}/gene_annotation.tsv', 'w') as f:
+        with open(f'{rootpth}/{out_dir}/phagcn_supplementary/gene_annotation.tsv', 'w') as f:
             f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\n')
             for genome in genomes:
                 for gene in genomes[genome].genes:

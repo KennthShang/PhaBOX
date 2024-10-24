@@ -1,9 +1,10 @@
 import  os
 import  re
 import shutil
+import kcounter
+import datasets
 import  numpy as np
 import  pandas as pd
-import  pickle as pkl
 from Bio import SeqIO
 import warnings
 
@@ -13,15 +14,14 @@ import pyarrow as pa
 import  torch
 from    torch import nn
 from    torch import optim
-from collections import Counter
+
 from transformers import AutoModelForSequenceClassification
 from transformers import TrainingArguments, Trainer
-import kcounter
-import datasets
 from transformers import BertTokenizer
 from transformers import DataCollatorWithPadding
 from transformers import logging as transformers_logging
 
+import subprocess
 # Set logging level to ERROR
 transformers_logging.set_verbosity_error()
 import logging
@@ -986,4 +986,53 @@ def define_regions(genome, genes, gc_weight, delta_cutoff, min_host_fract, min_h
 def get_average_kmer_freq(genome):
     counts = list(kcounter.count_kmers(genome.seq, 21, canonical_kmers=True).values())
     return round(np.mean(counts), 2)
+
+
+def run_crt(db_dir, inpth, outpth, bfile):
+    cmd = ["java", "-cp", f"{db_dir}/CRT1.2-CLI.jar", "crt", inpth, outpth]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        return f"{bfile}"
+
+
+def is_valid_dna_sequence(sequence):
+    valid_bases = {'A', 'T', 'C', 'G', 'N'}
+    return all(base in valid_bases for base in sequence.upper())
+
+
+# ANI
+def parse_blast(input_path):
+    with open(input_path, 'r') as f:
+        lines = f.readlines()
+        data = []
+        for line in lines:
+            r = line.split()
+            if r[0] != r[1]:  # Skip self hits
+                data.append({
+                    'qname': r[0],
+                    'tname': r[1],
+                    'pid': float(r[2]),
+                    'len': float(r[3]),
+                    'qcoords': sorted([int(r[6]), int(r[7])]),
+                    'tcoords': sorted([int(r[8]), int(r[9])]),
+                    'qlen': float(r[-2]),
+                    'tlen': float(r[-1]),
+                    'evalue': float(r[-4])
+                })
+    return pd.DataFrame(data)
+
+def compute_ani(alns):
+    return round((alns['len'] * alns['pid']).sum() / alns['len'].sum(), 2)
+
+def compute_cov(alns, coord_col, len_col):
+    coords = sorted(alns[coord_col].to_list())
+    nr_coords = [coords[0]]
+    for start, stop in coords[1:]:
+        if start <= (nr_coords[-1][1] + 1):
+            nr_coords[-1][1] = max(nr_coords[-1][1], stop)
+        else:
+            nr_coords.append([start, stop])
+    alen = sum([stop - start + 1 for start, stop in nr_coords])
+    return round(100.0 * alen / alns[len_col].iloc[0], 2)
 

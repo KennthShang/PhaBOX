@@ -4,9 +4,9 @@ from phabox2 import (
     phagcn,
     phamer,
     phatyp,
-    contamination,
+    contamination
 )
 from phabox2.scripts.ulity import *
 from phabox2.scripts.preprocessing import *
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
