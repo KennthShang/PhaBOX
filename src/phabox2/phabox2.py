@@ -28,25 +28,25 @@ Syntax: phabox2 [--help] [--task TASK] [--dbdir DBDIR] [--outpth OUTPTH]
 
 
 
-\033[93mIn-task options:\033[0m
+\033[93mGeneral options:\033[0m
 
 \033[94m--task\033[0m    
     Select a program to run:
-    end_to_end    || run phamer, phagcn, phatyp, and cherry once (default)
-    phamer        || virus identification
-    phagcn        || taxonomy classification
-    phatyp        || lifestyle prediction
-    cherry        || host prediction
-    contamination || contamination/proviurs detection
-    votu          || vOTU groupping (ANI-based or AAI-based)
-    tree          || build pylogenetic tree based on marker genes
+    end_to_end    || Run phamer, phagcn, phatyp, and cherry once (default)
+    phamer        || Virus identification
+    phagcn        || Taxonomy classification
+    phatyp        || Lifestyle prediction
+    cherry        || Host prediction
+    contamination || Contamination/proviurs detection
+    votu          || vOTU grouping (ANI-based or AAI-based)
+    tree          || Build phylogenetic trees based on marker genes
 
-    \033[93mMore options of specific task, please run:\033[0m
+    \033[93mFor more options in specific tasks, please run:\033[0m
         \033[93mphabox2 --task [task] -h\033[0m
         \033[93mExample:\033[0m
             \033[93mphabox2 --task phamer -h\033[0m
             \033[93mphabox2 --task phagcn -h\033[0m
-    \033[93mend_to_end task will not show the options but using all the parameters\033[0m
+    \033[93mend_to_end task will not show the options but use all the parameters\033[0m
     \033[93mYou can also check the parameters via: https://github.com/KennthShang/PhaBOX/wiki/Command-line-options \033[0m
             
 
@@ -137,7 +137,7 @@ Usage: phabox2 --task phagcn [options]
 
 The options below are used to generate a network for virus-virus connections. 
 The current parameters are optimized for the ICTV 2024 and are highly accurate for grouping genus-level vOTUs. 
-When making changes, make sure you understand 100% what they are.
+When making changes, make sure you understand what they are.
 
 \033[94m--aai\033[0m 
     Average amino acids identity  || default: 75 || range from 0 to 100 
@@ -199,7 +199,11 @@ The options below are used to align contigs to CRISPRs.
 \033[94m--blast\033[0m
     BLAST program for CRISPRs || default: blastn || blastn or blastn-short
     blastn-short will lead to more sensitive results but require more time to execute the program 
+
+The default parameters are optimized for predicting prokaryotic hosts (data from the NCBI RefSeq database). 
+When making changes, make sure you understand what they are.
 """
+
 
 
 contamination_description = """Contamination: Contamination/proviurs detection
@@ -209,7 +213,7 @@ Usage: phabox2 --task contamination [options]
 
 \033[93mIn-task options:\033[0m
 
---sensitive   
+\033[94m--sensitive\033[0m    
     Sensitive when search for the prokaryotic genes || default: N ||  Y or N
     Y will lead to more sensitive results but require more time to execute the program
 """
@@ -251,15 +255,15 @@ Usage: phabox2 --task tree [options]
 \033[93mIn-task options:\033[0m
 
 \033[94m--marker\033[0m
-    A list of marker used to generate tree || default: terl portal
+    A list of markers used to generate tree || default: terl portal
     You can choose more than one marker to generate the tree from below:
     
     The marker genes were obtained from the RefSeq 2024:
-        endolysin: 91 percent prokaryotic virus have endolysin
-        holin: 75 percent prokaryotic virus have holin
-        head: 77 percent prokaryotic virus have marjor head
-        portal protein: 84 percent prokaryotic viruses have portal
-        terl: 92 percent prokaryotic viruses have terminase large subunit
+        endolysin      || 91 percent prokaryotic virus have endolysin
+        holin          || 75 percent prokaryotic virus have holin
+        head           || 77 percent prokaryotic virus have marjor head
+        portal protein || 84 percent prokaryotic viruses have portal
+        terl           || 92 percent prokaryotic viruses have terminase large subunit
 
         Using combinations of these markers can improve the accuracy of the tree 
         But will decrease the number of sequences in the tree.

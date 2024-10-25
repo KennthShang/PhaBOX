@@ -536,19 +536,7 @@ def run(inputs):
     # Update 'Method' column where 'Host' is not '-'
     df.loc[predicted.index, 'Method'] = 'AAI-based'
 
-    groups = predicted.groupby('cluster')
-    for cluster, group in groups:
-        idx = group['Crispr_score_mag'].idxmax()
-        host = group.loc[idx, 'Crispr_mag']
-        if host == '-':
-            continue
-        df.loc[group.index, 'Host'] = host
-        df.loc[group.index, 'Score'] = group.loc[idx, 'Crispr_score_mag']
-        df.loc[group.index, 'Method'] = 'CRISPR-based (MAG)'
-
-
-
-    groups = unpredicted.groupby('cluster')
+    groups = df.groupby('cluster')
     for cluster, group in groups:
         idx_mag = group['Crispr_score_mag'].idxmax()
         mag_host = group.loc[idx_mag, 'Crispr_mag']
@@ -644,7 +632,7 @@ def run(inputs):
             gene.strand = int(rec_info[6])
             gene.genome_id = gene.id.rsplit("_", 1)[0]
             gene.gc = float(rec_info[-1].split('gc_cont=')[-1])
-            gene.anno = 'hypothetical protein'
+            gene.anno = 'hypothetical protein (no hit)'
             genes[gene.id] = gene
             genomes[gene.genome_id].genes.append(gene.id)
 

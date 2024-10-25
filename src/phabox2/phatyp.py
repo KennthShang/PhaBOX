@@ -124,7 +124,7 @@ def run(inputs):
         gene.strand = int(rec_info[6])
         gene.genome_id = gene.id.rsplit("_", 1)[0]
         gene.gc = float(rec_info[-1].split('gc_cont=')[-1])
-        gene.anno = 'hypothetical protein'
+        gene.anno = 'hypothetical protein (no hit)'
         genes[gene.id] = gene
         try:
             genomes[gene.genome_id].genes.append(gene.id)
@@ -226,6 +226,7 @@ def run(inputs):
     pred_csv.to_csv(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', index = False, sep='\t')
 
     if inputs.task != 'end_to_end':
+        _ = os.system(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/phatyp_supplementary/all_predicted_contigs.fa")
         _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/phatyp_supplementary/all_predicted_protein.fa")
         _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/phatyp_supplementary/alignment_results.tab")
         _ = os.system(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue' {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
@@ -244,7 +245,7 @@ def run(inputs):
                 genes[ORF].anno = Counter(annotations).most_common()[0][0]
         
         # write the gene annotation by genomes
-        with open(f'{rootpth}/{out_dir}/cherry_supplementary/gene_annotation.tsv', 'w') as f:
+        with open(f'{rootpth}/{out_dir}/phatyp_supplementary/gene_annotation.tsv', 'w') as f:
             f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\n')
             for genome in genomes:
                 for gene in genomes[genome].genes:

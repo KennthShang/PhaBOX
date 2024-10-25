@@ -107,7 +107,7 @@ def run(inputs):
         gene.strand = int(rec_info[6])
         gene.genome_id = gene.id.rsplit("_", 1)[0]
         gene.gc = float(rec_info[-1].split('gc_cont=')[-1])
-        gene.anno = 'hypothetical protein'
+        gene.anno = 'hypothetical protein (no hit)'
         genes[gene.id] = gene
         genomes[gene.genome_id].genes.append(gene.id)
     
@@ -176,14 +176,15 @@ def run(inputs):
                         all_pred.append('virus')
                         all_score.append(float('{:.2f}'.format(score)))
                         all_proportion.append(float('{:.2f}'.format(pro)))
-                    if pro > 0.75:
-                        all_confidence.append('high-confidence')
-                    elif pro > 0.25:
-                        all_confidence.append('medium-confidence')
-                    elif pro > reject:
-                        all_confidence.append('low-confidence')
-                    else:
+                    if pro < reject:
                         all_confidence.append('lower than reject threshold')
+                    elif (pro+score)/2 > 0.8:
+                        all_confidence.append('high-confidence')
+                    elif (pro+score)/2 > 0.6:
+                        all_confidence.append('medium-confidence')
+                    else:
+                        all_confidence.append('low-confidence')
+                    
                 _ = pbar.update(len(batch_x))
 
 
@@ -242,6 +243,16 @@ def run(inputs):
             virus_rec.append(record)
 
     SeqIO.write(virus_rec, f'{rootpth}/{out_dir}/phamer_supplementary/predicted_virus.fa', 'fasta')
+    virus_protein_rec = []
+    for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
+        try:
+            _ = virus_list[record.id.rsplit('_', 1)[0]]
+            virus_protein_rec.append(record)
+        except:
+            pass
+    
+    SeqIO.write(virus_protein_rec, f'{rootpth}/{out_dir}/phamer_supplementary/predicted_virus_protein.fa', 'fasta')  
+    _ = os.system(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/phamer_supplementary/all_predicted_contigs.fa")      
     _ = os.system(f"cp {rootpth}/{out_dir}/phamer_supplementary/predicted_virus.fa {rootpth}/filtered_contigs.fa")
 
 
