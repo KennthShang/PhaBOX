@@ -535,7 +535,6 @@ def run(inputs):
     df.loc[predicted.index, 'Score'] = [genus2score[acc].split(';')[-1] if acc in genus2score else 1 for acc in predicted['Genus']]
     # Update 'Method' column where 'Host' is not '-'
     df.loc[predicted.index, 'Method'] = 'AAI-based'
-
     groups = df.groupby('cluster')
     for cluster, group in groups:
         idx_mag = group['Crispr_score_mag'].idxmax()
@@ -543,7 +542,8 @@ def run(inputs):
         idx_db = group['Crispr_score_db'].idxmax()
         db_host  = group.loc[idx_db, 'Crispr_db']  
         if mag_host == '-' and db_host == '-':
-            df.loc[group.index, 'Method'] = '-'
+            unpredicted = group[group['Host'] == '-']
+            df.loc[unpredicted.index, 'Method'] = '-'
         elif mag_host != '-':
             host = mag_host
             df.loc[group.index, 'Host'] = host
