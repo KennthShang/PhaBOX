@@ -532,7 +532,7 @@ def run(inputs):
     predicted = df[df['Host'] != '-']
     unpredicted = df[df['Host'] == '-']
 
-    df.loc[predicted.index, 'Score'] = [genus2score[acc].split(';')[-1] for acc in predicted['Genus']]
+    df.loc[predicted.index, 'Score'] = [genus2score[acc].split(';')[-1] if acc in genus2score else 1 for acc in predicted['Genus']]
     # Update 'Method' column where 'Host' is not '-'
     df.loc[predicted.index, 'Method'] = 'AAI-based'
 
