@@ -4,18 +4,12 @@
 
 This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk).
 
-PhaBOX2 is a Python library for virus-related tasks: 
-1. virus identification
-2. taxonomy classification
-3. host prediction
-4. lifestyle prediction (for prokaryotic virus). 
-
 Table of Contents
 =================
 * [ ⌛️&nbsp; News](#news)
 * [ 🚀&nbsp; Quick Start](#quick)
 * [ ⌛️&nbsp; License ](#license)
-* [ 🤵&nbsp; Team ](#team)
+* [ 🤵&nbsp; Wiki ](https://github.com/KennthShang/PhaBOX/wiki)
 
 
 
@@ -48,11 +42,8 @@ If you have any more suggestions, feel free to let me know! We consider long-ter
 
 You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome any suggestions.
 
-
+<a name="quick"></a>
 ## 🚀&nbsp; Quick Start
-
-
-
 ### Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial to help you get started quickly and understand how to use PhaBOX2. We hope you will enjoy it!
 
 
