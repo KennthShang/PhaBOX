@@ -22,35 +22,38 @@ Table of Contents
 <a name="news"></a>
 ## ⌛️&nbsp; News
 
-PhaBOX has now been upgraded to the 2.0 version!!! There are some major components, including:
+PhaBOX has now been upgraded to the 2.0 version, which is generalized for all kinds of viruses with faster speed!!! 
 
-  🎉 Generalize for all kinds of viruses with faster speed! But we will call it PhaBOX2, not VirBOX, for a better inheritance ：) 
+There are some major components, including:
 
-  🎉 Provide a more comprehensive taxonomy classification (latest ICTV 2024) and complete taxonomy lineage
+  🎉 Virus identification
 
-  🎉 Provide a genus-level clustering for potential new genera (genus-level vOTU)!
+  🎉 Taxonomy classification
 
-  🎉 Provide a protein annotation function!
+  🎉 Host prediction
 
-  🎉 Provide a contamination and prophage detection module!
+  🎉 Lifestyle prediction
 
-  🎉 Allowing to predict host using your bacterial MAGs
+  🎉 Contamination/provirus detection
 
-  🎉 Provide a vOTU grouping module
+  🎉 vOTU grouping
 
-  🎉 Provide a marker-searching module for the phylogenetic tree
+  🎉 Phylogenetic tree based on marker genes
 
-  🎉 More user-friendly commands!
+  🎉 Viral protein annotation
 
+  🎉 All the databases are updated to the latest ICTV 2024 release
 
-If you have further suggestions, feel free to let me know! You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome any suggestions.
+If you have any more suggestions, feel free to let me know! We consider long-term maintenance PhaBOX and adding modules according to your needs
+
+You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome any suggestions.
 
 
 ## 🚀&nbsp; Quick Start
 
 
 
-### Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial for you to get started quickly and understand the usage of phabox2. Hope you will enjoy it!
+### Please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial to help you get started quickly and understand how to use PhaBOX2. We hope you will enjoy it!
 
 
 
