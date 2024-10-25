@@ -65,7 +65,7 @@ requirements:
   - cpython=3.10.15=py310hd8ed1ab_2
   - cuda-version=11.8=h70ddcb2_3
   - cudatoolkit=11.8.0=h4ba93d1_13
-  - cudnn=9.2.1.18=h93471f6_0
+  - cudnn=8.9.7.29=hbc23b4c_3
   - curl=8.9.1=hdbd6064_0
   - cycler=0.12.1=pyhd8ed1ab_0
   - dataclasses=0.8=pyhc8e2a94_3
@@ -152,6 +152,7 @@ requirements:
   - libllvm14=14.0.6=hcd5def8_4
   - libmagma=2.8.0=hfdb99dd_0
   - libmagma_sparse=2.8.0=h9ddd185_0
+  - libmlir14=14.0.6=he0ac6c6_0
   - libnghttp2=1.58.0=h47da74e_1
   - libnsl=2.0.1=hd590300_0
   - libopenblas=0.3.28=pthreads_h94d23a6_0
@@ -166,7 +167,7 @@ requirements:
   - libstdcxx-ng=14.2.0=h4852527_1
   - libthrift=0.19.0=hb90f79a_1
   - libtiff=4.3.0=h0fcbabc_4
-  - libtorch=2.4.1=cpu_mkl_he3c781b_100
+  - libtorch=2.4.0=cuda118_h8db9d67_301
   - libunistring=0.9.10=h7f98852_0
   - libutf8proc=2.8.0=h166bdaf_0
   - libuuid=1.41.5=h5eee18b_0
@@ -177,6 +178,7 @@ requirements:
   - libxkbcommon=1.7.0=h2c5496b_1
   - libxml2=2.13.1=hfdd30dd_2
   - libzlib=1.2.13=h4ab18f5_6
+  - lit=19.1.2=pyhd8ed1ab_0
   - llvm-openmp=19.1.2=h024ca30_0
   - lz4-c=1.9.4=hcb278e6_0
   - mafft=7.525=h031d066_1
@@ -243,7 +245,7 @@ requirements:
   - python-tzdata=2024.2=pyhd8ed1ab_0
   - python-xxhash=3.5.0=py310ha75aee5_1
   - python_abi=3.10=2_cp310
-  - pytorch=2.4.1=cpu_mkl_py310h1581fbd_100
+  - pytorch=2.4.0=cuda118_py310h954aa82_301
   - pytz=2024.1=pyhd8ed1ab_0
   - pyyaml=6.0.2=py310ha75aee5_1
   - qhull=2020.2=h434a139_5
@@ -275,6 +277,7 @@ requirements:
   - tornado=6.4.1=py310ha75aee5_1
   - tqdm=4.66.5=pyhd8ed1ab_0
   - transformers=4.11.3=pyhd8ed1ab_0
+  - triton=2.0.0=cuda112py310hb224420_4
   - typing-extensions=4.12.2=hd8ed1ab_0
   - typing_extensions=4.12.2=pyha770c72_0
   - tzdata=2024b=hc8b5060_0
