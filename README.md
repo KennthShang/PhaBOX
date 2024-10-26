@@ -2,7 +2,6 @@
 
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
 
-# The program is under maintainance, will release updates on 26th
 
 
 This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk).
