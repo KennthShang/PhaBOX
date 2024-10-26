@@ -77,7 +77,7 @@ def run(inputs):
             data = []
             for genome in genomes:
                 data.append((genomes[genome].id, 'singleton', genomes[genome].id, genomes[genome].length))
-            df = pd.DataFrame(data, columns=['Sequence', 'vOTU', 'Representative', 'Length'])
+            df = pd.DataFrame(data, columns=['Accesssion', 'vOTU', 'Representative', 'Length'])
             df.to_csv(f'{rootpth}/{out_dir}/ANI_based_vOTU.tsv', index=False, sep='\t')
             return
 
@@ -136,7 +136,7 @@ def run(inputs):
             for member in members:
                 data.append((member, cluster_id, rep_seq, genomes[member].length))
 
-        df = pd.DataFrame(data, columns=['Sequence', 'vOTU', 'Representative', 'Length'])
+        df = pd.DataFrame(data, columns=['Accession', 'vOTU', 'Representative', 'Length'])
         df.to_csv(f'{rootpth}/{out_dir}/ANI_based_vOTU.tsv', index=False, sep='\t')
         return
                 

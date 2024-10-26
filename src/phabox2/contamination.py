@@ -126,7 +126,7 @@ def run(inputs):
     # Open all files
     logger.info("[5/5] writing the results...")
     with open(f'{rootpth}/{out_dir}/contamination_prediction.tsv', 'w') as f1, \
-        open(f'{rootpth}/{out_dir}/contamination_supplementary/candidate_prophage.tsv', 'w') as f2, \
+        open(f'{rootpth}/{out_dir}/contamination_supplementary/candidate_provirus.tsv', 'w') as f2, \
         open(f'{rootpth}/{out_dir}/contamination_supplementary/marker_gene_from_contamination_search.tsv', 'w') as f3:
 
         # Write headers

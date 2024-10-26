@@ -188,6 +188,12 @@ We have provided the complete network for visualization (network_edges.tsv and n
 Please check it out via: https://github.com/KennthShang/PhaBOX/wiki/Outputs#-outputs-for-specific-task
 
 
+The options below are used to predict CRISPRs based on MAGs.
+
+\033[94m--bfolder\033[0m
+    Path to the folder that contains MAGs || default: None
+
+
 The options below are used to align contigs to CRISPRs.
 
 \033[94m--cpident\033[0m
@@ -202,6 +208,8 @@ The options below are used to align contigs to CRISPRs.
 
 The default parameters are optimized for predicting prokaryotic hosts (data from the NCBI RefSeq database). 
 When making changes, make sure you understand what they are.
+
+
 """
 
 
