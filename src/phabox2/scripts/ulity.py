@@ -836,7 +836,7 @@ def annotate_genes(hmm_info_df, genomes, genes, align_df):
         try:
             gene = genes[query]
             gene.label = label[hmm_info_df[target]['category']]
-            gene.hmm_hit = {'target': target, 'evalue': evalue, 'function': hmm_info_df[target]['function']}
+            gene.marker_hit = {'target': target, 'evalue': evalue, 'function': hmm_info_df[target]['function']}
         except KeyError:
             pass
         
