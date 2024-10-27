@@ -4,7 +4,9 @@
 
 
 
-This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk).
+This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk). 
+
+For large-scale sequencing data, please download this local version and use more threads to speed up the program.
 
 <a name="news"></a>
 ## ⌛️&nbsp; News
