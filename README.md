@@ -1,4 +1,4 @@
-<img src='imgs/logo.png'>
+<img src='imgs/logo.jpg'>
 
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
 
