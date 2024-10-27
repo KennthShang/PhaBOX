@@ -6,15 +6,6 @@
 
 This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk).
 
-Table of Contents
-=================
-* [ ⌛️&nbsp; News](#news)
-* [ 🚀&nbsp; Quick Start](#quick)
-* [ ⌛️&nbsp; License ](#license)
-* [ 🤵&nbsp; Wiki ](https://github.com/KennthShang/PhaBOX/wiki)
-
-
-
 <a name="news"></a>
 ## ⌛️&nbsp; News
 
