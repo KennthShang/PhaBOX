@@ -66,7 +66,7 @@ def run(inputs):
         logger.info("[1/7] filtering the length of contigs...")
         rec = []
         for record in SeqIO.parse(contigs, 'fasta'):
-            if len(record.seq) > inputs.len:
+            if len(record.seq) >= inputs.len:
                 rec.append(record)
                 genome = Genome()
                 genome.id = record.id

@@ -52,7 +52,7 @@ def run(inputs):
     genomes = {}
     rec = []
     for record in SeqIO.parse(contigs, 'fasta'):
-        if len(record.seq) > inputs.len:
+        if len(record.seq) >= inputs.len:
             rec.append(record)
             genome = Genome()
             genome.seq = record.seq
