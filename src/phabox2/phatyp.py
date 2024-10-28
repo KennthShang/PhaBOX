@@ -205,7 +205,7 @@ def run(inputs):
                 all_score.append('0')
             else:
                 contigs_add.append(record.id)
-                all_pred.append('unpredicted')
+                all_pred.append('-')
                 all_score.append('0')
 
     contigs_list = list(contigs_list.keys()) + contigs_add
@@ -220,7 +220,7 @@ def run(inputs):
         merged_df = pred_csv.merge(taxonomy_df[['Accession', 'Lineage']], on='Accession', how='left')
         rows_to_update = ~merged_df['Lineage'].apply(lambda lineage: any(group in lineage for group in ProkaryoticGroup))
         # Update the pred_csv dataframe
-        pred_csv.loc[rows_to_update, 'TYPE'] = 'unpredicted'
+        pred_csv.loc[rows_to_update, 'TYPE'] = '-'
         pred_csv.loc[rows_to_update, 'PhaTYPScore'] = '0'
 
     pred_csv.to_csv(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', index = False, sep='\t')

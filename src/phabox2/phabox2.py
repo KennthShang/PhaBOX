@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from phabox2 import phamer, phatyp, phagcn, cherry, contamination, votu, tree
+from phabox2 import phamer, phatyp, phagcn, cherry, contamination, votu, tree, phavip
 import argparse
 import os
 import pandas as pd
@@ -32,11 +32,12 @@ Syntax: phabox2 [--help] [--task TASK] [--dbdir DBDIR] [--outpth OUTPTH]
 
 \033[94m--task\033[0m    
     Select a program to run:
-    end_to_end    || Run phamer, phagcn, phatyp, and cherry once (default)
+    end_to_end    || Run phamer, phagcn, phatyp, cherry, and phavip once (default)
     phamer        || Virus identification
     phagcn        || Taxonomy classification
     phatyp        || Lifestyle prediction
     cherry        || Host prediction
+    phavip        || Protein annotation
     contamination || Contamination/proviurs detection
     votu          || vOTU grouping (ANI-based or AAI-based)
     tree          || Build phylogenetic trees based on marker genes
@@ -77,6 +78,8 @@ Syntax: phabox2 [--help] [--task TASK] [--dbdir DBDIR] [--outpth OUTPTH]
 """
 
 overal_description = """
+
+
 \033[93mGeneral options:\033[0m
 
 \033[94m--dbdir\033[0m    
@@ -208,10 +211,16 @@ The options below are used to align contigs to CRISPRs.
 
 The default parameters are optimized for predicting prokaryotic hosts (data from the NCBI RefSeq database). 
 When making changes, make sure you understand what they are.
-
-
 """
 
+phavip_description = """PhaVIP: Virus annotation
+
+Usage: phabox2 --task phavip [options]
+
+\033[93mIn-task options:\033[0m
+
+There are no additional options for lifestyle prediction. Only need to follow the general options.
+"""
 
 
 contamination_description = """Contamination: Contamination/proviurs detection
@@ -304,6 +313,7 @@ def get_task_description(task):
         'contamination': contamination_description,
         'votu': votu_description,
         'tree': tree_description,
+        'phavip': phavip_description
     }
     return descriptions.get(task, f'No description for {task}.\nPlease check the description for subprogram.')
 
@@ -342,7 +352,7 @@ def main():
     inputs = parser.parse_args()
 
     if inputs.help:
-        if inputs.task in ['phamer', 'phagcn', 'phatyp', 'cherry', 'contamination', 'votu', 'tree']:
+        if inputs.task in ['phamer', 'phagcn', 'phatyp', 'cherry', 'contamination', 'votu', 'tree', 'phavip']:
             print(get_task_description(inputs.task))
             print(overal_description)
             return
@@ -380,6 +390,10 @@ def main():
     elif inputs.task == "phagcn":
         phagcn.run(inputs)
         logger.info(f"PhaGCN finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}\n\n")
+    elif inputs.task == "phavip":
+        phavip.run(inputs)
+        logger.info(f"PhaVIP finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}\n\n")
+        logger.info('The annotation file is named as protein_annotation.tsv in phavip_supplementary folder')
     elif inputs.task == "cherry":
         cherry.run(inputs)
         logger.info(f"Cherry finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}\n\n")

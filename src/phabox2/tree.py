@@ -16,7 +16,7 @@ from Bio.SeqRecord import SeqRecord
 def run(inputs):
 
     logger = get_logger()
-    logger.info("Running program: vOTU groupping")
+    logger.info("Running program: marker gene searching")
     program_start = time.time()
 
     contigs   = inputs.contigs

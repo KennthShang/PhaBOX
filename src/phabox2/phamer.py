@@ -244,9 +244,10 @@ def run(inputs):
 
     SeqIO.write(virus_rec, f'{rootpth}/{out_dir}/phamer_supplementary/predicted_virus.fa', 'fasta')
     virus_protein_rec = []
+    check = {item: 1 for item in virus_list}
     for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
         try:
-            _ = virus_list[record.id.rsplit('_', 1)[0]]
+            _ = check[record.id.rsplit('_', 1)[0]]
             virus_protein_rec.append(record)
         except:
             pass
