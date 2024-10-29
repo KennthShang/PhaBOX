@@ -221,7 +221,7 @@ def run(inputs):
                 all_pred.append('non-virus')
                 all_score.append(0)
                 all_proportion.append(0)
-                all_confidence.append('non-virus')
+                all_confidence.append('lower than reject threshold')
             else:
                 contigs_add.append(record.id)
                 length_add.append(len(record.seq))
