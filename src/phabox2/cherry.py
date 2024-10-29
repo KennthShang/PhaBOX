@@ -450,18 +450,38 @@ def run(inputs):
     ref_df = ref_df[['Accession', 'Lineage', 'Length', 'Genus']]
     cluster_df = pd.concat([query_df, ref_df])
     genus2host = pkl.load(open(f'{db_dir}/genus2host.pkl', 'rb'))
+    genus2hostlineage = pkl.load(open(f'{db_dir}/genus2hostlineage.pkl', 'rb'))
 
     
     cluster_df['Host'] = cluster_df['Genus'].apply(lambda x: genus2host[x] if x in genus2host else '-')
+    cluster_df['Host_NCBI'] = cluster_df['Genus'].apply(lambda x: genus2hostlineage[x] if x in genus2hostlineage else '-')
+    cluster_df['Host_GTDB'] = cluster_df['Genus'].apply(lambda x: 'Not found' if x in genus2hostlineage else '-')
+    cluster_df['Score'] = 0
+
+
     ref_df = cluster_df[cluster_df['Accession'].isin(ref_df['Accession'])]
     refacc2host = {acc:host for acc, host in zip(ref_df['Accession'], ref_df['Host'])}
 
     #prokaryote_df = pd.read_csv(f'{db_dir}/prokaryote.csv')
     CRISPRs_acc2host = pkl.load(open(f'{db_dir}/CRISPRs_acc2host.pkl', 'rb'))
+    hostacc2ncbi = pkl.load(open(f'{db_dir}/hostacc2ncbi.pkl', 'rb'))
+    hostacc2gtdb = pkl.load(open(f'{db_dir}/hostacc2gtdb.pkl', 'rb'))
     crispr2host = {}
+    crispr2host_NCBI_lineage = {}
+    crispr2host_GTDB_lineage = {}
     for acc in crispr_pred_db:
         host = CRISPRs_acc2host[crispr_pred_db[acc]['pred']]
+        try:
+            ncbi_lineage = hostacc2ncbi[crispr_pred_db[acc]['pred']]
+        except:
+            ncbi_lineage = 'Not found'
+        try:
+            gtdb_lineage = hostacc2gtdb[crispr_pred_db[acc]['pred']]
+        except:
+            gtdb_lineage = 'Not found'
         crispr2host[acc] = host
+        crispr2host_NCBI_lineage[acc] = ncbi_lineage
+        crispr2host_GTDB_lineage[acc] = gtdb_lineage
 
     # add crispr information to df['Crispr']
     try:
@@ -470,6 +490,8 @@ def run(inputs):
         crispr_pred_mag = {}
     cluster_df['Crispr_db'] = cluster_df['Accession'].apply(lambda x: crispr2host[x] if x in crispr2host else '-')
     cluster_df['Crispr_score_db'] = cluster_df['Accession'].apply(lambda x: crispr_pred_db[x]['ident'] if x in crispr_pred_db else 0.0)
+    cluster_df['Crispr_NCBI_db'] = cluster_df['Accession'].apply(lambda x: crispr2host_NCBI_lineage[x] if x in crispr2host_NCBI_lineage else '-')
+    cluster_df['Crispr_GTDB_db'] = cluster_df['Accession'].apply(lambda x: crispr2host_GTDB_lineage[x] if x in crispr2host_GTDB_lineage else '-')
     cluster_df['Crispr_mag'] = cluster_df['Accession'].apply(lambda x: crispr_pred_mag[x]['pred'] if x in crispr_pred_mag else '-')
     cluster_df['Crispr_score_mag'] = cluster_df['Accession'].apply(lambda x: crispr_pred_mag[x]['ident'] if x in crispr_pred_mag else 0.0)
 
@@ -507,6 +529,10 @@ def run(inputs):
         cluster_df.loc[group.index, 'Genus'] = Genus
         Host = group.loc[idx, 'Host']
         cluster_df.loc[group.index, 'Host'] = Host
+        ncbi = group.loc[idx, 'Host_NCBI']
+        cluster_df.loc[group.index, 'Host_NCBI'] = ncbi
+        gtdb = group.loc[idx, 'Host_GTDB']
+        cluster_df.loc[group.index, 'Host_GTDB'] = gtdb
 
     # assign the Lineage according to the entry in database
     for cluster, group in groups:
@@ -523,6 +549,10 @@ def run(inputs):
             cluster_df.loc[group.index, 'Genus'] = Genus
             Host = ref_group['Host'].values[0]
             cluster_df.loc[group.index, 'Host'] = Host
+            ncbi = ref_group['Host_NCBI'].values[0]
+            cluster_df.loc[group.index, 'Host_NCBI'] = ncbi
+            gtdb = ref_group['Host_GTDB'].values[0]
+            cluster_df.loc[group.index, 'Host_GTDB'] = gtdb
         else:
             # assign the host for the query group accoding to the genus
             for idx, row in query_group[query_group['Genus'] != '-'].iterrows():
@@ -561,11 +591,13 @@ def run(inputs):
             df.loc[group.index, 'Host'] = host
             df.loc[group.index, 'Score'] = group.loc[idx_db, 'Crispr_score_db']
             df.loc[group.index, 'Method'] = 'CRISPR-based (DB)'
+            df.loc[group.index, 'Host_NCBI'] = group.loc[idx_db, 'Crispr_NCBI_db']
+            df.loc[group.index, 'Host_GTDB'] = group.loc[idx_db, 'Crispr_GTDB_db']
 
 
     df = df.sort_values('Accession', ascending=False)
 
-    df = df[['Accession', 'Length', 'Host', 'Score', 'Method']]
+    df = df[['Accession', 'Length', 'Host', 'Host_NCBI', 'Host_GTDB', 'Score', 'Method']]
     df.to_csv(f'{rootpth}/{midfolder}/cherry_prediction.tsv', index=False, sep='\t')
 
 
@@ -599,6 +631,8 @@ def run(inputs):
     all_score = df['Score'].tolist() + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
     all_length = df['Length'].tolist() + filtered_lenth + unpredicted_length
     all_method = df['Method'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+    all_ncbi = df['Host_NCBI'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+    all_gtdb = df['Host_GTDB'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
 
     # Create DataFrame directly from lists
     contig_to_pred = pd.DataFrame({
@@ -606,7 +640,9 @@ def run(inputs):
         'Length': all_length,
         'Host': all_pred,
         'CHERRYScore': all_score,
-        'Method': all_method
+        'Method': all_method,
+        'Host_NCBI_lineage': all_ncbi,
+        'Host_GTDB_lineage': all_gtdb
     })
 
     # Filter genus for a specific condition

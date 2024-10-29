@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "phabox2"
+version = "2.1.1"  # Specify your version here
 authors = [
-    {name = "Stephen Nayfach", email = "jiayushang@cuhk.edu.hk"}
+    {name = "SHANG Jiayu", email = "jiayushang@cuhk.edu.hk"}
 ]
 readme = "README.md"
 license = {file = "LICENSE.txt"}
@@ -18,7 +19,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 requires-python = ">=3.8"
-dynamic = ["version"]
 
 
 [project.scripts]
