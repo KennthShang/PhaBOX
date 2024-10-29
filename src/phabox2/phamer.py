@@ -178,7 +178,7 @@ def run(inputs):
                         if pro < reject:
                             all_confidence.append('lower than reject threshold')
                         else:
-                            all_confidence.append('lower than viral score threshold')
+                            all_confidence.append('lower than viral score threshold;proteinal prophage, please run contamination detection task')
                     else:
                         all_pred.append('virus')
                         all_score.append(float('{:.2f}'.format(score)))
@@ -246,6 +246,7 @@ def run(inputs):
 
     virus_rec = []
     low_confidence = {item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'low-confidence;please run contamination detection task']['Accession'].values}
+    low_confidence = {**low_confidence, **{item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'lower than viral score threshold;proteinal prophage, please run contamination detection task']['Accession'].values}}
     low_virus_rec = []
     for record in SeqIO.parse(f'{contigs}', 'fasta'):
         try:
