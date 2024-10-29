@@ -108,7 +108,11 @@ def run(inputs):
         else:
             genome.provirus = 'No'
             genome.contamination = 0
-            if genome.kmer_freq < 1.25:
+            if genome.count_viral == 0 and genome.count_host > 0:
+                genome.confident = 'Low quality'
+            elif genome.count_viral > 0 and genome.count_host > genome.count_viral:
+                genome.confident = 'Medium quality'
+            elif genome.kmer_freq < 1.25:
                 genome.confident = 'High quality'
             else:
                 genome.confident = 'Medium quality'
