@@ -22,26 +22,26 @@ requirements:
     - python
     - setuptools
   run:
-    - python=3.10.14
-    - diamond=0.9.14
-    - blast=2.16.0 
-    - mcl 
-    - fasttree=2.1.11 
-    - kcounter=0.1.1 
-    - mafft=7.525
-    - numpy=1.26.4 
-    - pandas=2.2.3 
-    - networkx=3.4.2 
-    - seaborn-base=0.13.2 
-    - biopython=1.84 
-    - tqdm=4.66.5 
-    - scipy=1.14.1
-    - datasets 
-    - transformers 
-    - pytorch 
-    - triton 
-    - accelerate 
-    - prodigal-gv
+    - python =3.10.14
+    - diamond =0.9.14
+    - blast =2.16.0 
+    - mcl =22.282
+    - fasttree =2.1.11 
+    - kcounter =0.1.1 
+    - mafft =7.525
+    - numpy =1.26.4 
+    - pandas =2.2.3 
+    - networkx =3.4.2 
+    - seaborn-base =0.13.2 
+    - biopython =1.84 
+    - tqdm =4.66.5 
+    - scipy =1.14.1
+    - datasets >=2.19.2
+    - transformers >=4.46.0
+    - pytorch >=1.11.0
+    - triton >=2.0.0
+    - accelerate >=1.0.1
+    - prodigal-gv >=2.11.0
 
 test:
   commands:
