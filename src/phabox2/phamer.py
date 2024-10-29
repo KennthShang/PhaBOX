@@ -168,22 +168,26 @@ def run(inputs):
                 logit = model(batch_x)
                 logit = torch.sigmoid(logit.squeeze(1))
                 for score, pro in zip(logit, weight):
-                    if score < 0.5 and pro < reject:
+                    if score < 0.5 or pro < reject:
                         all_pred.append('non-virus')
                         all_score.append(float('{:.2f}'.format(pro)))
                         all_proportion.append(float('{:.2f}'.format(pro)))
+                        if pro < reject:
+                            all_confidence.append('lower than reject threshold')
+                        else:
+                            all_confidence.append('lower than viral score threshold')
                     else:
                         all_pred.append('virus')
                         all_score.append(float('{:.2f}'.format(score)))
                         all_proportion.append(float('{:.2f}'.format(pro)))
-                    if pro < reject:
-                        all_confidence.append('lower than reject threshold')
-                    elif (pro+score)/2 > 0.8:
-                        all_confidence.append('high-confidence')
-                    elif (pro+score)/2 > 0.6:
-                        all_confidence.append('medium-confidence')
-                    else:
-                        all_confidence.append('low-confidence;please run contamination detection task')
+                        if pro < reject:
+                            all_confidence.append('lower than reject threshold')
+                        elif (pro+score)/2 > 0.8:
+                            all_confidence.append('high-confidence')
+                        elif (pro+score)/2 > 0.6:
+                            all_confidence.append('medium-confidence')
+                        else:
+                            all_confidence.append('low-confidence;please run contamination detection task')
                     
                 _ = pbar.update(len(batch_x))
 
