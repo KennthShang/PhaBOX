@@ -170,7 +170,10 @@ def run(inputs):
                 for score, pro in zip(logit, weight):
                     if score < 0.5 or pro < reject:
                         all_pred.append('non-virus')
-                        all_score.append(float('{:.2f}'.format(pro)))
+                        if score < 0.5:
+                            all_score.append(float('{:.2f}'.format(score)))
+                        else:
+                            all_score.append(float('{:.2f}'.format(pro)))
                         all_proportion.append(float('{:.2f}'.format(pro)))
                         if pro < reject:
                             all_confidence.append('lower than reject threshold')
