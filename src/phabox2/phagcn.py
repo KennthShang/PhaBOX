@@ -58,6 +58,13 @@ def run(inputs):
             genome.regions = None
             genome.proportion = 0
             genomes[genome.id] = genome
+        if not genomes:
+            with open(f'{rootpth}/{out_dir}/phagcn_prediction.tsv', 'w') as file_out:
+                file_out.write("Accession\tLength\tLineage\tPhaGCNScore\tGenus\tGenusCluster\n")
+                for record in SeqIO.parse(contigs, 'fasta'):
+                    file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\t-\t-\n')
+            logger.info(f"PhaGCN finished! please check the results in {os.path.join(rootpth,out_dir, 'phagcn_prediction.tsv')}")
+            exit()
     else:
         logger.info("[1/8] filtering the length of contigs...")
         rec = []

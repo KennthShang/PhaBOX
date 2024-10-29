@@ -62,6 +62,13 @@ def run(inputs):
             genome.regions = None
             genome.proportion = 0
             genomes[genome.id] = genome
+        if not genomes:
+            with open(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', 'w') as file_out:
+                file_out.write("Accession\tLength\tLineage\tPhaTYPScore\tLifestyle\n")
+                for record in SeqIO.parse(contigs, 'fasta'):
+                    file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\t-\n')
+            logger.info(f"PhaTYP finished! please check the results in {os.path.join(rootpth,out_dir, 'phatyp_prediction.tsv')}")
+            exit()
     else:
         logger.info("[1/7] filtering the length of contigs...")
         rec = []
@@ -158,37 +165,37 @@ def run(inputs):
 
     logger.info("[4/7] converting sequences to sentences for language model...")
     sentence, id2contig, _, pc2wordsid = contig2sentence(db_dir, os.path.join(rootpth, midfolder), genomes)
-    generate_bert_input(os.path.join(rootpth, midfolder), sentence, pc2wordsid)
+    
+    all_pred = []
+    all_score = []
+    if id2contig:
+        generate_bert_input(os.path.join(rootpth, midfolder), sentence, pc2wordsid)
 
-    logger.info("[5/7] Predicting the lifestyle...")
-    #id2contig  = pkl.load(open(f'{rootpth}/{midfolder}/phatyp_sentence_id2contig.dict', 'rb'))
+        logger.info("[5/7] Predicting the lifestyle...")
+        #id2contig  = pkl.load(open(f'{rootpth}/{midfolder}/phatyp_sentence_id2contig.dict', 'rb'))
 
-    trainer, tokenized_data = init_bert(rootpth, midfolder, parampth)
+        trainer, tokenized_data = init_bert(rootpth, midfolder, parampth)
 
-    with torch.no_grad():
-        pred, _, _ = trainer.predict(tokenized_data["test"])
+        with torch.no_grad():
+            pred, _, _ = trainer.predict(tokenized_data["test"])
+
+        prediction_value = []
+        for item in pred:
+            prediction_value.append(softmax(item))
+        prediction_value = np.array(prediction_value)
+
+
+        for score in prediction_value:
+            pred = np.argmax(score)
+            if pred == 1:
+                all_pred.append('temperate')
+                all_score.append(float('{:.2f}'.format(score[1])))
+            else:
+                all_pred.append('virulent')
+                all_score.append(float('{:.2f}'.format(score[0])))
 
 
     logger.info("[6/7] summarizing the results...")
-    prediction_value = []
-    for item in pred:
-        prediction_value.append(softmax(item))
-    prediction_value = np.array(prediction_value)
-
-
-
-    all_pred = []
-    all_score = []
-    for score in prediction_value:
-        pred = np.argmax(score)
-        if pred == 1:
-            all_pred.append('temperate')
-            all_score.append(float('{:.2f}'.format(score[1])))
-        else:
-            all_pred.append('virulent')
-            all_score.append(float('{:.2f}'.format(score[0])))
-
-
     contigs_list = {item:1 for item in list(id2contig.values())}
     contigs_add = []
     length_dict = {}

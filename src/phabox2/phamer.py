@@ -183,7 +183,7 @@ def run(inputs):
                     elif (pro+score)/2 > 0.6:
                         all_confidence.append('medium-confidence')
                     else:
-                        all_confidence.append('low-confidence')
+                        all_confidence.append('low-confidence;please run contamination detection task')
                     
                 _ = pbar.update(len(batch_x))
 
@@ -226,7 +226,7 @@ def run(inputs):
                 elif genomes[record.id].proportion > 0.25:
                     all_confidence.append('medium-confidence')
                 else:
-                    all_confidence.append('low-confidence')
+                    all_confidence.append('low-confidence;please run contamination detection task')
 
 
     length_list = [genomes[item].length for item in contigs_list] + length_add
@@ -235,14 +235,26 @@ def run(inputs):
     logger.info("[7/7] writing the results...")
     pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":all_pred, "Proportion":all_proportion, "PhaMerScore":all_score, "PhaMerConfidence":all_confidence})
     pred_csv.to_csv(f'{rootpth}/{out_dir}/phamer_prediction.tsv', index = False, sep='\t')
-    virus_list = pred_csv[pred_csv['Pred'] == 'virus']['Accession'].values
+    virus_list = {item:1 for item in pred_csv[pred_csv['Pred'] == 'virus']['Accession'].values}
 
     virus_rec = []
+    low_confidence = {item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'low-confidence;please run contamination detection task']['Accession'].values}
+    low_virus_rec = []
     for record in SeqIO.parse(f'{contigs}', 'fasta'):
-        if record.id in virus_list:
+        try:
+            _ = virus_list[record.id]
             virus_rec.append(record)
+        except:
+            pass
+        try:
+            _ = low_confidence[record.id]
+            low_virus_rec.append(record)
+        except:
+            pass
+            
 
     SeqIO.write(virus_rec, f'{rootpth}/{out_dir}/phamer_supplementary/predicted_virus.fa', 'fasta')
+    SeqIO.write(low_virus_rec, f'{rootpth}/{out_dir}/phamer_supplementary/low_confident_virus.fa', 'fasta')
     virus_protein_rec = []
     check = {item: 1 for item in virus_list}
     for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):

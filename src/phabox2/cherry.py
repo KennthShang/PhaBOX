@@ -75,6 +75,13 @@ def run(inputs):
             genome.regions = None
             genome.proportion = 0
             genomes[genome.id] = genome
+        if not genomes:
+            with open(f'{rootpth}/{out_dir}/cherry_prediction.tsv', 'w') as file_out:
+                file_out.write("Accession\tLength\tHost\tCHERRYScore\tMethod\n")
+                for record in SeqIO.parse(contigs, 'fasta'):
+                    file_out.write(f'{record.id},{len({record.seq})},filtered,0,-\n')
+            logger.info(f"Cherry finished! please check the results in {os.path.join(rootpth,out_dir, 'cherry_prediction.tsv')}")
+            exit()
     else:
         logger.info(f"[1/{jy}] filtering the length of contigs...")
         rec = []
