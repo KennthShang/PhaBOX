@@ -11,9 +11,11 @@ For large-scale sequencing data, please download this local version and use more
 <a name="news"></a>
 ## ⌛️&nbsp; News
 
-PhaBOX has now been upgraded to the 2.0 version, which is generalized for all kinds of viruses with faster speed!!! 
+PhaBOX has now been upgraded to the 2.0 version with faster speed!
 
 There are some major components, including:
+
+  🎉 Generalized to all kinds of viruses
 
   🎉 Virus identification
 
