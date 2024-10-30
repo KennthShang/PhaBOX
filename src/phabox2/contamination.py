@@ -97,6 +97,9 @@ def run(inputs):
     with mp.Pool(threads) as pool:
         kmer_freq_list = pool.map(get_average_kmer_freq, genomes.values())
 
+    low_rec = []
+    medium_rec = []
+    high_rec = []
     for kmer_freq, genome in zip(kmer_freq_list, genomes.values()):
         genome.kmer_freq = kmer_freq
         if genome.regions:
@@ -109,13 +112,29 @@ def run(inputs):
             genome.provirus = 'No'
             genome.contamination = 0
             if genome.count_viral == 0 and genome.count_host > 0:
-                genome.confident = 'Low quality'
+                genome.confident = 'Low quality;no viral marker found'
+                seq = genome.seq
+                record = SeqRecord(Seq(seq), id=genome.id, description="")
+                low_rec.append(record)
             elif genome.count_viral > 0 and genome.count_host > genome.count_viral:
                 genome.confident = 'Medium quality'
+                seq = genome.seq
+                record = SeqRecord(Seq(seq), id=genome.id, description="")
+                medium_rec.append(record)
             elif genome.kmer_freq < 1.25:
                 genome.confident = 'High quality'
+                seq = genome.seq
+                record = SeqRecord(Seq(seq), id=genome.id, description="")
+                high_rec.append(record)
             else:
                 genome.confident = 'Medium quality'
+                seq = genome.seq
+                record = SeqRecord(Seq(seq), id=genome.id, description="")
+                medium_rec.append(record)
+
+    SeqIO.write(low_rec, f"{rootpth}/{out_dir}/contamination_supplementary/low_quality_virus.fa", "fasta")
+    SeqIO.write(medium_rec, f"{rootpth}/{out_dir}/contamination_supplementary/medium_quality_virus.fa", "fasta")
+    SeqIO.write(high_rec, f"{rootpth}/{out_dir}/contamination_supplementary/high_quality_virus.fa", "fasta")
 
 
 

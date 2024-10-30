@@ -250,19 +250,20 @@ def run(inputs):
     low_virus_rec = []
     for record in SeqIO.parse(f'{contigs}', 'fasta'):
         try:
+            _ = low_confidence[record.id]
+            low_virus_rec.append(record)
+        except:
+            continue
+        try:
             _ = virus_list[record.id]
             virus_rec.append(record)
         except:
             pass
-        try:
-            _ = low_confidence[record.id]
-            low_virus_rec.append(record)
-        except:
-            pass
+        
             
 
     SeqIO.write(virus_rec, f'{rootpth}/{out_dir}/phamer_supplementary/predicted_virus.fa', 'fasta')
-    SeqIO.write(low_virus_rec, f'{rootpth}/{out_dir}/phamer_supplementary/low_confident_virus.fa', 'fasta')
+    SeqIO.write(low_virus_rec, f'{rootpth}/{out_dir}/phamer_supplementary/uncertain_sequences_for_contamination_task.fa', 'fasta')
     virus_protein_rec = []
     check = {item: 1 for item in virus_list}
     for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
