@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phabox2"
+version = "2.1.1"  # Specify your version here
+authors = [
+    {name = "SHANG Jiayu", email = "jiayushang@cuhk.edu.hk"}
+]
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "License :: OSI Approved :: AFL License",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.8"
+
+
+[project.scripts]
+phabox2 = "phabox2.phabox2:main"

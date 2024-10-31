@@ -1,0 +1,65 @@
+{% set name = "phabox" %}
+{% set version = "2.1.1" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  #path: .
+  git_url: https://github.com/KennthShang/PhaBOX.git
+  git_rev: main  # or a specific commit/tag
+
+build:
+  number: 0
+  noarch: python
+  script: "{{ PYTHON }} -m pip install . -vv"
+  entry_points:
+    - phabox2=phabox2.phabox2:main
+
+requirements:
+  host:
+    - python
+    - setuptools
+  run:
+    - python =3.10.14
+    - diamond =0.9.14
+    - blast =2.16.0 
+    - mcl =22.282
+    - fasttree =2.1.11 
+    - kcounter =0.1.1 
+    - mafft =7.525
+    - numpy =1.26.4 
+    - pandas =2.2.3 
+    - networkx =3.4.2 
+    - seaborn-base =0.13.2 
+    - biopython =1.84 
+    - tqdm =4.66.5 
+    - scipy =1.14.1
+    - datasets >=2.19.2
+    - transformers >=4.46.0
+    - pytorch >=1.11.0
+    - triton >=2.0.0
+    - accelerate >=1.0.1
+    - prodigal-gv >=2.11.0
+
+test:
+  commands:
+    - phabox2 --help
+
+about:
+  home: https://github.com/KennthShang/PhaBOX
+  license: MIT
+  summary: Virus identification and analysis web server (tool set)
+
+extra:
+  recipe-maintainers:
+    - SHANG Jiayu
+    - PENG Cheng
+
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+
+  # Add other channels as needed
