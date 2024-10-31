@@ -252,7 +252,6 @@ def run(inputs):
         try:
             _ = low_confidence[record.id]
             low_virus_rec.append(record)
-            continue
         except:
             pass
         try:
