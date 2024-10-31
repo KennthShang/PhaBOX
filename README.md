@@ -44,7 +44,7 @@ filename="phagesuite_database.zip"
 html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
 curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=${fileid}" -o ${filename}
 
-# initial files
+# inital files
 fileid="1E94ii3Q0O8ZBm7UsyDT_n06YekNtfV20"
 filename="phagesuite_parameters.zip"
 html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
