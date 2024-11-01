@@ -100,33 +100,43 @@ def run(inputs):
     # run marker alignment
     logger.info(f"[3/5] running marker:")
     for item in marker:
-        logger.info(f"Current marker: {item}...")
-        _ = os.system(f'diamond makedb --in {db_dir}/marker/{item}.fa -d {rootpth}/{midfolder}/marker/{item}.dmnd --threads {threads} --quiet')
-        _ = os.system(f'diamond blastp --threads {threads} --query {rootpth}/{midfolder}/query_protein.fa --db {rootpth}/{midfolder}/marker/{item}.dmnd --out {rootpth}/{midfolder}/{item}.blast -k 1 --outfmt 6 qseqid sseqid qlen slen length pident evalue --quiet')
-        df = pd.read_csv(f'{rootpth}/{midfolder}/{item}.blast', sep='\t', names=['qseqid', 'sseqid', 'qlen', 'slen', 'length', 'pident', 'evalue'])
-        df['query'] = df['qseqid'].apply(lambda x: x.rsplit('_', 1)[0])
-        df['qcovhsp'] = df['length'] / df['qlen'] * 100
-        df['scovhsp'] = df['length'] / df['slen'] * 100
-        df['cov'] = df[['qcovhsp', 'scovhsp']].max(axis=1)
-        df = df.sort_values(['query', 'cov', 'pident'], ascending=False)
-        df = df.drop_duplicates(['query'], keep='first')
-        df = df[df['cov'] > cov]
-        df = df[df['pident'] > pident]
-        df.to_csv(f'{rootpth}/{midfolder}/marker/{item}_filtered.csv', index=False)
-        rec = [SeqRecord(genomes[genome].seq, id=genomes[genome].id, description=f'{item}') for genome in df['query']]
-        if not rec:
-            logger.info(f"No sequences passed the filter for marker {item}. Please check the file in {rootpth}/{midfolder}/marker/{item}_filtered.csv")
-            logger.info(f"You probably shouldn't choose the marker {item} or use a more flexible --mcov and --mpident.")
-            exit(1)
-        _ = SeqIO.write(rec, f'{rootpth}/{midfolder}/marker/{item}.fa', 'fasta')
-        _ = os.system(f'cat {rootpth}/{midfolder}/marker/{item}.fa {db_dir}/marker/{item}.fa > {rootpth}/{midfolder}/marker/{item}_conbined_db.fa')
-        _ = os.system(f'cp {rootpth}/{midfolder}/marker/{item}_conbined_db.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_conbined_db.fa')
+        if os.path.exists(f'{rootpth}/{midfolder}/marker/{item}_conbined_db.fa'):
+            logger.info(f"Skip the marker {item} since the combined db file already exists.")
+            continue
+        else:
+            logger.info(f"Current marker: {item}...")
+            _ = os.system(f'diamond makedb --in {db_dir}/marker/{item}.fa -d {rootpth}/{midfolder}/marker/{item}.dmnd --threads {threads} --quiet')
+            _ = os.system(f'diamond blastp --threads {threads} --query {rootpth}/{midfolder}/query_protein.fa --db {rootpth}/{midfolder}/marker/{item}.dmnd --out {rootpth}/{midfolder}/{item}.blast -k 1 --outfmt 6 qseqid sseqid qlen slen length pident evalue --quiet')
+            df = pd.read_csv(f'{rootpth}/{midfolder}/{item}.blast', sep='\t', names=['qseqid', 'sseqid', 'qlen', 'slen', 'length', 'pident', 'evalue'])
+            df['query'] = df['qseqid'].apply(lambda x: x.rsplit('_', 1)[0])
+            df['qcovhsp'] = df['length'] / df['qlen'] * 100
+            df['scovhsp'] = df['length'] / df['slen'] * 100
+            df['cov'] = df[['qcovhsp', 'scovhsp']].max(axis=1)
+            df = df.sort_values(['query', 'cov', 'pident'], ascending=False)
+            df = df.drop_duplicates(['query'], keep='first')
+            df = df[df['cov'] > cov]
+            df = df[df['pident'] > pident]
+            df.to_csv(f'{rootpth}/{midfolder}/marker/{item}_filtered.csv', index=False)
+            rec = [SeqRecord(genomes[genome].seq, id=genomes[genome].id, description=f'{item}') for genome in df['query']]
+            if not rec:
+                logger.info(f"No sequences passed the filter for marker {item}. Please check the file in {rootpth}/{midfolder}/marker/{item}_filtered.csv")
+                logger.info(f"You probably shouldn't choose the marker {item} or use a more flexible --mcov and --mpident.")
+                exit(1)
+            _ = SeqIO.write(rec, f'{rootpth}/{midfolder}/marker/{item}.fa', 'fasta')
+            _ = os.system(f'cat {rootpth}/{midfolder}/marker/{item}.fa {db_dir}/marker/{item}.fa > {rootpth}/{midfolder}/marker/{item}_conbined_db.fa')
+            _ = os.system(f'cp {rootpth}/{midfolder}/marker/{item}_conbined_db.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_conbined_db.fa')
+            _ = os.system(f'cp {rootpth}/{midfolder}/marker/{item}.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_without_db.fa')
 
     logger.info("[4/5] Running the msa...")
     if msa == 'Y':
         for item in marker:
-            logger.info(f"Running msa: {item}...This may take a long time...")
-            _ = os.system(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_conbined_db.fa > {rootpth}/{midfolder}/msa/{item}.aln')
+            if os.path.exists(f'{rootpth}/{midfolder}/msa/{item}.aln'):
+                logger.info(f"Skip the msa for marker {item} since the alignment file already exists.")
+                continue
+            else:
+                logger.info(f"Running msa: {item}...This may take a long time...")
+                _ = os.system(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_conbined_db.fa > {rootpth}/{midfolder}/msa/{item}.aln')
+        
         msa = {}
         for item in marker:
             msa[item] = {}
@@ -134,9 +144,10 @@ def run(inputs):
                 msa[item][record.id] = record.seq
     
         # get the common ids
-        for item in marker:
-            common = set(msa[item].keys())
-        common = set.intersection(*common)
+        common = set(msa[marker[0]].keys())
+        if len(marker) >1:
+            for item in marker[1:]:
+                common.intersection_update(msa[item].keys())
 
         if all('phabox' in item for item in common):
             logger.info(f"No common sequences found for joint msa. Please check the files in the {rootpth}/{midfolder}/msa/")
