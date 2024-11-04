@@ -15,7 +15,7 @@ PhaBOX has now been upgraded to the 2.0 version with faster speed!
 
 There are some major components, including:
 
-  🎉 Generalized for all kinds of viruses
+  🎉 Generalized for all kinds of viruses; more than just bacteriophage
 
   🎉 Virus identification
 
