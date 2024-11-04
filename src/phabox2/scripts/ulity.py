@@ -1036,3 +1036,44 @@ def compute_cov(alns, coord_col, len_col):
     alen = sum([stop - start + 1 for start, stop in nr_coords])
     return round(100.0 * alen / alns[len_col].iloc[0], 2)
 
+
+
+def phavip_dump_result(genomes, rootpth, out_dir, logger, supplementary):
+    try:
+        # summarize the annotation rate for each genome (phavip_prediction.tsv)
+        df = pd.read_csv(f'{rootpth}/{out_dir}/{supplementary}/gene_annotation.tsv', sep='\t')
+        anno_df = df[df['Annotation'] != 'hypothetical protein (no hit)']
+        genome = df['Genome'].unique()
+        length = [genomes[item].length for item in genome]
+        protein_num = [len(genomes[item].genes) for item in genome]
+        anno_num = [len(anno_df[anno_df['Genome'] == item]) for item in genome]
+        anno_rate = [item1 / item2 for item1, item2 in zip(anno_num, protein_num)]
+        anno_rate = [f'{item:.2f}' for item in anno_rate]
+
+        with open(f'{rootpth}/{out_dir}/phavip_prediction.tsv', 'w') as f:
+            f.write('Accession\tLength\tProtein_num\tAnnotated_num\tAnnotation_rate\n')
+            for item in zip(genome, length, protein_num, anno_num, anno_rate):
+                f.write(f'{item[0]}\t{item[1]}\t{item[2]}\t{item[3]}\t{item[4]}\n')
+    except:
+        logger.info("phavip failed. Please check the gene annotation file.")
+
+def load_gene_info(file, genomes):
+    genes = {}
+    for record in SeqIO.parse(file, 'fasta'):
+        gene = Gene()
+        rec_info = record.description.split()
+        gene.id = rec_info[0]
+        gene.start = int(rec_info[2])
+        gene.end = int(rec_info[4])
+        gene.strand = int(rec_info[6])
+        gene.genome_id = gene.id.rsplit("_", 1)[0]
+        gene.gc = float(rec_info[-1].split('gc_cont=')[-1])
+        gene.anno = 'hypothetical protein (no hit)'
+        gene.pident = 0
+        gene.coverage = 0
+        genes[gene.id] = gene
+        try:
+            genomes[gene.genome_id].genes.append(gene.id)
+        except:
+            pass
+    return genes

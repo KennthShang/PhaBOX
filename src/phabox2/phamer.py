@@ -97,19 +97,8 @@ def run(inputs):
 
 
 
-    genes = {}
-    for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
-        gene = Gene()
-        rec_info = record.description.split()
-        gene.id = rec_info[0]
-        gene.start = int(rec_info[2])
-        gene.end = int(rec_info[4])
-        gene.strand = int(rec_info[6])
-        gene.genome_id = gene.id.rsplit("_", 1)[0]
-        gene.gc = float(rec_info[-1].split('gc_cont=')[-1])
-        gene.anno = 'hypothetical protein (no hit)'
-        genes[gene.id] = gene
-        genomes[gene.genome_id].genes.append(gene.id)
+    genes = load_gene_info(f'{rootpth}/{midfolder}/query_protein.fa', genomes)
+
     
 
     # align to the database
@@ -146,10 +135,6 @@ def run(inputs):
         exit(1)
 
 
-    #sentence   = pkl.load(open(f'{rootpth}/{midfolder}/phamer_sentence.feat', 'rb'))
-    #id2contig  = pkl.load(open(f'{rootpth}/{midfolder}/phamer_sentence_id2contig.dict', 'rb'))
-    #proportion = pkl.load(open(f'{rootpth}/{midfolder}/phamer_sentence_proportion.feat', 'rb'))
-
     all_pred = []
     all_score = []
     all_proportion = []
@@ -178,7 +163,7 @@ def run(inputs):
                         if pro < reject:
                             all_confidence.append('lower than reject threshold')
                         else:
-                            all_confidence.append('lower than viral score threshold;proteinal prophage, please run contamination detection task')
+                            all_confidence.append('lower than viral score threshold; proteinal prophage, please run contamination detection task')
                     else:
                         all_pred.append('virus')
                         all_score.append(float('{:.2f}'.format(score)))
@@ -190,7 +175,7 @@ def run(inputs):
                         elif (pro+score)/2 > 0.6:
                             all_confidence.append('medium-confidence')
                         else:
-                            all_confidence.append('low-confidence;please run contamination detection task')
+                            all_confidence.append('low-confidence; please run contamination detection task')
                     
                 _ = pbar.update(len(batch_x))
 
@@ -233,7 +218,7 @@ def run(inputs):
                 elif genomes[record.id].proportion > 0.25:
                     all_confidence.append('medium-confidence')
                 else:
-                    all_confidence.append('low-confidence;please run contamination detection task')
+                    all_confidence.append('low-confidence; please run contamination detection task')
 
 
     length_list = [genomes[item].length for item in contigs_list] + length_add
@@ -245,8 +230,8 @@ def run(inputs):
     virus_list = {item:1 for item in pred_csv[pred_csv['Pred'] == 'virus']['Accession'].values}
 
     virus_rec = []
-    low_confidence = {item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'low-confidence;please run contamination detection task']['Accession'].values}
-    low_confidence = {**low_confidence, **{item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'lower than viral score threshold;proteinal prophage, please run contamination detection task']['Accession'].values}}
+    low_confidence = {item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'low-confidence; please run contamination detection task']['Accession'].values}
+    low_confidence = {**low_confidence, **{item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'lower than viral score threshold; proteinal prophage, please run contamination detection task']['Accession'].values}}
     low_virus_rec = []
     for record in SeqIO.parse(f'{contigs}', 'fasta'):
         try:
@@ -280,28 +265,31 @@ def run(inputs):
 
     _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/phamer_supplementary/all_predicted_protein.fa")
     _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/phamer_supplementary/alignment_results.tab")
-    _ = os.system(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue' {rootpth}/{out_dir}/phamer_supplementary/alignment_results.tab")
+    _ = os.system(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore' {rootpth}/{out_dir}/phamer_supplementary/alignment_results.tab")
     anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
     # protein annotation
-    ORF2hits, _ = parse_alignment(f'{rootpth}/{midfolder}/db_results.abc')
-    for ORF in ORF2hits:
-        annotations = []
-        for hit, _ in ORF2hits[ORF]:
-            try:
-                annotations.append(anno_df[hit])
-            except:
-                pass
-        if annotations:
-            genes[ORF].anno = Counter(annotations).most_common()[0][0]
-    
+    df = pd.read_csv(f'{rootpth}/{midfolder}/db_results.tab', sep='\t', names=['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore'])
+    df = df.drop_duplicates('qseqid', keep='first').copy()
+    df['coverage'] = df['length'] / df['qend']
+    df.loc[df['coverage'] > 1, 'coverage'] = 1
+    for idx, row in df.iterrows():
+        gene = genes[row['qseqid']]
+        try:
+            gene.anno = anno_df[row['sseqid']]
+        except:
+            gene.anno = 'hypothetical protein'
+        gene.pident = row['pident']
+        gene.coverage = row['coverage']
+        
     # write the gene annotation by genomes
     with open(f'{rootpth}/{out_dir}/phamer_supplementary/gene_annotation.tsv', 'w') as f:
-        f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\n')
+        f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\tpident\tcoverage\n')
         for genome in genomes:
             for gene in genomes[genome].genes:
-                f.write(f'{genome}\t{gene}\t{genes[gene].start}\t{genes[gene].end}\t{genes[gene].strand}\t{genes[gene].gc}\t{genes[gene].anno}\n')
+                f.write(f'{genome}\t{gene}\t{genes[gene].start}\t{genes[gene].end}\t{genes[gene].strand}\t{genes[gene].gc}\t{genes[gene].anno}\t{genes[gene].pident:.2f}\t{genes[gene].coverage:.2f}\n')
 
-        
+
+    phavip_dump_result(genomes, rootpth, out_dir, logger, supplementary = 'phamer_supplementary')
     
     logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))
 

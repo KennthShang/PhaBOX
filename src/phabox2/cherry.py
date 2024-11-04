@@ -645,9 +645,6 @@ def run(inputs):
         'Host_GTDB_lineage': all_gtdb
     })
 
-    # Filter genus for a specific condition
-    # all_pie = contig_to_pred['Genus'][contig_to_pred['Genus'] != '-']
-
     # Save DataFrame to CSV
     contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index=False, sep='\t')
     query2host = {acc: genus for acc, genus in zip(df['Accession'], df['Host'])}
@@ -665,44 +662,35 @@ def run(inputs):
         draw_network(f'{rootpth}/{out_dir}/cherry_supplementary/', f'{rootpth}/{out_dir}/cherry_supplementary', 'cherry')
     
     if inputs.task != 'end_to_end':
-        genes = {}
-        for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
-            gene = Gene()
-            rec_info = record.description.split()
-            gene.id = rec_info[0]
-            gene.start = int(rec_info[2])
-            gene.end = int(rec_info[4])
-            gene.strand = int(rec_info[6])
-            gene.genome_id = gene.id.rsplit("_", 1)[0]
-            gene.gc = float(rec_info[-1].split('gc_cont=')[-1])
-            gene.anno = 'hypothetical protein (no hit)'
-            genes[gene.id] = gene
-            genomes[gene.genome_id].genes.append(gene.id)
-
+        genes = load_gene_info(f'{rootpth}/{midfolder}/query_protein.fa', genomes)
 
         _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_protein.fa")
         _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
-        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue" {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab')
+        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab')
 
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
         # protein annotation
-        for ORF in ORF2hits:
-            annotations = []
-            for hit, _ in ORF2hits[ORF]:
-                try:
-                    annotations.append(anno_df[hit])
-                except:
-                    pass
-            if annotations:
-                genes[ORF].anno = Counter(annotations).most_common()[0][0]
+        df = pd.read_csv(f'{rootpth}/{midfolder}/db_results.tab', sep='\t', names=['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore'])
+        df = df.drop_duplicates('qseqid', keep='first').copy()
+        df['coverage'] = df['length'] / df['qend']
+        df.loc[df['coverage'] > 1, 'coverage'] = 1
+        for idx, row in df.iterrows():
+            gene = genes[row['qseqid']]
+            try:
+                gene.anno = anno_df[row['sseqid']]
+            except:
+                gene.anno = 'hypothetical protein'
+            gene.pident = row['pident']
+            gene.coverage = row['coverage']
 
         # write the gene annotation by genomes
         with open(f'{rootpth}/{out_dir}/cherry_supplementary/gene_annotation.tsv', 'w') as f:
-            f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\n')
+            f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\tpident\tcoverage\n')
             for genome in genomes:
                 for gene in genomes[genome].genes:
-                    f.write(f'{genome}\t{gene}\t{genes[gene].start}\t{genes[gene].end}\t{genes[gene].strand}\t{genes[gene].gc}\t{genes[gene].anno}\n')
+                    f.write(f'{genome}\t{gene}\t{genes[gene].start}\t{genes[gene].end}\t{genes[gene].strand}\t{genes[gene].gc}\t{genes[gene].anno}\t{genes[gene].pident:.2f}\t{genes[gene].coverage:.2f}\n')
 
+        phavip_dump_result(genomes, rootpth, out_dir, logger, supplementary = 'cherry_supplementary')
 
     
     logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))
