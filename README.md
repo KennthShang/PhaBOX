@@ -1,10 +1,18 @@
 <img src='imgs/logo.jpg'>
 
 
-
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
 
 
+![GitHub License](https://img.shields.io/github/license/KennthShang/PhaBOX)
+[![BioConda Install](https://img.shields.io/conda/dn/bioconda/phabox.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/phabox) 
+[![Github All Releases](https://img.shields.io/github/downloads/KennthShang/PhaBOX/total.svg)](https://github.com/KennthShang/PhaBOX/releases/latest) 
+[![PhaBOXv1](https://img.shields.io/static/v1.svg?label=PhaBOX_v1&message=bioadv/vbad101&color=blue)](https://doi.org/10.1093/bioadv/vbad101)
+[![PhaMer](https://img.shields.io/static/v1.svg?label=PhaMer&message=bib/bbac258&color=blue)](https://doi.org/10.1093/bib/bbac258)
+[![PhaGCN](https://img.shields.io/static/v1.svg?label=PhaGCN&message=bioinformatics/btab293&color=blue)](https://doi.org/10.1093/bioinformatics/btab293)
+[![PhaTYP](https://img.shields.io/static/v1.svg?label=PhaTYP&message=bib/bbac487&color=blue)](https://doi.org/10.1093/bib/bbac487)
+[![CHERRY](https://img.shields.io/static/v1.svg?label=CHERRY&message=bib/bbac182&color=blue)](https://doi.org/10.1093/bib/bbac182)
+[![PhaVIP](https://img.shields.io/static/v1.svg?label=CHERRY&message=bioinformatics/btad229&color=blue)](https://doi.org/10.1093/bioinformatics/btad229)
 
 This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk). 
 
@@ -54,3 +62,4 @@ You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome 
 
 ## 📘&nbsp; License
 The PhaBOX pipelines are released under the terms of the [Academic Free License v3.0 License](https://choosealicense.com/licenses/afl-3.0/).
+
