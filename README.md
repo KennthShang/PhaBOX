@@ -6,7 +6,6 @@
 ![PhaBOX Server](https://img.shields.io/badge/PhaBOX-Webserver-brightgreen)
 ![GitHub License](https://img.shields.io/github/license/KennthShang/PhaBOX)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/phabox.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/phabox) 
-[![Github All Releases](https://img.shields.io/github/downloads/KennthShang/PhaBOX/total.svg)](https://github.com/KennthShang/PhaBOX/releases/latest) 
 [![PhaBOXv1](https://img.shields.io/static/v1.svg?label=PhaBOX_v1&message=bioadv/vbad101&color=blue)](https://doi.org/10.1093/bioadv/vbad101)
 [![PhaMer](https://img.shields.io/static/v1.svg?label=PhaMer&message=bib/bbac258&color=blue)](https://doi.org/10.1093/bib/bbac258)
 [![PhaGCN](https://img.shields.io/static/v1.svg?label=PhaGCN&message=bioinformatics/btab293&color=blue)](https://doi.org/10.1093/bioinformatics/btab293)
