@@ -6,7 +6,7 @@ import pandas as pd
 from  phabox2.scripts.ulity import *
 
 
-__version__ = "2.0.1"
+__version__ = "2.1.4"
 description = """
                                   \033[1m\033[96mPhaBOX v2.0.1\033[0m\033[0m                  
                \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Otc. 2024\033[0m\033[0m 
