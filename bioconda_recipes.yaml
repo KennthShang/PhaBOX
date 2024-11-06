@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/KennthShang/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: b3e342571c7344a22913d6d2f50a2c4b44682c9de1f13a6684d08df19f8ccf36
+  sha256: 963d71ac1e600f5a41cd8ff22a66a34921190e7b8afe449aa5ca3fd10fabba40
 
 build:
   number: 0
@@ -20,31 +20,30 @@ build:
 
 requirements:
   host:
-    - python >=3.10
+    - python >=3.8
     - pip
     - setuptools
   run:
-    - python >=3.10
-    - biopython >=1.84 
-    - datasets
+    - python >=3.8
+    - biopython >=1.84
+    - datasets >=3
     - kcounter >=0.1.1
     - fasttree >=2.1.11
     - mafft >=7.525
-    - networkx >=3.4.2
-    - numpy >=1.26.4
-    - pandas >=2.2.3
+    - networkx >=3.4
+    - numpy >=1.26
+    - pandas >=2
     - prodigal-gv >=2.11.0
-    - pytorch
-    - scipy >=1.14.1
+    - pyarrow >=16
+    - pytorch >=2.4
+    - scipy >=1.14
     - seaborn-base >=0.13.2
-    - transformers
-    - diamond <=0.9.14
+    - transformers >=4
     - blast >=2.16.0
+    - diamond <=0.9.14
     - mcl >=22.282
-    - tqdm >=4.66.5
-    - triton
-    - accelerate
-
+    - accelerate >=1.0.1
+    
 test:
   commands:
     - phabox2 --help
