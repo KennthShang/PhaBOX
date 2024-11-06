@@ -70,8 +70,8 @@ def run(inputs):
 
     if mode.upper() == 'ANI':
         logger.info("[1/5] calling genes with prodigal...")
-        _ = os.system(f"makeblastdb -in {rootpth}/filtered_contigs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/selfdb > /dev/null 2>&1")
-        _ = os.system(f"blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/selfdb -out {rootpth}/{midfolder}/ani_blast.tsv -outfmt '6 std qlen slen' -max_target_seqs 25000 -perc_identity 90  -num_threads 40 -evalue 1e-3")
+        run_command(f"makeblastdb -in {rootpth}/filtered_contigs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/selfdb > /dev/null 2>&1")
+        run_command(f"blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/selfdb -out {rootpth}/{midfolder}/ani_blast.tsv -outfmt '6 std qlen slen' -max_target_seqs 25000 -perc_identity 90  -num_threads 40 -evalue 1e-3")
         df = parse_blast(f'{rootpth}/{midfolder}/ani_blast.tsv')
         if df.empty:
             data = []
@@ -164,9 +164,9 @@ def run(inputs):
             parallel_prodigal_gv(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/query_protein.fa', threads)
 
         logger.info("[2/5] running diamond blastp...")
-        _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --quiet")
-        _ = os.system(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
-        _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
+        run_command(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --quiet")
+        run_command(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+        run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
 
         genome_size = defaultdict(int)
         for index, r in enumerate(SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta')):
@@ -183,7 +183,7 @@ def run(inputs):
         sub_df.to_csv(f'{rootpth}/{midfolder}/phagcn_network.tsv', sep='\t', index=False, header=False)
         #### drop network
         sub_df.rename(columns={'query':'Source', 'target':'Target', 'score':'Weight'}, inplace=True)
-        _ = os.system(f'mcl {rootpth}/{midfolder}/phagcn_network.tsv -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/phagcn_genus_clusters.txt > /dev/null 2>&1')
+        run_command(f'mcl {rootpth}/{midfolder}/phagcn_network.tsv -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/phagcn_genus_clusters.txt > /dev/null 2>&1')
 
 
         logger.info("[4/5] generating vOTU...")

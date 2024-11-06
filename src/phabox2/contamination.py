@@ -51,7 +51,7 @@ def run(inputs):
 
     logger.info("[1/5] calling genes with prodigal...")
     if not os.path.exists(f'{proteins}'):
-        _ = os.system(f'cp {contigs} {rootpth}/check_contig.fa')
+        run_command(f'cp {contigs} {rootpth}/check_contig.fa')
         parallel_prodigal_gv(f'{rootpth}/check_contig.fa', f'{rootpth}/{midfolder}/check_protein.fa', threads)
         proteins = f'{rootpth}/{midfolder}/check_protein.fa'
 
@@ -78,9 +78,9 @@ def run(inputs):
     logger.info("[2/5] Annotating genes...")
     contamination_db = f'{db_dir}/contamination.dmnd'
     if sensitive == 'N':
-        _ = os.system(f'diamond blastp -d {contamination_db} -q {proteins} -o {rootpth}/{midfolder}/contamination.tsv --sensitive -k 1 --quiet -f 6 qseqid sseqid evalue')
+        run_command(f'diamond blastp -d {contamination_db} -q {proteins} -o {rootpth}/{midfolder}/contamination.tsv --sensitive -k 1 --quiet -f 6 qseqid sseqid evalue')
     if sensitive == 'Y':
-        _ = os.system(f'diamond blastp -d {contamination_db} -q {proteins} -o {rootpth}/{midfolder}/contamination.tsv --very-sensitive -k 1 --quiet -f 6 qseqid sseqid evalue')
+        run_command(f'diamond blastp -d {contamination_db} -q {proteins} -o {rootpth}/{midfolder}/contamination.tsv --very-sensitive -k 1 --quiet -f 6 qseqid sseqid evalue')
     align_df = pd.read_csv(f'{rootpth}/{midfolder}/contamination.tsv', sep='\t', names=['query', 'target', 'evalue'])
     align_df['target'] = align_df['target'].apply(lambda x: x.split('-consensus')[0])
     annotate_genes(db_info_df, genomes, genes, align_df)

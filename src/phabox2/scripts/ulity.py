@@ -35,6 +35,19 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import math
 
+
+
+
+def run_command(command):
+    try:
+        # Using subprocess.run to execute the command
+        result = subprocess.run(command, shell=True, check=True, text=True, capture_output=True)
+        #print(result.stdout)  # Print the standard output from the command
+    except subprocess.CalledProcessError as e:
+        print(f"Command '{command}' failed with exit code {e.returncode}")
+        print(e.stderr)  # Print the standard error from the command
+        exit(e.returncode)  # Exit with the non-zero exit code
+
 # draw network for phagcn and cherry
 def draw_network(in_fn = './', out_fn='./', task='phagcn'):
     if task == 'phagcn':

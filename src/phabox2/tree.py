@@ -105,8 +105,8 @@ def run(inputs):
             continue
         else:
             logger.info(f"Current marker: {item}...")
-            _ = os.system(f'diamond makedb --in {db_dir}/marker/{item}.fa -d {rootpth}/{midfolder}/marker/{item}.dmnd --threads {threads} --quiet')
-            _ = os.system(f'diamond blastp --threads {threads} --query {rootpth}/{midfolder}/query_protein.fa --db {rootpth}/{midfolder}/marker/{item}.dmnd --out {rootpth}/{midfolder}/{item}.blast -k 1 --outfmt 6 qseqid sseqid qlen slen length pident evalue --quiet')
+            run_command(f'diamond makedb --in {db_dir}/marker/{item}.fa -d {rootpth}/{midfolder}/marker/{item}.dmnd --threads {threads} --quiet')
+            run_command(f'diamond blastp --threads {threads} --query {rootpth}/{midfolder}/query_protein.fa --db {rootpth}/{midfolder}/marker/{item}.dmnd --out {rootpth}/{midfolder}/{item}.blast -k 1 --outfmt 6 qseqid sseqid qlen slen length pident evalue --quiet')
             df = pd.read_csv(f'{rootpth}/{midfolder}/{item}.blast', sep='\t', names=['qseqid', 'sseqid', 'qlen', 'slen', 'length', 'pident', 'evalue'])
             df['query'] = df['qseqid'].apply(lambda x: x.rsplit('_', 1)[0])
             df['qcovhsp'] = df['length'] / df['qlen'] * 100
@@ -123,9 +123,9 @@ def run(inputs):
                 logger.info(f"You probably shouldn't choose the marker {item} or use a more flexible --mcov and --mpident.")
                 exit(1)
             _ = SeqIO.write(rec, f'{rootpth}/{midfolder}/marker/{item}.fa', 'fasta')
-            _ = os.system(f'cat {rootpth}/{midfolder}/marker/{item}.fa {db_dir}/marker/{item}.fa > {rootpth}/{midfolder}/marker/{item}_conbined_db.fa')
-            _ = os.system(f'cp {rootpth}/{midfolder}/marker/{item}_conbined_db.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_conbined_db.fa')
-            _ = os.system(f'cp {rootpth}/{midfolder}/marker/{item}.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_without_db.fa')
+            run_command(f'cat {rootpth}/{midfolder}/marker/{item}.fa {db_dir}/marker/{item}.fa > {rootpth}/{midfolder}/marker/{item}_conbined_db.fa')
+            run_command(f'cp {rootpth}/{midfolder}/marker/{item}_conbined_db.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_conbined_db.fa')
+            run_command(f'cp {rootpth}/{midfolder}/marker/{item}.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_without_db.fa')
 
     logger.info("[4/5] Running the msa...")
     if msa == 'Y':
@@ -135,7 +135,7 @@ def run(inputs):
                 continue
             else:
                 logger.info(f"Running msa: {item}...This may take a long time...")
-                _ = os.system(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_conbined_db.fa > {rootpth}/{midfolder}/msa/{item}.aln')
+                run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_conbined_db.fa > {rootpth}/{midfolder}/msa/{item}.aln')
         
         msa = {}
         for item in marker:
@@ -168,7 +168,7 @@ def run(inputs):
         if tree == 'Y':
             logger.info("[5/5] building tree...")
             logger.info("This may take a long time...")
-            _ = os.system(f'export OMP_NUM_THREADS={threads};fasttree -quiet {rootpth}/{out_dir}/combined_marker.msa > {rootpth}/{out_dir}/combined.tree')
+            run_command(f'export OMP_NUM_THREADS={threads};fasttree -quiet {rootpth}/{out_dir}/combined_marker.msa > {rootpth}/{out_dir}/combined.tree')
         else:
             logger.info("Skip the tree building step...")
     else:

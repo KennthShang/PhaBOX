@@ -104,15 +104,15 @@ def run(inputs):
 
     
     logger.info("[3/8] running all-against-all alignment...")
-    _ = os.system(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
-    _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
+    run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+    run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
 
 
 
-    _ = os.system(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/phavip_supplementary/all_predicted_contigs.fa")
-    _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/phavip_supplementary/all_predicted_protein.fa")
-    _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/phavip_supplementary/alignment_results.tab")
-    _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/phavip_supplementary/alignment_results.tab')
+    run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/phavip_supplementary/all_predicted_contigs.fa")
+    run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/phavip_supplementary/all_predicted_protein.fa")
+    run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/phavip_supplementary/alignment_results.tab")
+    run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/phavip_supplementary/alignment_results.tab')
 
     genes = load_gene_info(f'{rootpth}/{midfolder}/query_protein.fa', genomes)
 

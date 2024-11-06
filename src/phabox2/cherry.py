@@ -171,24 +171,24 @@ def run(inputs):
                 exit(1)
         else:
             SeqIO.write(total_rec, f"{rootpth}/{midfolder}/CRISPRs.fa", 'fasta')
-            _ = os.system(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_MAGs.fa")
+            run_command(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_MAGs.fa")
             check_path(os.path.join(rootpth, midfolder, 'crispr_db'))
-            _ = os.system(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPR > /dev/null 2>&1')
+            run_command(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPR > /dev/null 2>&1')
 
 
             logger.info(f"[3/{jy}] predicting MAG CRISPRs...")
 
             if blast == 'blastn-short':
-                _ = os.system(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+                run_command(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
             elif blast == 'blastn':
-                _ = os.system(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+                run_command(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
                 
 
             crispr_df = pd.read_csv(f"{rootpth}/{midfolder}/crispr_out.tab", sep='\t', names = ['qseqid', 'sseqid', 'evalue', 'pident', 'length', 'slen'])
             crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
             crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
             crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv", sep = '\t', index = False)
-            _ = os.system(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_MAG.tsv")
+            run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_MAG.tsv")
             best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
             crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
             pkl.dump(crispr_pred_mag, open(f'{rootpth}/{midfolder}/crispr_pred_mag.dict', 'wb'))
@@ -240,16 +240,16 @@ def run(inputs):
     logger.info(f"[4/{jy}] predicting DB CRISPRs...")
 
     if blast == 'blastn-short':
-        _ = os.system(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {db_dir}/crispr_db/allCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+        run_command(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {db_dir}/crispr_db/allCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
     elif blast == 'blastn':
-        _ = os.system(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {db_dir}/crispr_db/allCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+        run_command(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {db_dir}/crispr_db/allCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
 
 
     crispr_df = pd.read_csv(f"{rootpth}/{midfolder}/crispr_out.tab", sep='\t', names = ['qseqid', 'sseqid', 'evalue', 'pident', 'length', 'slen'])
     crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
     crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
     crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv", sep = '\t', index = False)
-    _ = os.system(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_DB.tsv")
+    run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_DB.tsv")
     best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
     #crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
     crispr_pred_db = {}
@@ -291,15 +291,15 @@ def run(inputs):
     else:
         logger.info(f"[5/{jy}] running all-against-all alignment...")
         # combine the database with the predicted proteins
-        _ = os.system(f"cat {db_dir}/RefVirus.faa {rootpth}/{midfolder}/query_protein.fa > {rootpth}/{midfolder}/ALLprotein.fa")
+        run_command(f"cat {db_dir}/RefVirus.faa {rootpth}/{midfolder}/query_protein.fa > {rootpth}/{midfolder}/ALLprotein.fa")
         # generate the diamond database
-        _ = os.system(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --threads {threads} --quiet")
+        run_command(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --threads {threads} --quiet")
         # align to the database
-        _ = os.system(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
-        _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
+        run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+        run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
         # align to itself
-        _ = os.system(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
-        _ = os.system(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
+        run_command(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+        run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
 
 
     logger.info(f"[6/{jy}] generating cherry networks...")
@@ -351,7 +351,7 @@ def run(inputs):
     # filter the network
     if os.path.exists(f'{rootpth}/{midfolder}/phagcn_network.tsv'):
         cherry_network = f'phagcn_network.tsv'
-        _ = os.system(f'cp {rootpth}/{out_dir}/phagcn_supplementary/phagcn_network_edges.tsv {rootpth}/{out_dir}/cherry_supplementary/cherry_network_edges.tsv')
+        run_command(f'cp {rootpth}/{out_dir}/phagcn_supplementary/phagcn_network_edges.tsv {rootpth}/{out_dir}/cherry_supplementary/cherry_network_edges.tsv')
     else:
         cherry_network = f'cherry_network.tsv'
         compute_aai(f'{rootpth}/{midfolder}', 'db_results', genome_size)
@@ -368,7 +368,7 @@ def run(inputs):
         sub_df.rename(columns={'query':'Source', 'target':'Target', 'score':'Weight'}, inplace=True)
         sub_df.to_csv(f"{rootpth}/{out_dir}/cherry_supplementary/cherry_network_edges.tsv", index=False, sep='\t')
     
-    _ = os.system(f'mcl {rootpth}/{midfolder}/{cherry_network} -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/cherry_genus_clusters.txt > /dev/null 2>&1')
+    run_command(f'mcl {rootpth}/{midfolder}/{cherry_network} -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/cherry_genus_clusters.txt > /dev/null 2>&1')
 
 
     contig2ORFs = {}
@@ -663,10 +663,10 @@ def run(inputs):
     
     if inputs.task != 'end_to_end':
         genes = load_gene_info(f'{rootpth}/{midfolder}/query_protein.fa', genomes)
-
-        _ = os.system(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_protein.fa")
-        _ = os.system(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
-        _ = os.system(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab')
+        run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/phagcn_supplementary/all_predicted_contigs.fa")
+        run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_protein.fa")
+        run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
+        run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab')
 
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
         # protein annotation
