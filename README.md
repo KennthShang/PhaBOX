@@ -1,5 +1,5 @@
 <img src='imgs/logo.jpg'>
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](/LICENSE.md)
+
 
 
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
