@@ -1,5 +1,5 @@
 {% set name = "PhaBOX" %}
-{% set version = "2.1.4" %}
+{% set version = "2.1.5" %}
 
 package:
   name: "{{ name|lower }}"
