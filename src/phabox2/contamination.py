@@ -25,10 +25,10 @@ def run(inputs):
     threads   = inputs.threads
     sensitive   = inputs.sensitive
 
-
+    supplementary = 'contamination_supplementary'
     check_path(os.path.join(rootpth, out_dir))
     check_path(os.path.join(rootpth, midfolder))
-    check_path(os.path.join(rootpth, out_dir, 'contamination_supplementary'))
+    check_path(os.path.join(rootpth, out_dir, supplementary))
 
 
 
@@ -132,9 +132,9 @@ def run(inputs):
                 record = SeqRecord(Seq(seq), id=genome.id, description="")
                 medium_rec.append(record)
 
-    SeqIO.write(low_rec, f"{rootpth}/{out_dir}/contamination_supplementary/low_quality_virus.fa", "fasta")
-    SeqIO.write(medium_rec, f"{rootpth}/{out_dir}/contamination_supplementary/medium_quality_virus.fa", "fasta")
-    SeqIO.write(high_rec, f"{rootpth}/{out_dir}/contamination_supplementary/high_quality_virus.fa", "fasta")
+    SeqIO.write(low_rec, f"{rootpth}/{out_dir}/{supplementary}/low_quality_virus.fa", "fasta")
+    SeqIO.write(medium_rec, f"{rootpth}/{out_dir}/{supplementary}/medium_quality_virus.fa", "fasta")
+    SeqIO.write(high_rec, f"{rootpth}/{out_dir}/{supplementary}/high_quality_virus.fa", "fasta")
 
 
 
@@ -149,8 +149,8 @@ def run(inputs):
     # Open all files
     logger.info("[5/5] writing the results...")
     with open(f'{rootpth}/{out_dir}/contamination_prediction.tsv', 'w') as f1, \
-        open(f'{rootpth}/{out_dir}/contamination_supplementary/candidate_provirus.tsv', 'w') as f2, \
-        open(f'{rootpth}/{out_dir}/contamination_supplementary/marker_gene_from_contamination_search.tsv', 'w') as f3:
+        open(f'{rootpth}/{out_dir}/{supplementary}/candidate_provirus.tsv', 'w') as f2, \
+        open(f'{rootpth}/{out_dir}/{supplementary}/marker_gene_from_contamination_search.tsv', 'w') as f3:
 
         # Write headers
         f1.write(contamination_header)
@@ -202,5 +202,5 @@ def run(inputs):
                 records.append(record)
 
     # Write FASTA file
-    SeqIO.write(records, f"{rootpth}/{out_dir}/contamination_supplementary/proviruses.fa", "fasta")
+    SeqIO.write(records, f"{rootpth}/{out_dir}/{supplementary}/proviruses.fa", "fasta")
     logger.info("Run time: %s seconds" % round(time.time() - program_start, 2))

@@ -53,8 +53,9 @@ def run(inputs):
         print(f'Database directory {db_dir} missing or unreadable')
         exit(1)
 
+    supplementary = 'cherry_supplementary'
     check_path(os.path.join(rootpth, out_dir))
-    check_path(os.path.join(rootpth, out_dir, 'cherry_supplementary'))
+    check_path(os.path.join(rootpth, out_dir, supplementary))
     check_path(os.path.join(rootpth, midfolder))
 
 
@@ -171,7 +172,7 @@ def run(inputs):
                 exit(1)
         else:
             SeqIO.write(total_rec, f"{rootpth}/{midfolder}/CRISPRs.fa", 'fasta')
-            run_command(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_MAGs.fa")
+            run_command(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/{supplementary}/CRISPRs_MAGs.fa")
             check_path(os.path.join(rootpth, midfolder, 'crispr_db'))
             run_command(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPR > /dev/null 2>&1')
 
@@ -188,7 +189,7 @@ def run(inputs):
             crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
             crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
             crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv", sep = '\t', index = False)
-            run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_MAG.tsv")
+            run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv {rootpth}/{out_dir}/{supplementary}/CRISPRs_alignment_MAG.tsv")
             best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
             crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
             pkl.dump(crispr_pred_mag, open(f'{rootpth}/{midfolder}/crispr_pred_mag.dict', 'wb'))
@@ -249,7 +250,7 @@ def run(inputs):
     crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
     crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
     crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv", sep = '\t', index = False)
-    run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv {rootpth}/{out_dir}/cherry_supplementary/CRISPRs_alignment_DB.tsv")
+    run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_DB.tsv {rootpth}/{out_dir}/{supplementary}/CRISPRs_alignment_DB.tsv")
     best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
     #crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
     crispr_pred_db = {}
@@ -351,7 +352,7 @@ def run(inputs):
     # filter the network
     if os.path.exists(f'{rootpth}/{midfolder}/phagcn_network.tsv'):
         cherry_network = f'phagcn_network.tsv'
-        run_command(f'cp {rootpth}/{out_dir}/phagcn_supplementary/phagcn_network_edges.tsv {rootpth}/{out_dir}/cherry_supplementary/cherry_network_edges.tsv')
+        run_command(f'cp {rootpth}/{out_dir}/phagcn_supplementary/phagcn_network_edges.tsv {rootpth}/{out_dir}/{supplementary}/cherry_network_edges.tsv')
     else:
         cherry_network = f'cherry_network.tsv'
         compute_aai(f'{rootpth}/{midfolder}', 'db_results', genome_size)
@@ -366,7 +367,7 @@ def run(inputs):
         sub_df.drop(['qcov', 'tcov', 'qgenes', 'tgenes', 'sgenes', 'aai'], axis=1, inplace=True)
         sub_df.to_csv(f'{rootpth}/{midfolder}/{cherry_network}', sep='\t', index=False, header=False)
         sub_df.rename(columns={'query':'Source', 'target':'Target', 'score':'Weight'}, inplace=True)
-        sub_df.to_csv(f"{rootpth}/{out_dir}/cherry_supplementary/cherry_network_edges.tsv", index=False, sep='\t')
+        sub_df.to_csv(f"{rootpth}/{out_dir}/{supplementary}/cherry_network_edges.tsv", index=False, sep='\t')
     
     run_command(f'mcl {rootpth}/{midfolder}/{cherry_network} -te {threads} -I 2.0 --abc -o {rootpth}/{midfolder}/cherry_genus_clusters.txt > /dev/null 2>&1')
 
@@ -656,17 +657,17 @@ def run(inputs):
         'TYPE': ['Ref']*len(refacc2host) + ['Query']*len(query2host)
         })
     
-    cherry_node.to_csv(f"{rootpth}/{out_dir}/cherry_supplementary/cherry_network_nodes.tsv", index=False, sep='\t')
+    cherry_node.to_csv(f"{rootpth}/{out_dir}/{supplementary}/cherry_network_nodes.tsv", index=False, sep='\t')
 
     if inputs.draw == 'Y':
-        draw_network(f'{rootpth}/{out_dir}/cherry_supplementary/', f'{rootpth}/{out_dir}/cherry_supplementary', 'cherry')
+        draw_network(f'{rootpth}/{out_dir}/{supplementary}/', f'{rootpth}/{out_dir}/{supplementary}', 'cherry')
     
     if inputs.task != 'end_to_end':
         genes = load_gene_info(f'{rootpth}/{midfolder}/query_protein.fa', genomes)
-        run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_contigs.fa")
-        run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_protein.fa")
-        run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
-        run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab')
+        run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_contigs.fa")
+        run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_protein.fa")
+        run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/{supplementary}/alignment_results.tab")
+        run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/{supplementary}/alignment_results.tab')
 
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
         # protein annotation
@@ -684,7 +685,7 @@ def run(inputs):
             gene.coverage = row['coverage']
 
         # write the gene annotation by genomes
-        with open(f'{rootpth}/{out_dir}/cherry_supplementary/gene_annotation.tsv', 'w') as f:
+        with open(f'{rootpth}/{out_dir}/{supplementary}/gene_annotation.tsv', 'w') as f:
             f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\tpident\tcoverage\n')
             for genome in genomes:
                 for gene in genomes[genome].genes:

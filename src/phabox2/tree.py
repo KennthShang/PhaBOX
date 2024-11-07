@@ -48,7 +48,7 @@ def run(inputs):
     ###############################################################
     #######################  Filter length ########################
     ###############################################################
-    logger.info("[1/5]filtering the length of contigs...")
+    logger.info("[1/5] filtering the length of contigs...")
     genomes = {}
     rec = []
     for record in SeqIO.parse(contigs, 'fasta'):
@@ -117,7 +117,16 @@ def run(inputs):
             df = df[df['cov'] > cov]
             df = df[df['pident'] > pident]
             df.to_csv(f'{rootpth}/{midfolder}/marker/{item}_filtered.csv', index=False)
-            rec = [SeqRecord(genomes[genome].seq, id=genomes[genome].id, description=f'{item}') for genome in df['query']]
+            check_gene = {item:1 for item in df['qseqid']}
+            rec = []
+            for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
+                try:
+                    _ = check_gene[record.id]
+                    record.id = record.id.rsplit('_', 1)[0]
+                    record.description = f'{item}'
+                    rec.append(record) 
+                except:
+                    pass
             if not rec:
                 logger.info(f"No sequences passed the filter for marker {item}. Please check the file in {rootpth}/{midfolder}/marker/{item}_filtered.csv")
                 logger.info(f"You probably shouldn't choose the marker {item} or use a more flexible --mcov and --mpident.")
@@ -156,7 +165,7 @@ def run(inputs):
 
         # combine the sequences in common ids
         record = []
-        des = ''.join(marker)
+        des = ';'.join(marker)
         for key in common:
             seq = ''
             for item in marker:

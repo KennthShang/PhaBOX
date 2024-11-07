@@ -34,8 +34,9 @@ def run(inputs):
         print(f'Database directory {db_dir} missing or unreadable')
         exit(1)
 
+    supplementary = 'phavip_supplementary'
     check_path(os.path.join(rootpth, out_dir))
-    check_path(os.path.join(rootpth, out_dir, 'phavip_supplementary'))
+    check_path(os.path.join(rootpth, out_dir, supplementary))
     check_path(os.path.join(rootpth, midfolder))
 
 
@@ -109,10 +110,10 @@ def run(inputs):
 
 
 
-    run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/phavip_supplementary/all_predicted_contigs.fa")
-    run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/phavip_supplementary/all_predicted_protein.fa")
-    run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/phavip_supplementary/alignment_results.tab")
-    run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/phavip_supplementary/alignment_results.tab')
+    run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_contigs.fa")
+    run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_protein.fa")
+    run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/{supplementary}/alignment_results.tab")
+    run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/{supplementary}/alignment_results.tab')
 
     genes = load_gene_info(f'{rootpth}/{midfolder}/query_protein.fa', genomes)
 
@@ -133,7 +134,7 @@ def run(inputs):
         
 
     # write the gene annotation by genomes
-    with open(f'{rootpth}/{out_dir}/phavip_supplementary/gene_annotation.tsv', 'w') as f:
+    with open(f'{rootpth}/{out_dir}/{supplementary}/gene_annotation.tsv', 'w') as f:
         f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\tpident\tcoverage\n')
         for genome in genomes:
             for gene in genomes[genome].genes:
