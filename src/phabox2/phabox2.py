@@ -6,9 +6,9 @@ import pandas as pd
 from  phabox2.scripts.ulity import *
 
 
-__version__ = "2.1.4"
+__version__ = "2.1.5"
 description = """
-                                  \033[1m\033[96mPhaBOX v2.0.1\033[0m\033[0m                  
+                                  \033[1m\033[96mPhaBOX v2.0.5\033[0m\033[0m                  
                \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Otc. 2024\033[0m\033[0m 
 
 
@@ -202,7 +202,7 @@ The options below are used to align contigs to CRISPRs.
 \033[94m--cpident\033[0m
     Alignment identity for CRISPRs || default: 90 || range from 90 to 100
 
-\033[94m--cpident\033[0m
+\033[94m--ccov\033[0m
     Alignment coverage for CRISPRs || default: 90 || range from 0 to 100
 
 \033[94m--blast\033[0m

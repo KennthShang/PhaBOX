@@ -310,9 +310,9 @@ def run(inputs):
     df = cluster_df[cluster_df['Accession'].isin(genomes.keys())].copy()
     df = df.reset_index(drop=True)
 
-
-    predicted = df[df['Genus'] != '-']
-    unpredicted = df[df['Genus'] == '-']
+    # issues that NaN will assign known_genus
+    predicted = df[(df['Genus'] != '-') & (df['Genus'].notna())]
+    unpredicted = df[(df['Genus'] == '-') | (df['Genus'].isna())]
     df.loc[predicted.index, 'cluster'] = 'known_genus'
 
     groups = unpredicted.groupby('cluster')
