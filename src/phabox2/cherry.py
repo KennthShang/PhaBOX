@@ -663,7 +663,7 @@ def run(inputs):
     
     if inputs.task != 'end_to_end':
         genes = load_gene_info(f'{rootpth}/{midfolder}/query_protein.fa', genomes)
-        run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/phagcn_supplementary/all_predicted_contigs.fa")
+        run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_contigs.fa")
         run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/cherry_supplementary/all_predicted_protein.fa")
         run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab")
         run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/cherry_supplementary/alignment_results.tab')
