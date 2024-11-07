@@ -196,7 +196,6 @@ The options below are used to predict CRISPRs based on MAGs.
 \033[94m--bfolder\033[0m
     Path to the folder that contains MAGs || default: None
 
-
 The options below are used to align contigs to CRISPRs.
 
 \033[94m--cpident\033[0m
@@ -211,6 +210,11 @@ The options below are used to align contigs to CRISPRs.
 
 The default parameters are optimized for predicting prokaryotic hosts (data from the NCBI RefSeq database). 
 When making changes, make sure you understand what they are.
+
+\033[94m--magonly\033[0m
+    Only predicting host based on the provided MAGs: Y or N || default: N
+    Y will only predict the host based on the provided MAGs
+    N will predict the host based on the MAGs and the reference database
 """
 
 phavip_description = """PhaVIP: Virus annotation
@@ -253,7 +257,7 @@ AAI-based options:
     Protein-level coverage for AAI based genus grouping || default: 80 || range from 0 to 100
 
 \033[94m--share\033[0m 
-    Minimum shared number of proteins for AAI based genus grouping || default: 15 || range from 0 to 100
+    Minimum shared percent of proteins for AAI based genus grouping || default: 15 || range from 0 to 100
 
 ANI-based options:
 
@@ -279,7 +283,7 @@ Usage: phabox2 --task tree [options]
         endolysin      || 91 percent prokaryotic virus have endolysin
         holin          || 75 percent prokaryotic virus have holin
         head           || 77 percent prokaryotic virus have marjor head
-        portal protein || 84 percent prokaryotic viruses have portal
+        portal         || 84 percent prokaryotic viruses have portal
         terl           || 92 percent prokaryotic viruses have terminase large subunit
 
         Using combinations of these markers can improve the accuracy of the tree 

@@ -1,4 +1,4 @@
-name: myenv
+name: phabox2
 
 channels:
   - defaults
