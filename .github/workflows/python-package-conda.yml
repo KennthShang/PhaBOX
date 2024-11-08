@@ -20,10 +20,10 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install Miniconda
-      uses: conda-inc/gha-setup-miniconda@v2
-      with:
-        auto-activate-base: true
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
         conda-build-args: "--solver classic"  # Use classic solver
 
     - name: Install dependencies
