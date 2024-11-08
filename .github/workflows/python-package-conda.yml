@@ -24,7 +24,6 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-        conda-build-args: "--solver classic"  # Use classic solver
 
     - name: Install dependencies
       run: |
