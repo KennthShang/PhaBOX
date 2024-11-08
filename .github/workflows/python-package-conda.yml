@@ -28,16 +28,9 @@ jobs:
     - name: Install dependencies
       run: |
         conda config --set solver classic
-        conda env update --file environment.yml --name base
+        conda install phabox -c bioconda -c conda-forge
         conda install flake8
 
-    - name: Cache Conda
-      uses: actions/cache@v3
-      with:
-        path: ~/conda_pkgs_dir
-        key: ${{ runner.os }}-conda-${{ hashFiles('environment.yml') }}
-        restore-keys: |
-          ${{ runner.os }}-conda-
 
     - name: Lint with flake8
       run: |
