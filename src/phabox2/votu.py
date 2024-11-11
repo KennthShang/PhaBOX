@@ -220,6 +220,7 @@ def run(inputs):
                 cluster_idx += 1
 
         cluster_df.rename(columns={'cluster':'vOTU'}, inplace=True)
+        cluster_df = cluster_df[['Accession', 'vOTU', 'Representative', 'Length']]
         cluster_df.to_csv(f'{rootpth}/{out_dir}/AAI_based_vOTU.tsv', index=False, sep='\t')
 
     else:
