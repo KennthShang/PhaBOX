@@ -42,5 +42,8 @@ host_nodes = pd.DataFrame({"Accession": Accession, "Host": Host, "TYPE": TYPE})
 edges_df = pd.concat((pd.read_csv(f'{inputs.edge}', sep='\t'), host_edges))
 nodes_df = pd.concat((pd.read_csv(f'{inputs.node}', sep='\t'), host_nodes))
 
+
+nodes_df.drop_duplicates(subset=['Accession'], keep='first', inplace=True)
+edges_df.drop_duplicates(subset=['Source', 'Target'], keep='first', inplace=True)
 edges_df.to_csv(f'{inputs.outpth}/cherry_network_edges.tsv', sep='\t', index=False)
 nodes_df.to_csv(f'{inputs.outpth}/cherry_network_nodes.tsv', sep='\t', index=False)
