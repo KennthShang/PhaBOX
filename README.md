@@ -3,7 +3,7 @@
 
 # Local version of [PhaBOX2](https://phage.ee.cityu.edu.hk) web server
 
-![PhaBOX Server](https://img.shields.io/badge/PhaBOX-Webserver-brightgreen)
+[![PhaBOX Server](https://img.shields.io/badge/PhaBOX-Webserver-brightgreen)](http://phage.ee.cityu.edu.hk/)
 ![GitHub License](https://img.shields.io/github/license/KennthShang/PhaBOX)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/phabox.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/phabox) 
 [![PhaBOXv1](https://img.shields.io/static/v1.svg?label=PhaBOX_v1&message=bioadv/vbad101&color=blue)](https://doi.org/10.1093/bioadv/vbad101)
