@@ -27,6 +27,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        conda config --set solver classic
         conda install phabox=2.1.5 python=3.10 -c bioconda -c conda-forge
         conda install flake8
 
