@@ -46,12 +46,12 @@ jobs:
         wget https://github.com/KennthShang/PhaBOX/releases/download/v2/example_contigs.fa
         wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2.zip
         unzip phabox_db_v2.zip > /dev/null
-        phabox2 --task end_to_end --contigs example_contigs.fa -o end_to_end -d ../phabox_db_v2
-        phabox2 --task phamer --contigs example_contigs.fa -o phamer -d ../phabox_db_v2
-        phabox2 --task phagcn --contigs example_contigs.fa -o phagcn -d ../phabox_db_v2
-        phabox2 --task phatyp --contigs example_contigs.fa -o phatyp -d ../phabox_db_v2
-        phabox2 --task cherry --contigs example_contigs.fa -o cherry -d ../phabox_db_v2
-        phabox2 --task contamination --contigs example_contigs.fa -o contamination -d ../phabox_db_v2
-        phabox2 --task votu --contigs example_contigs.fa -o vout -d ../phabox_db_v2 --mode AAI
-        phabox2 --task votu --contigs example_contigs.fa -o vout -d ../phabox_db_v2 --mode ANI
-        phabox2 --task tree --contigs example_contigs.fa -o tree -d ../phabox_db_v2 --msa Y --tree N
+        phabox2 --task end_to_end --contigs example_contigs.fa -o end_to_end -d phabox_db_v2
+        phabox2 --task phamer --contigs example_contigs.fa -o phamer -d phabox_db_v2
+        phabox2 --task phagcn --contigs example_contigs.fa -o phagcn -d phabox_db_v2
+        phabox2 --task phatyp --contigs example_contigs.fa -o phatyp -d phabox_db_v2
+        phabox2 --task cherry --contigs example_contigs.fa -o cherry -d phabox_db_v2
+        phabox2 --task contamination --contigs example_contigs.fa -o contamination -d phabox_db_v2
+        phabox2 --task votu --contigs example_contigs.fa -o vout -d phabox_db_v2 --mode AAI
+        phabox2 --task votu --contigs example_contigs.fa -o vout -d phabox_db_v2 --mode ANI
+        phabox2 --task tree --contigs example_contigs.fa -o tree -d phabox_db_v2 --msa Y --tree N
