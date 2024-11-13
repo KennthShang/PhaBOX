@@ -37,7 +37,7 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Test with pytest
+    - name: Test PhaBOX utilities
       run: |
         git clone https://github.com/KennthShang/PhaBOX.git
         cd PhaBOX
@@ -47,11 +47,20 @@ jobs:
         wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2.zip
         unzip phabox_db_v2.zip > /dev/null
         phabox2 --task end_to_end --contigs example_contigs.fa -o end_to_end -d phabox_db_v2
+        head end_to_end/final_prediction/final_prediction_summary.tsv
         phabox2 --task phamer --contigs example_contigs.fa -o phamer -d phabox_db_v2
+        head phamer/final_prediction/phamer_prediction.tsv
         phabox2 --task phagcn --contigs example_contigs.fa -o phagcn -d phabox_db_v2
+        head phagcn/final_prediction/phagcn_prediction.tsv
         phabox2 --task phatyp --contigs example_contigs.fa -o phatyp -d phabox_db_v2
+        head phatyp/final_prediction/phatyp_prediction.tsv
         phabox2 --task cherry --contigs example_contigs.fa -o cherry -d phabox_db_v2
+        head cherry/final_prediction/cherry_prediction.tsv
         phabox2 --task contamination --contigs example_contigs.fa -o contamination -d phabox_db_v2
-        phabox2 --task votu --contigs example_contigs.fa -o vout -d phabox_db_v2 --mode AAI
-        phabox2 --task votu --contigs example_contigs.fa -o vout -d phabox_db_v2 --mode ANI
+        head contamination/final_prediction/contamination_prediction.tsv
+        phabox2 --task votu --contigs example_contigs.fa -o votu -d phabox_db_v2 --mode AAI
+        head phatyp/final_prediction/AAI_based_vOTU.tsv
+        phabox2 --task votu --contigs example_contigs.fa -o votu -d phabox_db_v2 --mode ANI
+        head votu/final_prediction/ANI_based_vOTU.tsv
         phabox2 --task tree --contigs example_contigs.fa -o tree -d phabox_db_v2 --msa Y --tree N
+        head tree/final_prediction/combined_marker.msa
