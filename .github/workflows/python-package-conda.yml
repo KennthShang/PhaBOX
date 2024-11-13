@@ -29,6 +29,7 @@ jobs:
       run: |
         conda config --set solver classic
         conda install phabox=2.1.5 python=3.10 -c bioconda -c conda-forge -y
+        conda install flake8
 
 
     - name: Lint with flake8
