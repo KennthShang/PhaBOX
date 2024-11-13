@@ -28,8 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         conda config --set solver classic
-        conda create -n phabox2 phabox=2.1.5 python=3.10 -c bioconda -c conda-forge -y
-        conda activate phabox2
+        conda install phabox=2.1.5 python=3.10 diamond=0.9.14 -c bioconda -c conda-forge -y
 
 
     - name: Lint with flake8
