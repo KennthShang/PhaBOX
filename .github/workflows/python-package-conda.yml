@@ -59,7 +59,7 @@ jobs:
         phabox2 --task contamination --contigs example_contigs.fa -o contamination -d phabox_db_v2
         head contamination/final_prediction/contamination_prediction.tsv
         phabox2 --task votu --contigs example_contigs.fa -o votu -d phabox_db_v2 --mode AAI
-        head phatyp/final_prediction/AAI_based_vOTU.tsv
+        head votu/final_prediction/AAI_based_vOTU.tsv
         phabox2 --task votu --contigs example_contigs.fa -o votu -d phabox_db_v2 --mode ANI
         head votu/final_prediction/ANI_based_vOTU.tsv
         phabox2 --task tree --contigs example_contigs.fa -o tree -d phabox_db_v2 --msa Y --tree N
