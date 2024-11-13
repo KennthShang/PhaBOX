@@ -28,11 +28,8 @@ jobs:
     - name: Install dependencies
       run: |
         conda config --set solver classic
-        conda config --add channels bioconda
-        conda install diamond=0.9.14 blast=2.16.0 mcl fasttree=2.1.11 kcounter=0.1.1 mafft=7.525
-        conda install numpy=1.26.4 pandas=2.2.3 networkx=3.4.2 seaborn-base=0.13.2 biopython=1.84 tqdm=4.66.5 scipy=1.14.1
-        conda install datasets transformers pytorch triton accelerate prodigal-gv
-        conda install flake8
+        conda create -n phabox2 phabox=2.1.5 python=3.10 -c bioconda -c conda-forge -y
+        conda activate phabox2
 
 
     - name: Lint with flake8
