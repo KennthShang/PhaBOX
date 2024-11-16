@@ -49,7 +49,7 @@ def run(inputs):
         genome.proportion = 0
         genomes[genome.id] = genome
 
-    logger.info("[1/5] calling genes with prodigal...")
+    logger.info("[1/5] Calling genes with prodigal...")
     if not os.path.exists(f'{proteins}'):
         run_command(f'cp {contigs} {rootpth}/check_contig.fa')
         parallel_prodigal_gv(f'{rootpth}/check_contig.fa', f'{rootpth}/{midfolder}/check_protein.fa', threads)

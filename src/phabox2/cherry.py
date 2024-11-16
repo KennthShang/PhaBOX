@@ -39,7 +39,7 @@ def run(inputs):
     if magonly == 'Y':
         jy = 4
     else:
-        jy = 8
+        jy = 10
 
     if bfolder == 'None' and magonly == 'Y':
         print('In consistent input, please provide the MAGs folder or set the magonly flag to False.')
@@ -288,9 +288,9 @@ def run(inputs):
         parallel_prodigal_gv(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/query_protein.fa', threads)
     
     if os.path.exists(f'{rootpth}/{midfolder}/self_results.abc') and os.path.exists(f'{rootpth}/{midfolder}/db_results.abc'):
-        logger.info(f"[5/{jy}] reusing all-against-all alignment from PhaGCN...")
+        logger.info(f"[6/{jy}] reusing all-against-all alignment from PhaGCN...")
     else:
-        logger.info(f"[5/{jy}] running all-against-all alignment...")
+        logger.info(f"[6/{jy}] running all-against-all alignment...")
         # combine the database with the predicted proteins
         run_command(f"cat {db_dir}/RefVirus.faa {rootpth}/{midfolder}/query_protein.fa > {rootpth}/{midfolder}/ALLprotein.fa")
         # generate the diamond database
@@ -303,7 +303,7 @@ def run(inputs):
         run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
 
 
-    logger.info(f"[6/{jy}] generating cherry networks...")
+    logger.info(f"[7/{jy}] generating cherry networks...")
     # FLAGS: no proteins aligned to the database
     if os.path.getsize(f'{rootpth}/{midfolder}/db_results.abc') == 0:
         if len(crispr_pred_db) == 0 and len(crispr_pred_mag) == 0:
@@ -442,7 +442,7 @@ def run(inputs):
     df.to_csv(f'{rootpth}/{midfolder}/cherry_clustering.tsv', index=False, sep='\t')
 
     
-    logger.info(f"[6/{jy}] predicting the host...")
+    logger.info(f"[8/{jy}] predicting the host...")
     #query_df = pd.read_csv(f'{rootpth}/{midfolder}/cherry_clustering.tsv')
     query_df = df.copy()
     ref_df = pd.read_csv(f'{db_dir}/RefVirus.csv')
@@ -566,7 +566,7 @@ def run(inputs):
     df = cluster_df[cluster_df['Accession'].isin(genomes.keys())].copy()
     df = df.reset_index(drop=True)
 
-    logger.info(f"[7/{jy}] summarizing the results...")
+    logger.info(f"[9/{jy}] summarizing the results...")
     predicted = df[df['Host'] != '-']
     unpredicted = df[df['Host'] == '-']
 
@@ -605,7 +605,7 @@ def run(inputs):
     ###############################################################
     ####################### dump results ##########################
     ###############################################################\
-    logger.info(f"[8/{jy}] writing the results...")
+    logger.info(f"[10/{jy}] writing the results...")
     df = df.reset_index(drop=True)
 
     contigs_list = {item:1 for item in list(df['Accession'])}
