@@ -182,3 +182,5 @@ def run(inputs):
             logger.info("Skip the tree building step...")
     else:
         logger.info("Skip the msa and tree building step...")
+    
+    logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))

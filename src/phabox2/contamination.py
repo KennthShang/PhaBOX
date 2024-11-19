@@ -142,9 +142,10 @@ def run(inputs):
     # Prepare file headers
     contamination_header = "Accession\tLength\tTotal_genes\tViral_genes\tProkaryotic_genes\tKmer_freq\tContamination\tProvirus\tPure_viral\n"
     candidate_prophage_header = "Accession\tLength\tTotal_genes\tViral_genes\tProkaryotic_genes\tProvirus\tContamination\tProviral_length\tProkaryotic_length\tRegion_types\tRegion_lengths\tRegion_coords_bp\tRegion_coords_genes\tRegion_viral_genes\tRegion_prokaryotic_genes\n"
-    gene_annotation_header = "Accession\tGene_num\tStart\tEnd\tStrand\tGC\tmarker_label\tmarker_name\tEvalue\tScore\n"
+    gene_annotation_header = "Accession\tGene_num\tStart\tEnd\tStrand\tGC\tmarker_label\tmarker_name\tEvalue\tmarker_name\n"
 
     records = []
+    label = {"viral": 1, "microbial": -1}
 
     # Open all files
     logger.info("[5/5] writing the results...")
@@ -188,8 +189,8 @@ def run(inputs):
                 gene = genes[gene_id]
                 marker_hit = gene.marker_hit if gene.marker_hit else {"target": "NA", "evalue": "NA", "function": "NA"}
                 f3.write(
-                    f"{genome.id}\t{gene_id.split('_')[-1]}\t{gene.start},{gene.end}\t"
-                    f"{gene.strand}\t{round(gene.gc, 1)}\t{gene.label}\t"
+                    f"{genome.id}\t{gene_id.split('_')[-1]}\t{gene.start}\t{gene.end}\t"
+                    f"{gene.strand}\t{round(gene.gc, 2)}\t{label[gene.label]}\t"
                     f"{marker_hit['target']}\t{marker_hit['evalue']}\t{marker_hit['function']}\n"
                 )
 
