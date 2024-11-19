@@ -145,7 +145,7 @@ def run(inputs):
     gene_annotation_header = "Accession\tGene_num\tStart\tEnd\tStrand\tGC\tmarker_label\tmarker_name\tEvalue\tmarker_name\n"
 
     records = []
-    label = {"viral": 1, "microbial": -1}
+    label = {1:"viral", -1: "microbial", 0: "No match"}
 
     # Open all files
     logger.info("[5/5] writing the results...")
