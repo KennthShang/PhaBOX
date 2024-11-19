@@ -142,7 +142,7 @@ def run(inputs):
     # Prepare file headers
     contamination_header = "Accession\tLength\tTotal_genes\tViral_genes\tProkaryotic_genes\tKmer_freq\tContamination\tProvirus\tPure_viral\n"
     candidate_prophage_header = "Accession\tLength\tTotal_genes\tViral_genes\tProkaryotic_genes\tProvirus\tContamination\tProviral_length\tProkaryotic_length\tRegion_types\tRegion_lengths\tRegion_coords_bp\tRegion_coords_genes\tRegion_viral_genes\tRegion_prokaryotic_genes\n"
-    gene_annotation_header = "Accession\tGene_num\tStart\tEnd\tStrand\tGC\tmarker_label\tmarker_name\tEvalue\tmarker_name\n"
+    gene_annotation_header = "Accession\tGene_num\tStart\tEnd\tStrand\tGC\tmarker_label\tdomain_name\tEvalue\tmarker_name\n"
 
     records = []
     label = {1:"viral", -1: "microbial", 0: "No match"}
