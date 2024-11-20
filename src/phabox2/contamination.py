@@ -117,7 +117,7 @@ def run(inputs):
                 record = SeqRecord(Seq(seq), id=genome.id, description="")
                 low_rec.append(record)
             elif genome.count_viral > 0 and genome.count_host > genome.count_viral:
-                genome.confident = 'Medium quality'
+                genome.confident = 'Medium quality;host marker more than viral marker'
                 seq = genome.seq
                 record = SeqRecord(Seq(seq), id=genome.id, description="")
                 medium_rec.append(record)
