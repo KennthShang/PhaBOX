@@ -659,6 +659,34 @@ def run(inputs):
     
     cherry_node.to_csv(f"{rootpth}/{out_dir}/{supplementary}/cherry_network_nodes.tsv", index=False, sep='\t')
 
+    # add host nodes to the network
+    df = pd.read_csv(f'{rootpth}/{out_dir}/cherry_prediction.tsv', sep='\t')
+    df = df[df['Host'] != '-']
+
+    ref_df = pd.read_csv(f'{rootpth}/{out_dir}/{supplementary}/cherry_network_nodes.tsv', sep='\t')
+    ref_df = ref_df[(ref_df['Host'] != '-')&(ref_df['TYPE'] == 'Ref')]
+    
+    # rewrite the edges file
+    Source = df['Accession'].tolist()+ref_df['Accession'].tolist()
+    Target = df['Host'].tolist()+ref_df['Host'].tolist()
+    Weight = df['CHERRYScore'].tolist()+[1]*len(ref_df['Accession'].tolist())
+    host_edges = pd.DataFrame({"Source": Source, "Target": Target, "Weight": Weight})
+
+    # rewrite the nodes file
+    Accession = df['Host'].tolist() + df['Accession'].tolist() + list(set(ref_df['Host'].tolist()))
+    Host = df['Host'].tolist() + df['Host'].tolist() + list(set(ref_df['Host'].tolist()))
+    TYPE = ['Host'] * len(df['Host'].tolist()) + ['Query'] * len(df['Accession'].tolist()) + ['Host'] * len(set(ref_df['Host'].tolist()))
+    host_nodes = pd.DataFrame({"Accession": Accession, "Host": Host, "TYPE": TYPE})
+
+    edges_df = pd.concat((pd.read_csv(f'{rootpth}/{out_dir}/{supplementary}/cherry_network_edges.tsv', sep='\t'), host_edges))
+    nodes_df = pd.concat((pd.read_csv(f'{rootpth}/{out_dir}/{supplementary}/cherry_network_nodes.tsv', sep='\t'), host_nodes))
+
+
+    nodes_df.drop_duplicates(subset=['Accession'], keep='first', inplace=True)
+    edges_df.drop_duplicates(subset=['Source', 'Target'], keep='first', inplace=True)
+    edges_df.to_csv(f'{rootpth}/{out_dir}/{supplementary}/cherry_network_edges.tsv', sep='\t', index=False)
+    nodes_df.to_csv(f'{rootpth}/{out_dir}/{supplementary}/cherry_network_nodes.tsv', sep='\t', index=False)
+
     if inputs.draw == 'Y':
         draw_network(f'{rootpth}/{out_dir}/{supplementary}/', f'{rootpth}/{out_dir}/{supplementary}', 'cherry')
     
