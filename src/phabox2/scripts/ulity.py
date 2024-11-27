@@ -46,6 +46,7 @@ def run_command(command):
     except subprocess.CalledProcessError as e:
         print(f"Command '{command}' failed with exit code {e.returncode}")
         print(e.stderr)  # Print the standard error from the command
+        print("please run the command manually to check the error")
         exit(e.returncode)  # Exit with the non-zero exit code
 
 # draw network for phagcn and cherry
