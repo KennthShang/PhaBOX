@@ -112,7 +112,7 @@ def run(inputs):
             genome.provirus = 'No'
             genome.contamination = 0
             if genome.count_viral == 0 and genome.count_host > 0:
-                genome.confident = 'Low quality;no viral marker found'
+                genome.confident = 'Low quality;host marker found but no viral marker found'
                 seq = genome.seq
                 record = SeqRecord(Seq(seq), id=genome.id, description="")
                 low_rec.append(record)
