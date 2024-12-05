@@ -319,24 +319,29 @@ def contig2sentence(db_dir, outpth, genomes):
     #protein2pc = {protein: pc for protein, pc in zip(proteins_df['protein_id'].values, proteins_df['cluster'].values)}
     protein2pc = pkl.load(open(f'{db_dir}/protein2token.pkl', 'rb'))
     pc2wordsid = pkl.load(open(f'{db_dir}/pc2wordsid.pkl', 'rb'))
-    blast_df = pd.read_csv(f"{outpth}/db_results.abc", sep=' ', names=['query', 'ref', 'pident', 'evalue'])
-    blast_df = blast_df.drop_duplicates('query', keep='first')
+    blast_df = pd.read_csv(f"{outpth}/db_results.abc", sep=' ', names=['query', 'ref', 'pident', 'bitscore'])
+    blast_df = blast_df[blast_df['pident']>90]
     blast_df['genome'] = blast_df['query'].apply(lambda x: x.rsplit('_', 1)[0])
     blast_df = blast_df[blast_df['genome'].isin(genomes.keys())]
 
     # Parse the DIAMOND results
     contig2pcs = {}
-    for query, ref, evalue in zip(blast_df['query'].values, blast_df['ref'].values, blast_df['evalue'].values):
+    check = {}
+    for query, ref, evalue in zip(blast_df['query'].values, blast_df['ref'].values, blast_df['bitscore'].values):
         try:
-            pc = pc2wordsid[protein2pc[ref]]
-        except:
-            continue
-        conitg = query.rsplit('_', 1)[0]
-        idx    = query.rsplit('_', 1)[1]
-        try:
-            contig2pcs[conitg].append((idx, pc, evalue))
-        except:
-            contig2pcs[conitg] = [(idx, pc, evalue)]
+            _ = check[query]
+        except KeyError:
+            try:
+                pc = pc2wordsid[protein2pc[ref]]
+            except:
+                continue
+            conitg = query.rsplit('_', 1)[0]
+            idx    = query.rsplit('_', 1)[1]
+            try:
+                contig2pcs[conitg].append((idx, pc, evalue))
+            except:
+                contig2pcs[conitg] = [(idx, pc, evalue)]
+            check[query] = 1
 
     # Sorted by position
     for contig in contig2pcs:
