@@ -29,6 +29,9 @@ jobs:
 
     - name: Configure conda
       run: bash configure-conda.sh
+      
+    - name: init conda
+      run: conda init
 
     - name: Install dependencies
       run: |
