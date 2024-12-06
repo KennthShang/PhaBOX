@@ -100,7 +100,7 @@ def run(inputs):
     # run marker alignment
     logger.info(f"[3/5] running marker:")
     for item in marker:
-        if os.path.exists(f'{rootpth}/{midfolder}/marker/{item}_conbined_db.fa'):
+        if os.path.exists(f'{rootpth}/{midfolder}/marker/{item}_combined_db.fa'):
             logger.info(f"Skip the marker {item} since the combined db file already exists.")
             continue
         else:
@@ -132,9 +132,9 @@ def run(inputs):
                 logger.info(f"You probably shouldn't choose the marker {item} or use a more flexible --mcov and --mpident.")
                 exit(1)
             _ = SeqIO.write(rec, f'{rootpth}/{midfolder}/marker/{item}.fa', 'fasta')
-            run_command(f'cat {rootpth}/{midfolder}/marker/{item}.fa {db_dir}/marker/{item}.fa > {rootpth}/{midfolder}/marker/{item}_conbined_db.fa')
-            run_command(f'cp {rootpth}/{midfolder}/marker/{item}_conbined_db.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_conbined_db.fa')
-            run_command(f'cp {rootpth}/{midfolder}/marker/{item}.fa {rootpth}/{out_dir}/tree_supplementary/finded_marker_{item}_without_db.fa')
+            run_command(f'cat {rootpth}/{midfolder}/marker/{item}.fa {db_dir}/marker/{item}.fa > {rootpth}/{midfolder}/marker/{item}_combined_db.fa')
+            run_command(f'cp {rootpth}/{midfolder}/marker/{item}_combined_db.fa {rootpth}/{out_dir}/tree_supplementary/found_marker_{item}_combined_db.fa')
+            run_command(f'cp {rootpth}/{midfolder}/marker/{item}.fa {rootpth}/{out_dir}/tree_supplementary/found_marker_{item}_without_db.fa')
 
     logger.info("[4/5] Running the msa...")
     if msa == 'Y':
@@ -144,7 +144,7 @@ def run(inputs):
                 continue
             else:
                 logger.info(f"Running msa: {item}...This may take a long time...")
-                run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_conbined_db.fa > {rootpth}/{midfolder}/msa/{item}.aln')
+                run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_combined_db.fa > {rootpth}/{midfolder}/msa/{item}.aln')
         
         msa = {}
         for item in marker:
