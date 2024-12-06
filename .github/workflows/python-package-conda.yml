@@ -29,16 +29,14 @@ jobs:
 
     - name: Configure conda
       run: bash configure-conda.sh
-      
-    - name: init conda
-      run: |
-        conda init
-        source /home/runner/.bashrc
+        
 
     - name: Install dependencies
       run: |
         conda create -n phabox2 phabox=2.1.7 -c conda-forge -c bioconda -y
         conda activate phabox2
+        conda init
+        source /home/runner/.bashrc
 
     - name: Test PhaBOX utilities
       run: |
