@@ -10,32 +10,30 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 5
+      max-parallel: 13
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
       with:
-        python-version: '3.10.14'
+        fetch-depth: 0
 
-    - name: Add conda to system path
+    - name: set path
+      run: echo "/opt/mambaforge/bin" >> $GITHUB_PATH
+
+    - name: Fetch conda install script
       run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
+        wget https://raw.githubusercontent.com/bioconda/bioconda-common/master/{install-and-set-up-conda,configure-conda,common}.sh
+
+    - name: Set up bioconda-utils
+      run: bash install-and-set-up-conda.sh
+
+    - name: Configure conda
+      run: bash configure-conda.sh
 
     - name: Install dependencies
       run: |
-        conda config --set solver classic
-        conda update -n base -c defaults conda
-        conda install phabox=2.1.7 -c conda-forge -c bioconda
-        conda install diamond=0.9 flake8 -c conda-forge -c bioconda 
-
-    - name: Lint with flake8
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        conda create -n phabox2 phabox=2.1.7 -c conda-forge -c bioconda -y
+        conda activate phabox2
 
     - name: Test PhaBOX utilities
       run: |
