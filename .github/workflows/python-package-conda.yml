@@ -28,6 +28,7 @@ jobs:
     - name: Install dependencies
       run: |
         conda config --set solver classic
+        conda update -n base -c defaults conda
         conda install phabox -c conda-forge -c bioconda
         conda install diamond=0.9 flake8 -c conda-forge -c bioconda 
 
