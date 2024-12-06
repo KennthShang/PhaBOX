@@ -34,10 +34,10 @@ jobs:
     - name: Install dependencies
       run: |
         conda create -n phabox2 phabox=2.1.7 -c conda-forge -c bioconda -y
-        source /opt/mambaforge/bin/activate phabox2
 
     - name: Test PhaBOX utilities
       run: |
+        source /opt/mambaforge/bin/activate phabox2
         git clone https://github.com/KennthShang/PhaBOX.git
         cd PhaBOX
         python -m pip install .
