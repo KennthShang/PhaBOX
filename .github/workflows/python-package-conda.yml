@@ -34,9 +34,9 @@ jobs:
     - name: Install dependencies
       run: |
         conda create -n phabox2 phabox=2.1.7 -c conda-forge -c bioconda -y
-        conda activate phabox2
         conda init
         source /home/runner/.bashrc
+        conda activate phabox2
 
     - name: Test PhaBOX utilities
       run: |
