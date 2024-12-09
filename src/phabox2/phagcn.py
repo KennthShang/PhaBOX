@@ -372,6 +372,13 @@ def run(inputs):
         'GenusCluster': all_cluster
     })
 
+    ProkaryoticGroup = pkl.load(open(f'{db_dir}/ProkaryoticGroup.pkl', 'rb'))
+    rows_to_update = contig_to_pred['Lineage'].apply(lambda lineage: any(group in lineage for group in ProkaryoticGroup))
+    # Update the pred_csv dataframe
+    contig_to_pred.loc[rows_to_update, 'Prokaryotic virus (Bacteriophages and Archaeal virus)'] = 'Y'
+    contig_to_pred.loc[~rows_to_update, 'Prokaryotic virus (Bacteriophages and Archaeal virus)'] = 'N'
+
+
 
     # Save DataFrame to CSV
     contig_to_pred.to_csv(f"{rootpth}/{out_dir}/phagcn_prediction.tsv", index=False, sep='\t')
