@@ -55,6 +55,8 @@ You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome 
 > If you are a new user, please check our [WIKI](https://github.com/KennthShang/PhaBOX/wiki) page. We provide a tutorial to help you get started quickly and understand how to use PhaBOX2. We hope you will enjoy it!
 >
 > If you only want to analyze the results for Bacteriophages (as version 1), please check the **Prokarytic viruses** columns in the PhaGCN's results.
+
+
 If you are familiar with the PhaBOX2, please check our [Update log](https://github.com/KennthShang/PhaBOX/wiki/Update-logs). We may have some updates to the program to make it more useful. If you want to use the latest version, please also [upgrade your PhaBOX2](https://github.com/KennthShang/PhaBOX/wiki#upgrading-phabox)
 
 
