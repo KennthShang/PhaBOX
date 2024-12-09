@@ -320,7 +320,8 @@ def contig2sentence(db_dir, outpth, genomes):
     protein2pc = pkl.load(open(f'{db_dir}/protein2token.pkl', 'rb'))
     pc2wordsid = pkl.load(open(f'{db_dir}/pc2wordsid.pkl', 'rb'))
     blast_df = pd.read_csv(f"{outpth}/db_results.abc", sep=' ', names=['query', 'ref', 'pident', 'bitscore'])
-    blast_df = blast_df[blast_df['pident']>90]
+    max_bitscore_per_query = blast_df.groupby('query')['bitscore'].transform('max')
+    blast_df = blast_df[blast_df['bitscore'] > max_bitscore_per_query * 0.9]
     blast_df['genome'] = blast_df['query'].apply(lambda x: x.rsplit('_', 1)[0])
     blast_df = blast_df[blast_df['genome'].isin(genomes.keys())]
 
