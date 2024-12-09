@@ -8,7 +8,7 @@ from  phabox2.scripts.ulity import *
 
 __version__ = "2.1.7"
 description = """
-                                  \033[1m\033[96mPhaBOX v2.1.7\033[0m\033[0m                  
+                                  \033[1m\033[96mPhaBOX v2.1.9\033[0m\033[0m                  
                \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Otc. 2024\033[0m\033[0m 
 
 
