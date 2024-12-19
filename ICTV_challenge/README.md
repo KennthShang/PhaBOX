@@ -11,6 +11,6 @@ The description of the methods can be found via [PhaBOX implementation](https://
 The papers are: PMID 34252923, 36464489, and 37641717
 
 
-In short, our method based on protein-similarity network for classification. In the newtork, the nodes are viruses (both reference and query sequence), and the edges are the similarity between viruses, such as shared common protein cluster, average amino acids identify, shared sequence fragment (overall coverage). Then, the algorithm will classified based on the information and give a score.
+In short, our method is based on protein-similarity network for classification. In the network, the nodes are viruses (both reference and query sequence), and the edges are the similarity between viruses, such as shared common protein cluster, average amino acids identity, and shared sequence fragment (overall coverage). Then, the algorithm will be classified based on the information and give a score.
 
-Since we found many of the viruses, especially phages, do not have genus/family level prediction when processing our real sequence data, in our method, we provided a new column **GenusCluster** showing the potential new genus clustered by the "sequence similariy".  If it is not needed, you can just delete the column.
+Since we found many of the viruses, especially phages, do not have genus/family level prediction when processing our real sequence data, in our method, we provided a new column **GenusCluster** showing the potential new genus clustered by the "sequence similarity".  If it is not needed, you can delete the column.
