@@ -47,6 +47,8 @@ jobs:
         unzip phabox_db_v2.zip > /dev/null
         phabox2 --task end_to_end --contigs example_contigs.fa -o end_to_end -d phabox_db_v2
         head end_to_end/final_prediction/final_prediction_summary.tsv
+        phabox2 --task end_to_end --skip Y --contigs example_contigs.fa -o end_to_end2 -d phabox_db_v2
+        head end_to_end2/final_prediction/final_prediction_summary.tsv
         phabox2 --task phamer --contigs example_contigs.fa -o phamer -d phabox_db_v2
         head phamer/final_prediction/phamer_prediction.tsv
         phabox2 --task phagcn --contigs example_contigs.fa -o phagcn -d phabox_db_v2
