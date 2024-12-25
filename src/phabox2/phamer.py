@@ -132,7 +132,10 @@ def run(inputs):
     logger.info("[4/7] converting sequences to sentences for language model...")
     sentence, id2contig, proportion, pcs2idx = contig2sentence(db_dir, os.path.join(rootpth, midfolder), genomes)
 
-    logger.info("[5/7] Predicting the viruses...")
+    if inputs.skip == 'N':
+        logger.info("[5/7] Predicting the viruses...")
+    else:
+        logger.info("[5/7] Analyzing the seuqences...")
     #pcs2idx = pkl.load(open(f'{rootpth}/{midfolder}/phamer_pc2wordsid.dict', 'rb'))
     num_pcs = len(set(pcs2idx.keys()))
     src_vocab_size = num_pcs+1
