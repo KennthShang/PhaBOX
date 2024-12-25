@@ -327,6 +327,7 @@ def main():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('-h', '--help', action='store_true', help='Show this help message and exit')
     parser.add_argument('--task', help='Select a program to run  || (default end_to_end)',  default = 'end_to_end')
+    parser.add_argument('--skip', help='Skip PhaMer in end_to_end task || (defailt N)',  default = 'N')
     parser.add_argument('-d', '--dbdir', help='Path of database directory || (required)',  default = 'database/')
     parser.add_argument('-o', '--outpth', help='Rootpth for the output folder || (required)', default='test_out/')
     parser.add_argument('--contigs', help='Path of the input FASTA file || (required)',  default = 'test_contigs.fa')
@@ -368,23 +369,38 @@ def main():
     logger.info(f"PhaBOX2 is running with: {inputs.threads} threads!")
     if inputs.task == "end_to_end":
         phamer.run(inputs)
-        logger.info(f"PhaMer finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}")
+        if inputs.skip == 'N':
+            logger.info(f"PhaMer finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}")
+        else:
+            logger.info(f"Preprocessing finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}")
         phagcn.run(inputs)
         logger.info(f"PhaGCN finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}")
         cherry.run(inputs)
         logger.info(f"Cherry finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}")
         phatyp.run(inputs)
         logger.info(f"PhaTYP finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}")
-        df1 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phamer_prediction.tsv'), sep='\t')
-        df2 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phagcn_prediction.tsv'), sep='\t')
-        df3 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phatyp_prediction.tsv'), sep='\t')
-        df4 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'cherry_prediction.tsv'), sep='\t')
-        df  = df1.merge(df2, on=['Accession', 'Length'], how='outer') \
-               .merge(df3, on=['Accession', 'Length'], how='outer') \
-               .merge(df4, on=['Accession', 'Length'], how='outer')
-        df.fillna('NA', inplace=True)
-        df.to_csv(f'{inputs.outpth}/final_prediction/final_prediction_summary.tsv', index=False, sep='\t')
-        logger.info(f"Summarized finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction', 'final_prediction_summary.tsv')}\n\n")
+        if inputs.skip == 'N':
+            df1 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phamer_prediction.tsv'), sep='\t')
+            df2 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phagcn_prediction.tsv'), sep='\t')
+            df3 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phatyp_prediction.tsv'), sep='\t')
+            df4 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'cherry_prediction.tsv'), sep='\t')
+            df  = df1.merge(df2, on=['Accession', 'Length'], how='outer') \
+                .merge(df3, on=['Accession', 'Length'], how='outer') \
+                .merge(df4, on=['Accession', 'Length'], how='outer')
+            df.fillna('NA', inplace=True)
+            df.replace('-', 'NA', inplace=True)
+            df.to_csv(f'{inputs.outpth}/final_prediction/final_prediction_summary.tsv', index=False, sep='\t')
+            logger.info(f"Summarized finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction', 'final_prediction_summary.tsv')}\n\n")
+        else:
+            df2 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phagcn_prediction.tsv'), sep='\t')
+            df3 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'phatyp_prediction.tsv'), sep='\t')
+            df4 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'cherry_prediction.tsv'), sep='\t')
+            df  = df2.merge(df3, on=['Accession', 'Length'], how='outer') \
+                .merge(df4, on=['Accession', 'Length'], how='outer')
+            df.fillna('NA', inplace=True)
+            df.replace('-', 'NA', inplace=True)
+            df.to_csv(f'{inputs.outpth}/final_prediction/final_prediction_summary.tsv', index=False, sep='\t')
+            logger.info(f"Summarized finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction', 'final_prediction_summary.tsv')}\n\n")
     elif inputs.task == "phamer":
         phamer.run(inputs)
         logger.info(f"PhaMer finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction')}\n\n")

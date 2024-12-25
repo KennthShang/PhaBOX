@@ -18,7 +18,13 @@ from tqdm import tqdm
 
 def run(inputs):
     logger = get_logger()
-    logger.info("Running program: PhaMer (virus identification)")
+    if inputs.skip == 'Y' and inputs.task == 'phamer':
+        logger.info("Error: parameter 'skip' should be 'Y' when running the task 'phamer'")
+        exit()
+    if inputs.skip == 'N':
+        logger.info("Running program: PhaMer (virus identification)")
+    else:
+        logger.info("Running program: Data preprocessing")
     program_start = time.time()
 
     contigs   = inputs.contigs
@@ -34,7 +40,10 @@ def run(inputs):
         print(f'Database directory {db_dir} missing or unreadable')
         exit(1)
 
-    supplementary = 'phamer_supplementary'
+    if inputs.skip == 'N':
+        supplementary = 'phamer_supplementary'
+    else:
+        supplementary = 'preprocessing_supplementary'
     check_path(os.path.join(rootpth, out_dir))
     check_path(os.path.join(rootpth, out_dir, supplementary))
     check_path(os.path.join(rootpth, midfolder))
@@ -226,43 +235,47 @@ def run(inputs):
     contigs_list = list(contigs_list.keys()) + contigs_add
 
     logger.info("[7/7] writing the results...")
-    pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":all_pred, "Proportion":all_proportion, "PhaMerScore":all_score, "PhaMerConfidence":all_confidence})
-    pred_csv.to_csv(f'{rootpth}/{out_dir}/phamer_prediction.tsv', index = False, sep='\t')
-    virus_list = {item:1 for item in pred_csv[pred_csv['Pred'] == 'virus']['Accession'].values}
+    if inputs.skip == 'N':
+        pred_csv = pd.DataFrame({"Accession":contigs_list, "Length":length_list, "Pred":all_pred, "Proportion":all_proportion, "PhaMerScore":all_score, "PhaMerConfidence":all_confidence})
+        pred_csv.to_csv(f'{rootpth}/{out_dir}/phamer_prediction.tsv', index = False, sep='\t')
+        virus_list = {item:1 for item in pred_csv[pred_csv['Pred'] == 'virus']['Accession'].values}
 
-    virus_rec = []
-    low_confidence = {item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'low-confidence; please run contamination detection task']['Accession'].values}
-    low_confidence = {**low_confidence, **{item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'lower than viral score threshold; proteinal prophage, please run contamination detection task']['Accession'].values}}
-    low_virus_rec = []
-    for record in SeqIO.parse(f'{contigs}', 'fasta'):
-        try:
-            _ = low_confidence[record.id]
-            low_virus_rec.append(record)
-        except:
-            pass
-        try:
-            _ = virus_list[record.id]
-            virus_rec.append(record)
-        except:
-            pass
+        virus_rec = []
+        low_confidence = {item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'low-confidence; please run contamination detection task']['Accession'].values}
+        low_confidence = {**low_confidence, **{item:1 for item in pred_csv[pred_csv['PhaMerConfidence'] == 'lower than viral score threshold; proteinal prophage, please run contamination detection task']['Accession'].values}}
+        low_virus_rec = []
+        for record in SeqIO.parse(f'{contigs}', 'fasta'):
+            try:
+                _ = low_confidence[record.id]
+                low_virus_rec.append(record)
+            except:
+                pass
+            try:
+                _ = virus_list[record.id]
+                virus_rec.append(record)
+            except:
+                pass
         
             
 
-    SeqIO.write(virus_rec, f'{rootpth}/{out_dir}/{supplementary}/predicted_virus.fa', 'fasta')
-    SeqIO.write(low_virus_rec, f'{rootpth}/{out_dir}/{supplementary}/uncertain_sequences_for_contamination_task.fa', 'fasta')
-    virus_protein_rec = []
-    check = {item: 1 for item in virus_list}
-    for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
-        try:
-            _ = check[record.id.rsplit('_', 1)[0]]
-            virus_protein_rec.append(record)
-        except:
-            pass
+        SeqIO.write(virus_rec, f'{rootpth}/{out_dir}/{supplementary}/predicted_virus.fa', 'fasta')
+        SeqIO.write(low_virus_rec, f'{rootpth}/{out_dir}/{supplementary}/uncertain_sequences_for_contamination_task.fa', 'fasta')
+        virus_protein_rec = []
+        check = {item: 1 for item in virus_list}
+        for record in SeqIO.parse(f'{rootpth}/{midfolder}/query_protein.fa', 'fasta'):
+            try:
+                _ = check[record.id.rsplit('_', 1)[0]]
+                virus_protein_rec.append(record)
+            except:
+                pass
     
-    SeqIO.write(virus_protein_rec, f'{rootpth}/{out_dir}/{supplementary}/predicted_virus_protein.fa', 'fasta')  
-    run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_contigs.fa")      
-    run_command(f"cp {rootpth}/{out_dir}/{supplementary}/predicted_virus.fa {rootpth}/filtered_contigs.fa")
+        SeqIO.write(virus_protein_rec, f'{rootpth}/{out_dir}/{supplementary}/predicted_virus_protein.fa', 'fasta')  
+    
+        run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_contigs.fa")      
+        run_command(f"cp {rootpth}/{out_dir}/{supplementary}/predicted_virus.fa {rootpth}/filtered_contigs.fa")
 
+    else:
+        run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_contigs.fa")      
 
     run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_protein.fa")
     run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/{supplementary}/alignment_results.tab")
@@ -290,9 +303,15 @@ def run(inputs):
                 f.write(f'{genome}\t{gene}\t{genes[gene].start}\t{genes[gene].end}\t{genes[gene].strand}\t{genes[gene].gc}\t{genes[gene].anno}\t{genes[gene].pident:.2f}\t{genes[gene].coverage:.2f}\n')
 
 
-    phavip_dump_result(genomes, rootpth, out_dir, logger, supplementary = 'phamer_supplementary')
+    phavip_dump_result(genomes, rootpth, out_dir, logger, supplementary = supplementary)
     
     logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))
+
+    if inputs.skip == 'N':
+        if not virus_rec: 
+            logger.info("PhaMer finished! No virus found in the contigs!")
+            logger.info(f"Please check the results in {os.path.join(rootpth,out_dir, 'phamer_prediction.tsv')}")
+            exit()
 
 
 
