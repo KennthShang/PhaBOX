@@ -174,7 +174,7 @@ def run(inputs):
             SeqIO.write(total_rec, f"{rootpth}/{midfolder}/CRISPRs.fa", 'fasta')
             run_command(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/{supplementary}/CRISPRs_MAGs.fa")
             check_path(os.path.join(rootpth, midfolder, 'crispr_db'))
-            run_command(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPRs > /dev/null 2>&1')
+            run_command(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPRs')
 
 
             logger.info(f"[3/{jy}] predicting MAG CRISPRs...")
