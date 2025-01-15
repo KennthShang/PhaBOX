@@ -18,7 +18,7 @@ description = """
 Syntax: phabox2 [--help] [--task TASK] [--dbdir DBDIR] [--outpth OUTPTH] 
                     [--contigs CONTIGS] [--proteins PROTEINS]
                     [--midfolder MIDFOLDER] [--threads THREADS]
-                    [--len LEN] [--reject REJECT] [--aai AAI] 
+                    [--len LEN] [--reject REJECT] [--aai AAI] [--skip N/Y]
                     [--share SHARE] [--pcov PCOV]
                     [--pident PIDENT] [--cov COV] 
                     [--blast BLAST] [--sensitive SENSITIVE] 
@@ -32,7 +32,8 @@ Syntax: phabox2 [--help] [--task TASK] [--dbdir DBDIR] [--outpth OUTPTH]
 
 \033[94m--task\033[0m    
     Select a program to run:
-    end_to_end    || Run phamer, phagcn, phatyp, cherry, and phavip once (default)
+    end_to_end    || Run phamer, phagcn, phatyp, cherry, and phavip once (default) 
+                     --skip Y can skip the phamer (deault N)
     phamer        || Virus identification
     phagcn        || Taxonomy classification
     phatyp        || Lifestyle prediction
