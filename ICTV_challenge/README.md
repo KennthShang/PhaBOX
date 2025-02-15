@@ -4,8 +4,10 @@
 2. Run the PhaGCN program using codes: `phabox2 --task phagcn -d phabox_db_v2 -o ICTV_Challenge --contigs ICTV_Challenge.fa`
 3. Convert the format using the script **convert_original_results_to_temperate_format.py**
 
-## Brief description of the methodology
+**NOTE:** The current version of phabox2 will filtered the contigs with length 3 kbp (lower than this threshold will not return a prediction). You can adjust the parameters if needed. The provided predictions are based on the default parameters.
 
+
+## Brief description of the methodology
 
 The description of the methods can be found via [PhaBOX implementation](https://phage.ee.cityu.edu.hk/implement)
 The papers are: PMID 34252923, 36464489, and 37641717
