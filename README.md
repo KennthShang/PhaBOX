@@ -13,9 +13,9 @@
 [![CHERRY](https://img.shields.io/static/v1.svg?label=CHERRY&message=bib/bbac182&color=blue)](https://doi.org/10.1093/bib/bbac182)
 [![PhaVIP](https://img.shields.io/static/v1.svg?label=CHERRY&message=bioinformatics/btad229&color=blue)](https://doi.org/10.1093/bioinformatics/btad229)
 
-This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk). 
+This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk), consisting of the latest updates of our previously released programs: PhaMer, PhaGCN, CHERRY/HostG, and PhaTYP.
 
-For large-scale sequencing data, please download this local version and use more threads to speed up the program.
+Please download this local version for large-scale sequencing data and use more threads to speed up the program.
 
 <a name="news"></a>
 ## ⌛️&nbsp; News
