@@ -26,13 +26,13 @@ There are some major components, including:
 
   🎉 Generalized for all kinds of viruses; more than just bacteriophage
 
-  🎉 Virus identification (lastest PhaMer)
+  🎉 Virus identification (latest PhaMer)
 
-  🎉 Taxonomy classification (lastest PhaGCN)
+  🎉 Taxonomy classification (latest PhaGCN)
 
-  🎉 Host prediction (lastest CHERRY/HostG)
+  🎉 Host prediction (latest CHERRY/HostG)
 
-  🎉 Lifestyle prediction (lastest PhaTYP)
+  🎉 Lifestyle prediction (latest PhaTYP)
 
   🎉 Contamination/provirus detection
 
