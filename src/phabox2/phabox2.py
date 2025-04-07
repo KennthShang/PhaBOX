@@ -6,9 +6,9 @@ import pandas as pd
 from  phabox2.scripts.ulity import *
 
 
-__version__ = "2.1.10"
+__version__ = "2.1.11"
 description = """
-                                  \033[1m\033[96mPhaBOX v2.1.10\033[0m\033[0m                  
+                                  \033[1m\033[96mPhaBOX v2.1.11\033[0m\033[0m                  
                \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Dec. 2024\033[0m\033[0m 
 
 
@@ -199,6 +199,9 @@ The options below are used to predict CRISPRs based on MAGs.
 
 The options below are used to align contigs to CRISPRs.
 
+\033[94m--prophage\033[0m  
+    Minimum alignment length for estimate potential prophage || default: 1000 || range from 0 to 100000
+
 \033[94m--cpident\033[0m
     Alignment identity for CRISPRs || default: 90 || range from 90 to 100
 
@@ -344,6 +347,7 @@ def main():
     parser.add_argument('--ccov', help='Alignment coverage for CRISPRs: 0-100 || (default 90)',  type=float, default = 90)
     parser.add_argument('--blast', help='BLAST program for CRISPRs: blastn or blastn-short || (default blastn)', default = 'blastn')
     parser.add_argument('--bfolder', help='path to the folder that contains MAGs || (default None)', default = 'None')
+    parser.add_argument('--prophage', help='minimum alignment length for estimate potential prophage', type=float, default = 1000)
     parser.add_argument('--magonly', help='Only predicting host based on the MAGs: Y or N || (default N)', default = 'N')
     parser.add_argument('--sensitive', help='Sensitive search for the prokaryotic genes: Y or N (contamination) || (default N)', default = 'N')
     parser.add_argument('--mode', help='Mode for clustering ANI based or AAI based || (default ANI)', default = 'ANI')
