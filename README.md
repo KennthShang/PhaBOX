@@ -60,6 +60,35 @@ You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome 
 If you are familiar with the PhaBOX2, please check our [Update log](https://github.com/KennthShang/PhaBOX/wiki/Update-logs). We may have some updates to the program to make it more useful. If you want to use the latest version, please also [upgrade your PhaBOX2](https://github.com/KennthShang/PhaBOX/wiki#upgrading-phabox)
 
 
+## 🚀&nbsp; The Most Recent Update Logs
+
+### March 6, 2025
+
+> [!IMPORTANT]
+> New functions were added to the cherry host prediction task
+> We also adjust the host prediction logic as below:
+> 1. CRISPRs from MAGs (if MAGs were provided)
+> 2. BLASTN (prophage) from MAGs (if MAGs were provided)
+> 3. Protein organization compared to the viruses in the database
+> 4. CRISPRs from database
+
+
+New added parameters in `--task cherry`
+```
+--prophage
+     Minimum alignment length for estimating potential prophage || default: 1000 || range from 0 to 100000
+```
+
+
+### Dec 26, 2024
+
+> [!IMPORTANT]
+>  Now, the end-to-end task allow to skip the PhaMer(virus identification). 
+>  If users already have the viral contigs as their inputs, they can run end-to-end task using `--skip Y` to skip the virus identification
+>  However, please noted that the default parameters is `--skip N`
+
+We also added a log output that tells the user that PhaMer detected no viruses and stopped the following pipelines in the end-to-end task in  `--skip N` condition.
+
 <a name="license"></a>
 
 ## 📘&nbsp; License
