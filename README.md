@@ -62,7 +62,7 @@ If you are familiar with the PhaBOX2, please check our [Update log](https://gith
 
 ## 🚀&nbsp; The Most Recent Update Logs
 
-### March 6, 2025
+### 2.1.11 March 6, 2025
 
 > [!IMPORTANT]
 > New functions were added to the cherry host prediction task
@@ -80,7 +80,7 @@ New added parameters in `--task cherry`
 ```
 
 
-### Dec 26, 2024
+### 2.1.10 Dec 26, 2024
 
 > [!IMPORTANT]
 >  Now, the end-to-end task allow to skip the PhaMer(virus identification). 
