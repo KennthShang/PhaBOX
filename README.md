@@ -17,6 +17,8 @@ This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk),
 
 Please download this local version for large-scale sequencing data and use more threads to speed up the program.
 
+**If you like our tool, please give us a star on GitHub. This will provide power for our ongoing maintenance, thanks！**
+
 <a name="news"></a>
 ## ⌛️&nbsp; News
 
