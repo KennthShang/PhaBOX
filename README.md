@@ -9,9 +9,10 @@
 [![PhaBOXv1](https://img.shields.io/static/v1.svg?label=PhaBOX_v1&message=bioadv/vbad101&color=blue)](https://doi.org/10.1093/bioadv/vbad101)
 [![PhaMer](https://img.shields.io/static/v1.svg?label=PhaMer&message=bib/bbac258&color=blue)](https://doi.org/10.1093/bib/bbac258)
 [![PhaGCN](https://img.shields.io/static/v1.svg?label=PhaGCN&message=bioinformatics/btab293&color=blue)](https://doi.org/10.1093/bioinformatics/btab293)
+[![PhaGCN2](https://img.shields.io/static/v1.svg?label=PhaGCN2&message=bib/bbac505&color=blue)](https://doi.org/10.1093/bioinformatics/btab293)
 [![PhaTYP](https://img.shields.io/static/v1.svg?label=PhaTYP&message=bib/bbac487&color=blue)](https://doi.org/10.1093/bib/bbac487)
 [![CHERRY](https://img.shields.io/static/v1.svg?label=CHERRY&message=bib/bbac182&color=blue)](https://doi.org/10.1093/bib/bbac182)
-[![PhaVIP](https://img.shields.io/static/v1.svg?label=CHERRY&message=bioinformatics/btad229&color=blue)](https://doi.org/10.1093/bioinformatics/btad229)
+[![PhaVIP](https://img.shields.io/static/v1.svg?label=PhaVIP&message=bioinformatics/btad229&color=blue)](https://doi.org/10.1093/bioinformatics/btad229)
 
 This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk), consisting of the latest updates of our previously released programs: PhaMer, PhaGCN, CHERRY/HostG, and PhaTYP.
 
