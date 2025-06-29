@@ -6,9 +6,9 @@ import pandas as pd
 from  phabox2.scripts.ulity import *
 
 
-__version__ = "2.1.11"
+__version__ = "2.1.12"
 description = """
-                                  \033[1m\033[96mPhaBOX v2.1.11\033[0m\033[0m                  
+                                  \033[1m\033[96mPhaBOX v2.1.12\033[0m\033[0m                  
                \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Dec. 2024\033[0m\033[0m 
 
 
@@ -192,10 +192,16 @@ We have provided the complete network for visualization (network_edges.tsv and n
 Please check it out via: https://github.com/KennthShang/PhaBOX/wiki/Outputs#-outputs-for-specific-task
 
 
-The options below are used to predict CRISPRs based on MAGs.
+The options below are used to predict Host based on MAGs.
 
 \033[94m--bfolder\033[0m
     Path to the folder that contains MAGs || default: None
+
+
+\033[94m--magonly\033[0m
+    Only predicting host based on the provided MAGs: Y or N || default: N
+    Y will only predict the host based on the provided MAGs
+    N will predict the host based on the MAGs and the reference database
 
 The options below are used to align contigs to CRISPRs.
 
@@ -212,13 +218,19 @@ The options below are used to align contigs to CRISPRs.
     BLAST program for CRISPRs || default: blastn || blastn or blastn-short
     blastn-short will lead to more sensitive results but require more time to execute the program 
 
+The options below are used to align contigs to MAGs to find prophages.
+
+\033[94m--prolen\033[0m
+    Minimum alignment length for prophage || default: 1000 || range from 0 to 100000
+
+The options below are used as GTDB-based taxonomy annotation filter for kmer-based prediction.
+
+\033[94m--bgtdb\033[0m
+    Path to the GTDB tsv file of the MAGs || default: None
+
+    
 The default parameters are optimized for predicting prokaryotic hosts (data from the NCBI RefSeq database). 
 When making changes, make sure you understand what they are.
-
-\033[94m--magonly\033[0m
-    Only predicting host based on the provided MAGs: Y or N || default: N
-    Y will only predict the host based on the provided MAGs
-    N will predict the host based on the MAGs and the reference database
 """
 
 phavip_description = """PhaVIP: Virus annotation
@@ -303,6 +315,11 @@ Usage: phabox2 --task tree [options]
     Whether run msa || default: N || Y or N
     Y will run msa for the marker genes using mafft
     But this will require more time to execute the program
+    
+\033[94m--msadb\033[0m
+    Whether run msa with database || default: Y || Y or N
+    Y will run msa on the detected marker genes with the database
+    N will run msa on the detected marker genes without the database
 
 \033[94m--tree\033[0m
     Whether build a tree || default: N || Y or N
@@ -343,11 +360,12 @@ def main():
     parser.add_argument('--aai', help='Average amino acids identity for AAI based genus grouping: 0-100  || (default 75)',  type=float, default = 75)
     parser.add_argument('--share', help='Minimum shared number of proteins for AAI based genus grouping: 0-100  || (default 15)',  type=float, default = 15)
     parser.add_argument('--pcov', help='Protein-level coverage for AAI based genus grouping: 0-100  || (default 80)',  type=float, default = 80)
-    parser.add_argument('--cpident', help='Alignment identity for CRISPRs: 90-100 || (default 90)',  type=float, default = 90)
-    parser.add_argument('--ccov', help='Alignment coverage for CRISPRs: 0-100 || (default 90)',  type=float, default = 90)
+    parser.add_argument('--cpident', help='Alignment identity for CRISPRs: 90-100 || (default 90)',  type=int, default = 90)
+    parser.add_argument('--ccov', help='Alignment coverage for CRISPRs: 0-100 || (default 90)',  type=int, default = 90)
     parser.add_argument('--blast', help='BLAST program for CRISPRs: blastn or blastn-short || (default blastn)', default = 'blastn')
     parser.add_argument('--bfolder', help='path to the folder that contains MAGs || (default None)', default = 'None')
-    parser.add_argument('--prophage', help='minimum alignment length for estimate potential prophage', type=float, default = 1000)
+    parser.add_argument('--bgtdb', help='path to the GTDB tsv file of the MAGs || (default None)', default = 'None')
+    parser.add_argument('--prolen', help='minimum alignment length for estimate potential prophage', type=int, default = 1000)
     parser.add_argument('--magonly', help='Only predicting host based on the MAGs: Y or N || (default N)', default = 'N')
     parser.add_argument('--sensitive', help='Sensitive search for the prokaryotic genes: Y or N (contamination) || (default N)', default = 'N')
     parser.add_argument('--mode', help='Mode for clustering ANI based or AAI based || (default ANI)', default = 'ANI')
@@ -358,6 +376,7 @@ def main():
     parser.add_argument('--mpident', help='Alignment identity for matching marker genes || default: 25 || range from 0 to 100',  type=float, default = 25)
     parser.add_argument('--mcov', help='Alignment coverage for matching marker genes || default: 50 || range from 0 to 100',  type=float, default = 50)
     parser.add_argument('--msa', type=str, help='Whether run msa: Y or N ||default N', default='N')
+    parser.add_argument('--msadb', type=str, help='Whether run msa with database: Y or N ||default Y', default='Y')
     parser.add_argument('--tree', type=str, help='Whether build a tree: Y or N ||default N', default='N')
     inputs = parser.parse_args()
 

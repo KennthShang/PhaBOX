@@ -35,6 +35,8 @@ def run(inputs):
     blast     = inputs.blast
     bfolder   = inputs.bfolder
     magonly   = inputs.magonly
+    bgtdb     = inputs.bgtdb
+    prolen    = inputs.prolen
 
     if magonly == 'Y':
         jy = 4
@@ -45,6 +47,10 @@ def run(inputs):
         print('In consistent input, please provide the MAGs folder or set the magonly flag to False.')
         exit(1)
 
+    if bfolder == 'None' and bgtdb != 'None':
+        print('In consistent input, please provide the MAGs folder (--bfolder) corresponding to your gtdb file.')
+        exit(1)
+
     if not os.path.isfile(contigs):
         print('cannot find the input contigs file')
         exit(1)
@@ -52,6 +58,11 @@ def run(inputs):
     if not os.path.exists(db_dir):
         print(f'Database directory {db_dir} missing or unreadable')
         exit(1)
+
+    if bgtdb != 'None':
+        if not os.path.isfile(bgtdb):
+            print(f'GTDB file {bgtdb} missing or unreadable')
+            exit(1)
 
     supplementary = 'cherry_supplementary'
     check_path(os.path.join(rootpth, out_dir))
@@ -110,9 +121,10 @@ def run(inputs):
 
 
     ###############################################################
-    ##################  CRISPRs (MAG/BLASTN)  #####################
+    #################  CRISPRs (MAG/BLASTN/Kmer)  #################
     ###############################################################
     blast_pred_mag = {}
+    virus2host_kmer_reorg = {}
     if bfolder != 'None':
         # running CRT
         logger.info(f"[2/{jy}] finding CRISPRs from MAGs...")
@@ -167,6 +179,7 @@ def run(inputs):
                 SeqIO.write(crispr_rec, f"{rootpth}/{midfolder}/crispr_fa/{prefix}_CRISPRs.fa", 'fasta')
 
         # BLASTN prophage sequences
+        logger.info(f"[3/{jy}] predicting MAG link...")
         check_path(f"{rootpth}/{midfolder}/blast_db")
         check_path(f"{rootpth}/{midfolder}/blast_out")
         df_list = []
@@ -175,7 +188,7 @@ def run(inputs):
             run_command(f"makeblastdb -in {bfolder}/{bfile} -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/blast_db/{prefix}")
             run_command(f"blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/blast_db/{prefix} -outfmt '6 qseqid sseqid evalue pident length' -out {rootpth}/{midfolder}/blast_out/{prefix}.blastn -evalue 1 -max_target_seqs 1 -perc_identity 98 -num_threads {threads}")
             blast_df = pd.read_csv(f"{rootpth}/{midfolder}/blast_out/{prefix}.blastn", sep='\t', names = ['qseqid', 'sseqid', 'evalue', 'pident', 'length'])
-            blast_df = blast_df[blast_df['length'] > 1000]
+            blast_df = blast_df[blast_df['length'] >= prolen]
             blast_df['sseqid'] = prefix
             blast_df.sort_values('length', ascending=False, inplace=True)
             blast_df.drop_duplicates(subset='qseqid', keep='first', inplace=True)
@@ -190,43 +203,183 @@ def run(inputs):
             run_command(f"cp {rootpth}/{midfolder}//blastn_MAGs.tsv {rootpth}/{out_dir}/{supplementary}/BLASTN_alignment_MAG.tsv")
             blast_df.drop_duplicates(subset='qseqid', keep='first', inplace=True)
             blast_pred_mag = {row['qseqid']: {'pred': row['sseqid'], 'ident': round(row['pident']/100, 2)} for index, row in blast_df.iterrows()}
-            
+        
+        # Kmer prediction
+        getPKmer(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/pkmer', threads)
+        getBKmer(f'{bfolder}', f'{rootpth}/{midfolder}/bkmer', threads)
+        virus2host_kmer = predictVirusHost(db_dir, f'{rootpth}/{midfolder}/', genomes)
+        pkl.dump(virus2host_kmer, open(f'{rootpth}/{midfolder}/virus2host_kmer.pkl', 'wb'))
 
-
-        if not total_rec and not blast_pred_mag:
-            logger.info('No CRISPRs/BLASTN links found in the MAGs.')
-            if magonly == 'Y':
-                logger.info('Please check the MAGs or set the magonly flag to False.')
-                exit(1)
+        # align virus protien against MAGs protein
+        ## tranlate the contigs/MAGs to protein sequences
+        if os.path.exists(f'{rootpth}/{midfolder}/query_protein.fa'):
+            logger.info(f"reusing existing protein file...")
         else:
-            logger.info(f"[3/{jy}] predicting MAG link...")
-            crispr_pred_mag = {}
-            if total_rec:
-                SeqIO.write(total_rec, f"{rootpth}/{midfolder}/CRISPRs.fa", 'fasta')
-                run_command(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/{supplementary}/CRISPRs_MAGs.fa")
-                check_path(os.path.join(rootpth, midfolder, 'crispr_db'))
-                run_command(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPRs')
+            logger.info(f"calling genes with prodigal...")
+            parallel_prodigal_gv(f'{rootpth}/filtered_contigs.fa', f'{rootpth}/{midfolder}/query_protein.fa', threads)
+        
+        check_path(os.path.join(rootpth, midfolder, 'bfolder_protein'))
+        check_path(os.path.join(rootpth, midfolder, 'bfolder_protein_db'))
+        check_path(os.path.join(rootpth, midfolder, 'bfolder_protein_align'))
+        Flag, _ = translate_MAGs(f'{bfolder}', f'{rootpth}/{midfolder}/bfolder_protein/', threads)
+        assert Flag == True, "Error in translating MAGs to protein sequences, please check the MAGs."
 
-                if blast == 'blastn-short':
-                    run_command(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
-                elif blast == 'blastn':
-                    run_command(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+        # run diamond blastp
+        for file in os.listdir(f'{rootpth}/{midfolder}/bfolder_protein/'):
+            name = file.rsplit('.', 1)[0]
+            _ = os.system(f'diamond makedb --in {rootpth}/{midfolder}/bfolder_protein/{file} -d {rootpth}/{midfolder}/bfolder_protein_db/{name} --quiet')
+
+
+        for db in os.listdir(f'{rootpth}/{midfolder}/bfolder_protein_db/'):
+            db_name = db.split('.dmnd')[0]
+            _ = os.system(f'diamond blastp -d {rootpth}/{midfolder}/bfolder_protein_db/{db} -q {rootpth}/{midfolder}/query_protein.fa -o {rootpth}/{midfolder}/bfolder_protein_align/{db_name}.tsv --threads {threads}  --query-cover 50 --subject-cover 50 --quiet')
+
+        df_list = []
+        for file in os.listdir(f'{rootpth}/{midfolder}/bfolder_protein_align/'):
+            try:
+                df = pd.read_csv(f'{rootpth}/{midfolder}/bfolder_protein_align/{file}', sep='\t', header=None)
+            except pd.errors.EmptyDataError:
+                continue
+            df.columns = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore']
+            df['MAG'] = file.rsplit('.', 1)[0]
+            df = df[['qseqid', 'MAG', 'pident']]
+            df_list.append(df)
+
+        align = pd.concat(df_list)
+        align['phage'] = align['qseqid'].apply(lambda x: x.rsplit('_', 1)[0])
+        align = align.groupby(['phage', 'MAG'], as_index=False)['pident'].max()
+        align.to_csv(f'{rootpth}/{midfolder}/bfolder_protein_align.tsv', sep='\t', index=False)
+        align = align[align['phage'].isin(set(virus2host_kmer.keys()))]
+
+        phage2mag2pident = {phage: {} for phage in virus2host_kmer.keys()}
+        phage2mean = {phage: [] for phage in virus2host_kmer.keys()}
+        for index, row in align.iterrows():
+            phage = row['phage']
+            mag = row['MAG']
+            pident = row['pident']/100
+            phage2mag2pident[phage][mag] = pident
+            phage2mean[phage].append(pident)
+
+        for phage in phage2mean.keys():
+            if phage2mean[phage]:
+                phage2mean[phage] = sum(phage2mean[phage]) / len(phage2mean[phage])
+            else:
+                phage2mean[phage] = 0
+
+
+
+        
+
+        if bgtdb != 'None':
+            gtdb_df = pd.read_csv(f'{bgtdb}', sep='\t')
+            # check if all mag in the gtdb file
+            mag_set = set([item.rsplit('.', 1)[0] for item in os.listdir(f'{bfolder}')])
+            assert (mag_set - set(gtdb_df['user_genome'].unique())) == set(), "Seems not all MAGs has annotation in the gtdb file, please check\nPlease also ensure there is no suffix like .fa in the user_genome in your gtdb tsv file\nOr please do not use the --bgtdb option"
+
+            gtdb_df['Species'] = gtdb_df['classification'].apply(lambda x: "species:" + x.split('s__')[-1].split(';')[0] if (isinstance(x, str) and x.split('s__')[-1].split(';')[0] != '') else 'NaN')
+            gtdb_df['Genus'] = gtdb_df['classification'].apply(lambda x: "genus:" + x.split('g__')[-1].split(';')[0] if (isinstance(x, str) and x.split('g__')[-1].split(';')[0] != '') else 'NaN')
+            gtdb_df['Family'] = gtdb_df['classification'].apply(lambda x: "family:" +x.split('f__')[-1].split(';')[0] if (isinstance(x, str) and x.split('f__')[-1].split(';')[0] != '') else 'NaN')
+
+            mag2taxonomy = {row['user_genome']: row['classification'] for _, row in gtdb_df.iterrows()}
+            mag2species = {row['user_genome']: row['Species'] for _, row in gtdb_df.iterrows()}
+            mag2genus = {row['user_genome']: row['Genus'] for _, row in gtdb_df.iterrows()}
+            mag2family = {row['user_genome']: row['Family'] for _, row in gtdb_df.iterrows()}
+            species2linage = {row['Species']: row['classification'] for _, row in gtdb_df.iterrows()}
+            genus2linage = {row['Genus']: row['classification'].split(';s__')[0] for _, row in gtdb_df.iterrows()}
+            family2linage = {row['Family']: row['classification'].split(';g__')[0] for _, row in gtdb_df.iterrows()}
+        
+        # initialize a dictionary to store candidate predictions for each phage
+        align2pred = {}
+        for phage, mag in zip(align['phage'], align['MAG']):
+            try:
+                align2pred[phage]['Exact'].append(mag)
+            except KeyError:
+                align2pred[phage] = {'Exact': [mag]}
+
+        if bgtdb != 'None':
+            for phage, mag in zip(align['phage'], align['MAG']):
+                if mag2species[mag] != 'NaN':
+                    align2pred[phage]['Species'] = mag2species[mag]
+                if mag2genus[mag] != 'NaN':
+                    align2pred[phage]['Genus'] = mag2genus[mag]
+                if mag2family[mag] != 'NaN':
+                    align2pred[phage]['Family'] = mag2family[mag]
+
+
+        # reorganize the predictions based on the kmer results
+        if bgtdb != 'None':
+            for phage, mag in virus2host_kmer.items():
+                if phage not in align2pred:
+                    continue
+                if mag in align2pred[phage]['Exact']:
+                    virus2host_kmer_reorg[phage] = {}
+                    virus2host_kmer_reorg[phage]['pred'] = mag
+                    virus2host_kmer_reorg[phage]['ident'] = round(phage2mag2pident[phage][mag], 2)
+                elif mag2species[mag] in align2pred[phage]['Species']:
+                    virus2host_kmer_reorg[phage] = {}
+                    virus2host_kmer_reorg[phage]['pred'] = mag2species[mag]
+                    virus2host_kmer_reorg[phage]['ident'] = round(phage2mean[phage], 2)
+                elif mag2genus[mag] in align2pred[phage]['Genus']:
+                    virus2host_kmer_reorg[phage] = {}
+                    virus2host_kmer_reorg[phage]['pred'] = mag2genus[mag]
+                    virus2host_kmer_reorg[phage]['ident'] = round(phage2mean[phage], 2)
+                elif mag2genus[mag] in align2pred[phage]['Family']:
+                    virus2host_kmer_reorg[phage] = {}
+                    virus2host_kmer_reorg[phage]['pred'] = mag2family[mag]
+                    virus2host_kmer_reorg[phage]['ident'] = round(phage2mean[phage], 2)
+        else:
+            for phage, mag in virus2host_kmer.items():
+                if phage not in align2pred:
+                    continue
+                if mag in align2pred[phage]['Exact']:
+                    virus2host_kmer_reorg[phage] = {}
+                    virus2host_kmer_reorg[phage]['pred'] = mag
+                    virus2host_kmer_reorg[phage]['ident'] = round(phage2mag2pident[phage][mag], 2)
+
                 
 
-                crispr_df = pd.read_csv(f"{rootpth}/{midfolder}/crispr_out.tab", sep='\t', names = ['qseqid', 'sseqid', 'evalue', 'pident', 'length', 'slen'])
-                crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
-                crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
-                crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv", sep = '\t', index = False)
-                run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv {rootpth}/{out_dir}/{supplementary}/CRISPRs_alignment_MAG.tsv")
-                best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
-                crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
-            
-            pkl.dump(crispr_pred_mag, open(f'{rootpth}/{midfolder}/crispr_pred_mag.dict', 'wb'))
+        pkl.dump(virus2host_kmer_reorg, open(f'{rootpth}/{midfolder}/virus2host_kmer_reorg.pkl', 'wb'))
 
-            common_keys = crispr_pred_mag.keys() & blast_pred_mag.keys()
-            # Remove the common keys from blast_pred_mag
-            for key in common_keys:
-                del blast_pred_mag[key]
+        # if CRISPRs found in the MAGs
+        crispr_pred_mag = {}
+        if total_rec:
+            SeqIO.write(total_rec, f"{rootpth}/{midfolder}/CRISPRs.fa", 'fasta')
+            run_command(f"cp {rootpth}/{midfolder}/CRISPRs.fa {rootpth}/{out_dir}/{supplementary}/CRISPRs_MAGs.fa")
+            check_path(os.path.join(rootpth, midfolder, 'crispr_db'))
+            run_command(f'makeblastdb -in {rootpth}/{midfolder}/CRISPRs.fa -dbtype nucl -parse_seqids -out {rootpth}/{midfolder}/crispr_db/magCRISPRs')
+
+            if blast == 'blastn-short':
+                run_command(f'blastn -task blastn-short -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -gapopen 10 -penalty -1 -gapextend 2 -word_size 7 -dust no -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+            elif blast == 'blastn':
+                run_command(f'blastn -task blastn -query {rootpth}/filtered_contigs.fa -db {rootpth}/{midfolder}/crispr_db/magCRISPRs -out {rootpth}/{midfolder}/crispr_out.tab -outfmt "6 qseqid sseqid evalue pident length slen" -evalue 1 -max_target_seqs 25 -perc_identity 90 -num_threads {threads}')
+            # read the CRISPRs alignment results
+            crispr_df = pd.read_csv(f"{rootpth}/{midfolder}/crispr_out.tab", sep='\t', names = ['qseqid', 'sseqid', 'evalue', 'pident', 'length', 'slen'])
+            crispr_df['cov'] = crispr_df['length']/crispr_df['slen']
+            crispr_df = crispr_df[(crispr_df['cov'] > cov) & (crispr_df['pident'] > pident)]
+            crispr_df.to_csv(f"{rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv", sep = '\t', index = False)
+            run_command(f"cp {rootpth}/{midfolder}/CRISPRs_alignment_MAG.tsv {rootpth}/{out_dir}/{supplementary}/CRISPRs_alignment_MAG.tsv")
+            best_hit = crispr_df.drop_duplicates(subset='qseqid', keep='first')
+            crispr_pred_mag = {row['qseqid']: {'pred': row['sseqid'].split('_CRISPR_')[0], 'ident': round(row['pident']/100, 2)} for index, row in best_hit.iterrows()}
+            
+        pkl.dump(crispr_pred_mag, open(f'{rootpth}/{midfolder}/crispr_pred_mag.dict', 'wb'))
+
+        
+
+        if not crispr_pred_mag and not blast_pred_mag and not virus2host_kmer_reorg:
+            logger.info('No CRISPRs/BLASTN/Kmer links found in the MAGs.')
+            if magonly == 'Y':
+                logger.info('Please check the MAGs or set the magonly flag to F.')
+                exit(1)
+        else:
+            crispr_set = set(crispr_pred_mag.keys())
+            blast_set = set(blast_pred_mag.keys())
+            kmer_set = set(virus2host_kmer_reorg.keys())
+
+            blast_set = blast_set - crispr_set
+            kmer_set = kmer_set - crispr_set - blast_set
+
+            blast_set = list(blast_set)
+            kmer_set = list(kmer_set)
                             
 
             unpredicted = []
@@ -241,35 +394,65 @@ def run(inputs):
                     try:
                         _ = blast_pred_mag[record.id]
                     except:
-                        if len(record.seq) < inputs.len:
-                            filtered_contig.append(record.id)
-                            filtered_lenth.append(len(record.seq))
-                        unpredicted.append(record)
-                        unpredicted_contig.append(record.id)
-                        unpredicted_length.append(len(record.seq))
+                        try:
+                            _ = virus2host_kmer_reorg[record.id]
+                        except:
+                            if len(record.seq) < inputs.len:
+                                filtered_contig.append(record.id)
+                                filtered_lenth.append(len(record.seq))
+                            unpredicted.append(record)
+                            unpredicted_contig.append(record.id)
+                            unpredicted_length.append(len(record.seq))
         
             if magonly == 'Y' or not unpredicted:
                 logger.info(f"[4/{jy}] writing the results...")
                 # Create lists by combining existing data with new entries
-                all_contigs = list(crispr_pred_mag.keys()) + list(blast_pred_mag.keys()) + filtered_contig + unpredicted_contig
-                all_pred = [crispr_pred_mag[item]['pred'] for item in crispr_pred_mag] + [blast_pred_mag[item]['pred'] for item in blast_pred_mag] + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
-                all_score = [crispr_pred_mag[item]['ident'] for item in crispr_pred_mag] + [blast_pred_mag[item]['ident'] for item in blast_pred_mag] + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
-                all_length = [genomes[item].length for item in crispr_pred_mag] + [genomes[item].length for item in blast_pred_mag] + filtered_lenth + unpredicted_length
-                all_method = ['CIRPSR-based (MAG)']*len(crispr_pred_mag) + ['BLASTN-based (MAG)']*len(blast_pred_mag) + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+                all_contigs = list(crispr_pred_mag.keys()) + blast_set + kmer_set + filtered_contig + unpredicted_contig
+                all_pred = [crispr_pred_mag[item]['pred'] for item in crispr_pred_mag] + [blast_pred_mag[item]['pred'] for item in blast_set] + [virus2host_kmer_reorg[item]['pred'] for item in kmer_set] + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+                all_score = [crispr_pred_mag[item]['ident'] for item in crispr_pred_mag] + [blast_pred_mag[item]['ident'] for item in blast_pred_mag] + [virus2host_kmer_reorg[item]['ident'] for item in kmer_set] + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
+                all_length = [genomes[item].length for item in crispr_pred_mag] + [genomes[item].length for item in blast_set] + [genomes[item].length for item in kmer_set] + filtered_lenth + unpredicted_length
+                all_method = ['CIRPSR-based (MAG)']*len(crispr_pred_mag) + ['BLASTN-based (MAG)']*len(blast_set) + ['Kmer-based (MAG)']*len(kmer_set) + [] + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+                
+                if bgtdb != 'None':
+                    all_linage = []
+                    for item in all_pred:
+                        try:
+                            all_linage.append(mag2taxonomy[item])
+                        except:
+                            try:
+                                all_linage.append(species2linage[item])
+                            except:
+                                try:
+                                    all_linage.append(genus2linage[item])
+                                except:
+                                    try:
+                                        all_linage.append(family2linage[item])
+                                    except:
+                                        all_linage.append('-')
 
-                contig_to_pred = pd.DataFrame({
-                    'Accession': all_contigs,
-                    'Length': all_length,
-                    'Host': all_pred,
-                    'CHERRYScore': all_score,
-                    'Method': all_method
-                })
+                    contig_to_pred = pd.DataFrame({
+                        'Accession': all_contigs,
+                        'Length': all_length,
+                        'Host': all_pred,
+                        'CHERRYScore': all_score,
+                        'Method': all_method,
+                        'Host_GTDB_lineage': all_linage
+                    })
+               
+                else:
+                    contig_to_pred = pd.DataFrame({
+                        'Accession': all_contigs,
+                        'Length': all_length,
+                        'Host': all_pred,
+                        'CHERRYScore': all_score,
+                        'Method': all_method
+                    })
                 contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index=False, sep='\t')
                 logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))
                 return()
     else:
-        logger.info(f"[2/{jy}] no MAGs provided, skipping MAG CRISPRs prediction...")
-        logger.info(f"[3/{jy}] will continue running CHERRY with database bersion...")
+        logger.info(f"[2/{jy}] no MAGs provided, skipping MAG link prediction...")
+        logger.info(f"[3/{jy}] will continue running CHERRY with database version...")
     
 
     ###############################################################
@@ -343,13 +526,13 @@ def run(inputs):
     logger.info(f"[7/{jy}] generating cherry networks...")
     # FLAGS: no proteins aligned to the database
     if os.path.getsize(f'{rootpth}/{midfolder}/db_results.abc') == 0:
-        if len(crispr_pred_db) == 0 and len(crispr_pred_mag) == 0 and len(blast_pred_mag) == 0:
+        if len(crispr_pred_db) == 0 and len(crispr_pred_mag) == 0 and len(blast_pred_mag) == 0 and len(virus2host_kmer_reorg) == 0:
             Accession = []
             Length_list = []
             for record in SeqIO.parse(f'{contigs}', 'fasta'):
                 Accession.append(record.id)
                 Length_list.append(len(record.seq))
-            df = pd.DataFrame({"Accession": Accession, "Host":['unknown']*len(Accession), "CHERRYScore":[0]*len(Accession), "Method":['-']*len(Accession)})
+            df = pd.DataFrame({"Accession": Accession, "Host":['-']*len(Accession), "CHERRYScore":[0]*len(Accession), "Method":['-']*len(Accession)})
             df.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index = None, sep='\t')
             exit()
         else:
@@ -368,19 +551,44 @@ def run(inputs):
                     Method.append('CRISPR-based (DB)')
                 except:
                     try:
-                        Pred.append(crispr_pred_mag[record.id]['pred'])
-                        Score.append(crispr_pred_mag[record.id]['ident'])
-                        Method.append('CRISPR-based (MAG)')
+                        Pred.append(blast_pred_mag[record.id]['pred'])
+                        Score.append(blast_pred_mag[record.id]['ident'])
+                        Method.append('BLASTN-based (MAG)')
                     except:
                         try:
-                            Pred.append(blast_pred_mag[record.id]['pred'])
-                            Score.append(blast_pred_mag[record.id]['ident'])
-                            Method.append('BLASTN-based (MAG)')
+                            Pred.append(virus2host_kmer_reorg[record.id]['pred'])
+                            Score.append(virus2host_kmer_reorg[record.id]['ident'])
+                            Method.append('Kmer-based (MAG)')
+                            
                         except:
-                            Pred.append('-')
-                            Score.append(0.0)
-                            Method.append('-')
-            df = pd.DataFrame({"Accession": Accession, "Length": Length_list, "Host":Pred, "CHERRYScore": Score, "Method": Method})
+                            try:
+                                Pred.append(crispr_pred_mag[record.id]['pred'])
+                                Score.append(crispr_pred_mag[record.id]['ident'])
+                                Method.append('CRISPR-based (MAG)')
+                            except:
+                                Pred.append('-')
+                                Score.append(0.0)
+                                Method.append('-')
+
+            if bgtdb != 'None':
+                all_linage = []
+                for item in Pred:
+                    try:
+                        all_linage.append(mag2taxonomy[item])
+                    except:
+                        try:
+                            all_linage.append(species2linage[item])
+                        except:
+                            try:
+                                all_linage.append(genus2linage[item])
+                            except:
+                                try:
+                                    all_linage.append(family2linage[item])
+                                except:
+                                    all_linage.append('-')
+                df = pd.DataFrame({"Accession": Accession, "Length": Length_list, "Host":Pred, "CHERRYScore": Score, "Method": Method, 'Host_GTDB_lineage': all_linage})
+            else:
+                df = pd.DataFrame({"Accession": Accession, "Length": Length_list, "Host":Pred, "CHERRYScore": Score, "Method": Method})
             df.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index = None, sep='\t')
             exit()
 
@@ -462,8 +670,7 @@ def run(inputs):
                 results.append([contig, "no lineage larger than threshold.", -1])
                 continue
             # Prepare lineage and score strings
-            lineage_str = convert_lineage_to_names(lineages, taxid2name, taxid2rank)
-            scores_str = ";".join(f"{score:.2f}" for score in lineages_scores)
+            lineage_str, scores_str = convert_lineage_to_names(lineages, lineages_scores, taxid2name, taxid2rank)
             results.append([contig, lineage_str, scores_str])
 
 
@@ -497,8 +704,8 @@ def run(inputs):
 
     
     cluster_df['Host'] = cluster_df['Genus'].apply(lambda x: genus2host[x] if x in genus2host else '-')
-    cluster_df['Host_NCBI'] = cluster_df['Genus'].apply(lambda x: genus2hostlineage[x] if x in genus2hostlineage else '-')
-    cluster_df['Host_GTDB'] = cluster_df['Genus'].apply(lambda x: 'Not found' if x in genus2hostlineage else '-')
+    cluster_df['Host_NCBI'] = cluster_df['Host'].apply(lambda x: genus2hostlineage[x] if x in genus2hostlineage else '-')
+    cluster_df['Host_GTDB'] = cluster_df['Host'].apply(lambda x: '-')
     cluster_df['Score'] = 0
 
 
@@ -539,6 +746,8 @@ def run(inputs):
     cluster_df['Crispr_score_mag'] = cluster_df['Accession'].apply(lambda x: crispr_pred_mag[x]['ident'] if x in crispr_pred_mag else 0.0)
     cluster_df['BLASTN_mag'] = cluster_df['Accession'].apply(lambda x: blast_pred_mag[x]['pred'] if x in blast_pred_mag else '-')
     cluster_df['BLASTN_score_mag'] = cluster_df['Accession'].apply(lambda x: blast_pred_mag[x]['ident'] if x in blast_pred_mag else 0.0)
+    cluster_df['Kmer_mag'] = cluster_df['Accession'].apply(lambda x: virus2host_kmer_reorg[x]['pred'] if x in virus2host_kmer_reorg else '-')
+    cluster_df['Kmer_score_mag'] = cluster_df['Accession'].apply(lambda x: virus2host_kmer_reorg[x]['ident'] if x in virus2host_kmer_reorg else 0.0)
 
 
 
@@ -632,6 +841,12 @@ def run(inputs):
             df.loc[index, 'Method'] = 'BLASTN-based (MAG)'
             df.loc[index, 'Host_NCBI'] = '-'
             df.loc[index, 'Host_GTDB'] = '-'
+        elif row['Kmer_mag'] != '-':
+            df.loc[index, 'Host'] = row['Kmer_mag']
+            df.loc[index, 'Score'] = row['Kmer_score_mag']
+            df.loc[index, 'Method'] = 'Kmer-based (MAG)'
+            df.loc[index, 'Host_NCBI'] = '-'
+            df.loc[index, 'Host_GTDB'] = '-'
         elif row['Crispr_db'] != '-':
             df.loc[index, 'Host'] = row['Crispr_db']
             df.loc[index, 'Score'] = row['Crispr_score_db']
@@ -650,6 +865,12 @@ def run(inputs):
             df.loc[index, 'Host'] = row['BLASTN_mag']
             df.loc[index, 'Score'] = row['BLASTN_score_mag']
             df.loc[index, 'Method'] = 'BLASTN-based (MAG)'
+            df.loc[index, 'Host_NCBI'] = '-'
+            df.loc[index, 'Host_GTDB'] = '-'
+        elif row['Kmer_mag'] != '-':
+            df.loc[index, 'Host'] = row['Kmer_mag']
+            df.loc[index, 'Score'] = row['Kmer_score_mag']
+            df.loc[index, 'Method'] = 'Kmer-based (MAG)'
             df.loc[index, 'Host_NCBI'] = '-'
             df.loc[index, 'Host_GTDB'] = '-'
 
@@ -720,6 +941,38 @@ def run(inputs):
     all_ncbi = df['Host_NCBI'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
     all_gtdb = df['Host_GTDB'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
 
+    """
+    for item, linage in zip(all_pred, all_ncbi):
+        all_linage = []
+        if linage == '-':
+            try:
+                all_linage.append(genus2hostlineage[item]) 
+            except:
+                all_linage.append('-')
+        else:
+            all_linage.append(linage)
+        all_ncbi = all_linage
+    """
+            
+
+    if bgtdb != 'None':
+        all_linage = []
+        for item, linage in zip(all_pred, all_gtdb):
+            try:
+                all_linage.append(mag2taxonomy[item])
+            except:
+                try:
+                    all_linage.append(species2linage[item])
+                except:
+                    try:
+                        all_linage.append(genus2linage[item])
+                    except:
+                        try:
+                            all_linage.append(family2linage[item])
+                        except:
+                            all_linage.append(linage)
+        all_gtdb = all_linage
+    
     # Create DataFrame directly from lists
     contig_to_pred = pd.DataFrame({
         'Accession': all_contigs,

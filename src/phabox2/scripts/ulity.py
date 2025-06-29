@@ -7,6 +7,7 @@ import  numpy as np
 import  pandas as pd
 from Bio import SeqIO
 import warnings
+import joblib
 
 # Ignore all warnings
 warnings.filterwarnings("ignore")
@@ -34,6 +35,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
 import math
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 
 
@@ -820,26 +822,28 @@ def find_weighted_LCA(orf_hits, taxid2parent, threshold):
     # Sort by length and score, then select the best lineage
     valid_lineages.sort(key=lambda x: (len(x[0]), sum(x[1])), reverse=True)
     best_lineage, best_score = valid_lineages[0]
-    return best_lineage, best_score[::-1]
+    return best_lineage, best_score
 
 
 
 
-def convert_lineage_to_names(lineage, taxid2name, taxid2rank):
+def convert_lineage_to_names(lineage, lineages_scores, taxid2name, taxid2rank):
     named_lineage = []
-    for taxid in lineage:
+    str_score = []
+    for taxid, score in zip(lineage, lineages_scores):
         if taxid == 1:
             continue
         name = taxid2name.get(taxid, 'unknown')
         if name == 'Tailed phages':
             name = 'Caudoviricetes'
         rank = taxid2rank.get(taxid, 'unknown')
-        if rank == 'species':
-            continue
+        #if rank == 'species':
+        #    continue
         if rank == 'no rank':
             continue
         named_lineage.append(f"{rank}:{name}")
-    return ";".join(named_lineage[::-1])
+        str_score.append(f"{score:.2f}")
+    return ";".join(named_lineage[::-1]), ";".join(str_score[::-1])
 
 
 
@@ -1091,3 +1095,145 @@ def load_gene_info(file, genomes):
         except:
             pass
     return genes
+
+
+
+def countKmerNum(seq):
+    seq = seq.upper()
+    dic_kmer4 = eval("{'AAGC': 0, 'TTTC': 0, 'ACAG': 0, 'CAGA': 0, 'CAGG': 0, 'GAGA': 0, 'AACT': 0, 'ATAT': 0, 'GCTA': 0, 'CTCA': 0, 'CAGT': 0, 'TGAA': 0, 'AGTC': 0, 'ACAA': 0, 'AAGG': 0, 'CGTG': 0, 'TGAT': 0, 'CTTA': 0, 'CGAC': 0, 'AGGG': 0, 'CACT': 0, 'TGGA': 0, 'CGCA': 0, 'TGGC': 0, 'CCTT': 0, 'TACA': 0, 'AGCT': 0, 'GACT': 0, 'AAAT': 0, 'TAGG': 0, 'TACT': 0, 'TCAG': 0, 'ATTA': 0, 'CTTC': 0, 'ATGG': 0, 'CTGG': 0, 'TCTT': 0, 'TTAT': 0, 'ATGT': 0, 'TTCT': 0, 'TTCG': 0, 'CCCC': 0, 'TGAC': 0, 'AATC': 0, 'TTCA': 0, 'AGGA': 0, 'TTCC': 0, 'CGCG': 0, 'GGTC': 0, 'CAGC': 0, 'GTCC': 0, 'AAAC': 0, 'GCCA': 0, 'TCCG': 0, 'TAGC': 0, 'ATCA': 0, 'ACTG': 0, 'CACG': 0, 'ACTC': 0, 'ATAG': 0, 'ACAT': 0, 'GACG': 0, 'TCTG': 0, 'TCGG': 0, 'GCCT': 0, 'CAAA': 0, 'CCGT': 0, 'CGAA': 0, 'GAAG': 0, 'GTCT': 0, 'CGGG': 0, 'TATG': 0, 'CAAT': 0, 'TAAT': 0, 'CTTT': 0, 'GGAC': 0, 'TGGG': 0, 'GCAT': 0, 'AGCA': 0, 'TCTA': 0, 'GTCA': 0, 'CATG': 0, 'TAAC': 0, 'TAGT': 0, 'TAAG': 0, 'TTTT': 0, 'CCCT': 0, 'TCCA': 0, 'TAAA': 0, 'AGAA': 0, 'TGCG': 0, 'GTAG': 0, 'CACC': 0, 'TCAC': 0, 'AAAA': 0, 'AAGT': 0, 'AACA': 0, 'GTCG': 0, 'TCCT': 0, 'ACTA': 0, 'CTAC': 0, 'GATC': 0, 'CACA': 0, 'ACCG': 0, 'GTAC': 0, 'GTTC': 0, 'TAGA': 0, 'TGCA': 0, 'AGCC': 0, 'TTTA': 0, 'GCAC': 0, 'ATGA': 0, 'AACC': 0, 'CTGT': 0, 'ACTT': 0, 'CTAT': 0, 'AAGA': 0, 'GCGC': 0, 'CGTC': 0, 'CCAG': 0, 'TGTC': 0, 'AATT': 0, 'CGTA': 0, 'GTTT': 0, 'CGGA': 0, 'TCGA': 0, 'TTGT': 0, 'GTAA': 0, 'CCGC': 0, 'GCTT': 0, 'ATCG': 0, 'GAAC': 0, 'GCGA': 0, 'ATTC': 0, 'CGAG': 0, 'TCCC': 0, 'GATA': 0, 'TTGA': 0, 'GCAA': 0, 'AGTG': 0, 'TCTC': 0, 'TGTG': 0, 'ATGC': 0, 'GGTA': 0, 'TGAG': 0, 'GCGG': 0, 'ACCT': 0, 'GAAT': 0, 'CTGA': 0, 'GCGT': 0, 'AGAC': 0, 'GCTG': 0, 'GTGT': 0, 'ATCT': 0, 'CGGC': 0, 'CCCA': 0, 'TGCC': 0, 'CTGC': 0, 'AGCG': 0, 'CCAA': 0, 'CATT': 0, 'CTCT': 0, 'GGTT': 0, 'TCGT': 0, 'GGGC': 0, 'ATAA': 0, 'CGAT': 0, 'TATT': 0, 'ACGC': 0, 'CGCT': 0, 'TATC': 0, 'TCGC': 0, 'CTCC': 0, 'CTAG': 0, 'GGAA': 0, 'AGAT': 0, 'ATAC': 0, 'CCTA': 0, 'CGTT': 0, 'GGTG': 0, 'CCGA': 0, 'AAAG': 0, 'CCGG': 0, 'GGCT': 0, 'ATTT': 0, 'GTGA': 0, 'GGCA': 0, 'TTAG': 0, 'GGGA': 0, 'GCCC': 0, 'GTGG': 0, 'GCAG': 0, 'GTTG': 0, 'GAAA': 0, 'GTTA': 0, 'CGCC': 0, 'TTGG': 0, 'GAGC': 0, 'CTCG': 0, 'AGGT': 0, 'TACC': 0, 'ATTG': 0, 'AATG': 0, 'CAAG': 0, 'AGTT': 0, 'ACCC': 0, 'CCAC': 0, 'CTTG': 0, 'TTAC': 0, 'GAGG': 0, 'GGCG': 0, 'TCAA': 0, 'AGAG': 0, 'CAAC': 0, 'CCTC': 0, 'GTAT': 0, 'ACGA': 0, 'ACGT': 0, 'AATA': 0, 'TCAT': 0, 'GGAT': 0, 'GGAG': 0, 'TGTT': 0, 'AACG': 0, 'ACGG': 0, 'GATT': 0, 'GACC': 0, 'AGGC': 0, 'CGGT': 0, 'CCTG': 0, 'TGTA': 0, 'GAGT': 0, 'GGCC': 0, 'GCCG': 0, 'CATC': 0, 'ACAC': 0, 'GTGC': 0, 'TGCT': 0, 'GGGG': 0, 'ACCA': 0, 'TTAA': 0, 'AGTA': 0, 'GACA': 0, 'TGGT': 0, 'CTAA': 0, 'GGGT': 0, 'TACG': 0, 'TATA': 0, 'CCCG': 0, 'CATA': 0, 'TTTG': 0, 'TTGC': 0, 'GCTC': 0, 'CCAT': 0, 'ATCC': 0, 'GATG': 0}")
+
+    seqLength = len(seq)
+    for locus in range(0,seqLength):
+        if locus + 4 <= seqLength:
+            kmer4 = seq[locus:locus+4]
+            if kmer4 in dic_kmer4: 
+                dic_kmer4[kmer4] += 1
+    return dic_kmer4,seqLength
+
+
+def countPFrequency(eachVirus):
+    seq = str(eachVirus.seq)
+    dicts, seqLength = countKmerNum(seq)
+    
+    seqLength = float(seqLength)
+    outList = [eachVirus.id]
+    for eachItem in sorted(dicts.items(), key=lambda e: e[0]):
+        eachValue = eachItem[1]/(seqLength - 1)
+        outList.append('%.6f' % eachValue)
+    outLine = ','.join(outList)+'\n'
+    return outLine
+
+
+def getPKmer(Virus, outName, threads):
+    p = ProcessPoolExecutor(threads)
+    virusList = SeqIO.parse(Virus, 'fasta')
+    obj_l = []
+    for eachVirus in virusList:
+        obj = p.submit(countPFrequency, eachVirus)
+        obj_l.append(obj)
+        
+    p.shutdown(wait=True)
+    with open(outName, 'w') as fileOut:
+        for each in obj_l:
+            each = each.result()
+            fileOut.write(each)
+    return 
+
+def countBFrequency(Host, eachHost):
+    seq  = ''.join([str(record.seq) for record in SeqIO.parse(f'{Host}/{eachHost}', 'fasta')])
+    dicts, seqLength = countKmerNum(seq)
+    
+    outList = [eachHost.rsplit('.', 1)[0]]
+    for eachItem in sorted(dicts.items(), key=lambda e: e[0]):
+        eachValue = eachItem[1]/(seqLength - 1)
+        outList.append('%.6f' % eachValue)
+    outLine = ','.join(outList)+'\n'
+    return outLine
+
+
+def getBKmer(Host, outName, threads):
+    p = ProcessPoolExecutor(threads)
+    
+    HoostNameList = os.listdir(Host)
+    obj_l = []
+    for eachHostName in HoostNameList:
+        obj = p.submit(countBFrequency, Host, eachHostName)
+        obj_l.append(obj)
+        
+    p.shutdown(wait=True)
+    with open(outName,'w') as fileOut:
+        for each in obj_l:
+            each = each.result()
+            fileOut.write(each)
+    return 
+
+
+def predictVirusHost(db_dir, pth, genomes):
+    try:
+        model1 = joblib.load(f'{db_dir}/cherry/1.m')
+        model2 = joblib.load(f'{db_dir}/cherry/2.m')
+        model3 = joblib.load(f'{db_dir}/cherry/3.m')
+        model4 = joblib.load(f'{db_dir}/cherry/4.m')
+        model5 = joblib.load(f'{db_dir}/cherry/5.m')
+    except:
+        print('DATABASE ERROR: please ensure you have downloaded the latest PhaBOX database version 2.1')
+        exit(1)
+
+    hostAll = pd.read_csv(f'{pth}/bkmer', sep=',', header=None, index_col=0).astype('float32')
+    listHostName = hostAll.index
+    testVirusAll = pd.read_csv(f'{pth}/pkmer', sep=',', header=None, index_col=0)
+    testList = testVirusAll.index
+
+    virus2host = {}
+    for eachVirus in testList:
+        length = genomes[eachVirus].length
+        if length >12500:
+            model = model1
+        elif length>7500 and length<=12500:
+            model = model2
+        elif length>4000 and length<=7500:
+            model = model3
+        elif length>2000 and length<=4000:
+            model = model4
+        elif length>4 and length<=2000:
+            model = model5
+        else:
+            continue
+        
+        virusParameter = testVirusAll.loc[eachVirus]
+        temp1 = hostAll.sub((virusParameter), axis=1)
+        temp2 = temp1.sub((temp1), axis=1)
+        dataVirusMinusAllHost = temp2.sub((temp1))
+        
+        pre = model.score_samples(dataVirusMinusAllHost)
+        maxScoreList = sorted(list(zip(listHostName, pre)), key=lambda x:float(x[1]),reverse=True)
+        
+        virus2host[eachVirus] = maxScoreList[0][0]
+
+    return virus2host
+
+
+def run_prodigal(Host, eachHostName, pth):
+    if not os.path.exists(f"{Host}/{eachHostName}"):
+        return eachHostName + " not found"
+    
+    cmd = f"prodigal-gv -i {Host}/{eachHostName} -a {pth}/{eachHostName} -p meta > /dev/null 2>&1"
+    subprocess.run(cmd, shell=True, check=True)
+    return eachHostName
+
+
+def translate_MAGs(Host, pth, threads):
+    p = ProcessPoolExecutor(threads)
+    
+    HostNameList = os.listdir(Host)
+    obj_l = []
+    for eachHostName in HostNameList:
+        obj = p.submit(run_prodigal, Host, eachHostName, pth)
+        obj_l.append(obj)
+        
+    p.shutdown(wait=True)
+    for each in obj_l:
+        each = each.result()
+        if "not found" in each:
+            return False, each
+    return True, "All MAGs translated successfully"

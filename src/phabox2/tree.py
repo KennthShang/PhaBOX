@@ -31,6 +31,7 @@ def run(inputs):
 
     marker    = inputs.marker
     msa       = inputs.msa
+    msadb     = inputs.msadb
     tree      = inputs.tree
     candidate = ['terl', 'portal', 'head', 'endolysin', 'holin']
     for item in marker:
@@ -144,43 +145,153 @@ def run(inputs):
                 continue
             else:
                 logger.info(f"Running msa: {item}...This may take a long time...")
-                run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_combined_db.fa > {rootpth}/{midfolder}/msa/{item}.aln')
+                # with database
+                run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_combined_db.fa > {rootpth}/{midfolder}/msa/{item}_combined_db.aln')
+                # with database
+                run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}.fa > {rootpth}/{midfolder}/msa/{item}.aln')
         
-        msa = {}
-        for item in marker:
-            msa[item] = {}
-            for record in SeqIO.parse(f'{rootpth}/{midfolder}/msa/{item}.aln', 'fasta'):
-                msa[item][record.id] = record.seq
-    
-        # get the common ids
-        common = set(msa[marker[0]].keys())
-        if len(marker) >1:
-            for item in marker[1:]:
-                common.intersection_update(msa[item].keys())
-
-        if all('phabox' in item for item in common):
-            logger.info(f"No common sequences found for joint msa. Please check the files in the {rootpth}/{midfolder}/msa/")
-            logger.info(f"You may need to adjust the number of selected marker genes.")
-            exit(1)
-
-        # combine the sequences in common ids
-        record = []
-        des = ';'.join(marker)
-        for key in common:
-            seq = ''
+        
+        if msadb == 'Y':
+            run_command(f'cp {db_dir}/marker/marker_stats.tsv > {rootpth}/{out_dir}/tree_supplementary/marker_stats_db.tsv')
+            msa = {}
             for item in marker:
-                seq += msa[item][key]
-            record.append(SeqRecord(seq, id=key, description=des))
-        
-        SeqIO.write(record, f'{rootpth}/{out_dir}/combined_marker.msa', 'fasta')
+                msa[item] = {}
+                for record in SeqIO.parse(f'{rootpth}/{midfolder}/msa/{item}_combined_db.aln', 'fasta'):
+                    msa[item][record.id] = record.seq
 
-        if tree == 'Y':
-            logger.info("[5/5] building tree...")
-            logger.info("This may take a long time...")
-            run_command(f'export OMP_NUM_THREADS={threads};fasttree -quiet {rootpth}/{out_dir}/combined_marker.msa > {rootpth}/{out_dir}/combined.tree')
+            ## AND mode
+            flag_and = False
+            ### get the common ids
+            common = set(msa[marker[0]].keys())
+            if len(marker) >1:
+                for item in marker[1:]:
+                    common.intersection_update(msa[item].keys())
+            if all('phabox' in item for item in common):
+                logger.info(f"No common sequences found for intersection msa. Please check the files in the {rootpth}/{midfolder}/msa/")
+                logger.info(f"You may need to adjust the number of selected marker genes.")
+            else:
+                flag_and = True
+                ### combine the sequences in common ids
+                record = []
+                des = ';'.join(marker)
+                for key in common:
+                    seq = ''
+                    for item in marker:
+                        seq += msa[item][key]
+                    record.append(SeqRecord(seq, id=key, description=des))
+                
+                SeqIO.write(record, f'{rootpth}/{out_dir}/combined_marker_intersection.msa', 'fasta')
+            
+            ## OR mode
+            flag_or = False
+            ### get the union ids
+            union = set()
+            for item in marker:
+                union.update(msa[item].keys())
+
+            if all('phabox' in item for item in union):
+                logger.info(f"No sequences found for union msa. Please check the files in the {rootpth}/{midfolder}/msa/")
+                logger.info(f"You may need to adjust the number of selected marker genes.")
+            else:
+                flag_or = True
+                ### combine the sequences in union ids
+                record = []
+                des = ';'.join(marker)
+                for key in union:
+                    seq = ''
+                    for item in marker:
+                        try:
+                            seq += msa[item][key]
+                        except KeyError:
+                            seq += '-' * len(msa[item][list(msa[item].keys())[0]])
+                    record.append(SeqRecord(seq, id=key, description=des))
+
+                SeqIO.write(record, f'{rootpth}/{out_dir}/combined_marker_union.msa', 'fasta')
+
+            if not flag_and and not flag_or:
+                logger.info(f"No sequences found for intersection and union msa. Please check the files in the {rootpth}/{midfolder}/msa/")
+                logger.info(f"You may need to adjust the number of selected marker genes.")
+                exit(1)
+
+
+            if tree == 'Y':
+                logger.info("[5/5] building tree...")
+                logger.info("This may take a long time...")
+                if flag_and:
+                    run_command(f'export OMP_NUM_THREADS={threads};fasttree -quiet {rootpth}/{out_dir}/combined_marker_intersection.msa > {rootpth}/{out_dir}/combined_intersection.tree')
+                if flag_or:
+                    run_command(f'export OMP_NUM_THREADS={threads};fasttree -quiet {rootpth}/{out_dir}/combined_marker_union.msa > {rootpth}/{out_dir}/combined_union.tree')
+            else:
+                logger.info("Skip the tree building step...")
+
         else:
-            logger.info("Skip the tree building step...")
+            msa = {}
+            for item in marker:
+                msa[item] = {}
+                for record in SeqIO.parse(f'{rootpth}/{midfolder}/msa/{item}.aln', 'fasta'):
+                    msa[item][record.id] = record.seq
+            ## AND mode
+            flag_and = False
+            ### get the common ids
+            common = set(msa[marker[0]].keys())
+            if len(marker) >1:
+                for item in marker[1:]:
+                    common.intersection_update(msa[item].keys())
+            if all('phabox' in item for item in common):
+                logger.info(f"No common sequences found for intersection msa. Please check the files in the {rootpth}/{midfolder}/msa/")
+                logger.info(f"You may need to adjust the number of selected marker genes.")
+            else:
+                flag_and = True
+                ### combine the sequences in common ids
+                record = []
+                des = ';'.join(marker)
+                for key in common:
+                    seq = ''
+                    for item in marker:
+                        seq += msa[item][key]
+                    record.append(SeqRecord(seq, id=key, description=des))
+                
+                SeqIO.write(record, f'{rootpth}/{out_dir}/combined_marker_intersection.msa', 'fasta')
+
+            ## OR mode
+            flag_or = False
+            ### get the union ids
+            union = set()
+            for item in marker:
+                union.update(msa[item].keys())
+            if all('phabox' in item for item in union):
+                logger.info(f"No sequences found for union msa. Please check the files in the {rootpth}/{midfolder}/msa/")
+                logger.info(f"You may need to adjust the number of selected marker genes.")
+            else:
+                flag_or = True
+                ### combine the sequences in union ids
+                record = []
+                des = ';'.join(marker)
+                for key in union:
+                    seq = ''
+                    for item in marker:
+                        try:
+                            seq += msa[item][key]
+                        except KeyError:
+                            seq += '-' * len(msa[item][list(msa[item].keys())[0]])
+                    record.append(SeqRecord(seq, id=key, description=des))
+
+                SeqIO.write(record, f'{rootpth}/{out_dir}/combined_marker_union.msa', 'fasta')
+
+            if not flag_and and not flag_or:
+                logger.info(f"No sequences found for intersection and union msa. Please check the files in the {rootpth}/{midfolder}/msa/")
+                logger.info(f"You may need to adjust the number of selected marker genes.")
+                exit(1)
+            if tree == 'Y':
+                logger.info("[5/5] building tree...")
+                logger.info("This may take a long time...")
+                if flag_and:
+                    run_command(f'export OMP_NUM_THREADS={threads};fasttree -quiet {rootpth}/{out_dir}/combined_marker_intersection.msa > {rootpth}/{out_dir}/combined_intersection.tree')
+                if flag_or:
+                    run_command(f'export OMP_NUM_THREADS={threads};fasttree -quiet {rootpth}/{out_dir}/combined_marker_union.msa > {rootpth}/{out_dir}/combined_union.tree')
+
     else:
         logger.info("Skip the msa and tree building step...")
     
     logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))
+

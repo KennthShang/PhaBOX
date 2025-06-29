@@ -225,8 +225,7 @@ def run(inputs):
                 results.append([contig, "no lineage larger than threshold.", -1])
                 continue
             # Prepare lineage and score strings
-            lineage_str = convert_lineage_to_names(lineages, taxid2name, taxid2rank)
-            scores_str = ";".join(f"{score:.2f}" for score in lineages_scores)
+            lineage_str, scores_str = convert_lineage_to_names(lineages, lineages_scores, taxid2name, taxid2rank)
             results.append([contig, lineage_str, scores_str])
             
 
