@@ -9,13 +9,16 @@
 [![PhaBOXv1](https://img.shields.io/static/v1.svg?label=PhaBOX_v1&message=bioadv/vbad101&color=blue)](https://doi.org/10.1093/bioadv/vbad101)
 [![PhaMer](https://img.shields.io/static/v1.svg?label=PhaMer&message=bib/bbac258&color=blue)](https://doi.org/10.1093/bib/bbac258)
 [![PhaGCN](https://img.shields.io/static/v1.svg?label=PhaGCN&message=bioinformatics/btab293&color=blue)](https://doi.org/10.1093/bioinformatics/btab293)
+[![PhaGCN2](https://img.shields.io/static/v1.svg?label=PhaGCN2&message=bib/bbac505&color=blue)](https://doi.org/10.1093/bioinformatics/btab293)
 [![PhaTYP](https://img.shields.io/static/v1.svg?label=PhaTYP&message=bib/bbac487&color=blue)](https://doi.org/10.1093/bib/bbac487)
 [![CHERRY](https://img.shields.io/static/v1.svg?label=CHERRY&message=bib/bbac182&color=blue)](https://doi.org/10.1093/bib/bbac182)
-[![PhaVIP](https://img.shields.io/static/v1.svg?label=CHERRY&message=bioinformatics/btad229&color=blue)](https://doi.org/10.1093/bioinformatics/btad229)
+[![PhaVIP](https://img.shields.io/static/v1.svg?label=PhaVIP&message=bioinformatics/btad229&color=blue)](https://doi.org/10.1093/bioinformatics/btad229)
 
 This is the source code of our website [PhaBOX2](https://phage.ee.cityu.edu.hk), consisting of the latest updates of our previously released programs: PhaMer, PhaGCN, CHERRY/HostG, and PhaTYP.
 
 Please download this local version for large-scale sequencing data and use more threads to speed up the program.
+
+**If you like our tool, please give us a star on GitHub. This will provide power for our ongoing maintenance, thanks！**
 
 <a name="news"></a>
 ## ⌛️&nbsp; News
@@ -59,6 +62,35 @@ You can post an issue or directly email me (jiayushang@cuhk.edu.hk). We welcome 
 
 If you are familiar with the PhaBOX2, please check our [Update log](https://github.com/KennthShang/PhaBOX/wiki/Update-logs). We may have some updates to the program to make it more useful. If you want to use the latest version, please also [upgrade your PhaBOX2](https://github.com/KennthShang/PhaBOX/wiki#upgrading-phabox)
 
+
+## 🚀&nbsp; The Most Recent Update Logs
+
+### 2.1.11 March 6, 2025
+
+> [!IMPORTANT]
+> New functions were added to the cherry host prediction task
+> We also adjust the host prediction logic as below:
+> 1. CRISPRs from MAGs (if MAGs were provided)
+> 2. BLASTN (prophage) from MAGs (if MAGs were provided)
+> 3. Protein organization compared to the viruses in the database
+> 4. CRISPRs from database
+
+
+New added parameters in `--task cherry`
+```
+--prophage
+     Minimum alignment length for estimating potential prophage || default: 1000 || range from 0 to 100000
+```
+
+
+### 2.1.10 Dec 26, 2024
+
+> [!IMPORTANT]
+>  Now, the end-to-end task allow to skip the PhaMer(virus identification). 
+>  If users already have the viral contigs as their inputs, they can run end-to-end task using `--skip Y` to skip the virus identification
+>  However, please noted that the default parameters is `--skip N`
+
+We also added a log output that tells the user that PhaMer detected no viruses and stopped the following pipelines in the end-to-end task in  `--skip N` condition.
 
 <a name="license"></a>
 
