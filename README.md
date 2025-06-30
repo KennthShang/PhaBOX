@@ -64,6 +64,20 @@ If you are familiar with the PhaBOX2, please check our [Update log](https://gith
 
 
 ## 🚀&nbsp; The Most Recent Update Logs
+### 2.1.12 June 30, 2025
+To use this version, please also update your phabox database as below:
+```
+wget https://github.com/KennthShang/PhaBOX/releases/download/2.1.0/phabox_db_v2_1.zip
+```
+
+> [!IMPORTANT]
+>  New functions were added to the taxonomy classification (--phagcn), host prediction (--cherry), and phylogenetic tree (--tree)
+>  The taxonomy classification task allows classification of viruses at the species level.
+>  The Host prediction task allows the user to provide the GTDB-tk taxonomy file (gtdbtk.tsv) for high-confidence filtering and labeling (--bgtdb gtdbtk.tsv).
+>  The phylogenetic tree task allows running MSA and tree construction without genes from the database (--msadb Y or N).
+>  A marker_stats.tsv file (information of marker genes in the database) will be copied to the final_prediction folder once the tree task is finished.
+
+We also added a log output that tells the user that PhaMer detected no viruses and stopped the following pipelines in the end-to-end task in  `--skip N` condition.
 
 ### 2.1.11 March 6, 2025
 
@@ -73,7 +87,8 @@ If you are familiar with the PhaBOX2, please check our [Update log](https://gith
 > 1. CRISPRs from MAGs (if MAGs were provided)
 > 2. BLASTN (prophage) from MAGs (if MAGs were provided)
 > 3. Protein organization compared to the viruses in the database
-> 4. CRISPRs from database
+> 4. Kmer frequency compared to MAGs (if MAGs were provided)
+> 5. CRISPRs from the database
 
 
 New added parameters in `--task cherry`
@@ -84,13 +99,6 @@ New added parameters in `--task cherry`
 
 
 ### 2.1.10 Dec 26, 2024
-
-> [!IMPORTANT]
->  Now, the end-to-end task allow to skip the PhaMer(virus identification). 
->  If users already have the viral contigs as their inputs, they can run end-to-end task using `--skip Y` to skip the virus identification
->  However, please noted that the default parameters is `--skip N`
-
-We also added a log output that tells the user that PhaMer detected no viruses and stopped the following pipelines in the end-to-end task in  `--skip N` condition.
 
 <a name="license"></a>
 
