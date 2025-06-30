@@ -64,4 +64,6 @@ jobs:
         phabox2 --task votu --contigs example_contigs.fa -o votu -d phabox_db_v2 --mode ANI
         head votu/final_prediction/ANI_based_vOTU.tsv
         phabox2 --task tree --contigs example_contigs.fa -o tree -d phabox_db_v2 --msa Y --tree N
-        head tree/final_prediction/combined_marker.msa
+        head tree/final_prediction/combined_marker_union.msa
+        head tree/final_prediction/combined_marker_intersection.msa
+        
