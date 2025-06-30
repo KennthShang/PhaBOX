@@ -152,7 +152,7 @@ def run(inputs):
         
         
         if msadb == 'Y':
-            run_command(f'cp {db_dir}/marker/marker_stats.tsv > {rootpth}/{out_dir}/tree_supplementary/marker_stats_db.tsv')
+            run_command(f'cp {db_dir}/marker/marker_stats.tsv  {rootpth}/{out_dir}/tree_supplementary/marker_stats_db.tsv')
             msa = {}
             for item in marker:
                 msa[item] = {}
