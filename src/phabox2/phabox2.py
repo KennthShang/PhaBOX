@@ -205,9 +205,6 @@ The options below are used to predict Host based on MAGs.
 
 The options below are used to align contigs to CRISPRs.
 
-\033[94m--prophage\033[0m  
-    Minimum alignment length for estimate potential prophage || default: 1000 || range from 0 to 100000
-
 \033[94m--cpident\033[0m
     Alignment identity for CRISPRs || default: 90 || range from 90 to 100
 
