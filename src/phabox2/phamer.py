@@ -74,8 +74,11 @@ def run(inputs):
         with open(f'{rootpth}/{out_dir}/phamer_prediction.tsv', 'w') as file_out:
             file_out.write("Accession\tLength\tPred\tPhaMerScore\tPhaMerConfidence\n")
             for record in SeqIO.parse(contigs, 'fasta'):
-                file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\trejected\n')
-        logger.info(f"PhaMer finished! please check the results in {os.path.join(rootpth,out_dir, 'phamer_prediction.tsv')}")
+                file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\trejected\n')
+        if inputs.skip == 'N':
+            logger.info(f"PhaMer finished! please check the results in {os.path.join(rootpth,out_dir, 'phamer_prediction.tsv')}")
+        else:
+            logger.info(f"Data preprocessing finished! please check the results in {os.path.join(rootpth,out_dir, 'phamer_prediction.tsv')}")
         exit()
 
     _ = SeqIO.write(rec, f'{rootpth}/filtered_contigs.fa', 'fasta')
