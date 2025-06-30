@@ -74,7 +74,6 @@ wget https://github.com/KennthShang/PhaBOX/releases/download/2.1.0/phabox_db_v2_
 >  The phylogenetic tree task allows running MSA and tree construction without genes from the database (--msadb Y or N).
 >  A marker_stats.tsv file (information of marker genes in the database) will be copied to the final_prediction folder once the tree task is finished.
 
-We also added a log output that tells the user that PhaMer detected no viruses and stopped the following pipelines in the end-to-end task in  `--skip N` condition.
 
 ### 2.1.11 March 6, 2025
 
