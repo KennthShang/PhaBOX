@@ -1089,6 +1089,7 @@ def load_gene_info(file, genomes):
         gene.anno = 'hypothetical protein (no hit)'
         gene.pident = 0
         gene.coverage = 0
+        gene.inference = 'unknown'
         genes[gene.id] = gene
         try:
             genomes[gene.genome_id].genes.append(gene.id)
