@@ -1036,6 +1036,13 @@ def run(inputs):
         run_command(f'sed -i "1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore" {rootpth}/{out_dir}/{supplementary}/alignment_results.tab')
 
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
+        try:
+            df = pd.read_csv(f'{db_dir}/db2ref_protein_map.csv', names=['dbid', 'refid'])
+            db2ref = {key: value for key, value in zip(df['dbid'], df['refid'])}
+        except:
+            logger.info("WARNING: db2ref_protein_map.csv not found in the database directory. Please upgrade your database to version 2.1.")
+            db2ref = {key: value for key, value in zip(anno_df.keys(), anno_df.values())}
+    
         # protein annotation
         df = pd.read_csv(f'{rootpth}/{midfolder}/db_results.tab', sep='\t', names=['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore'])
         df = df.drop_duplicates('qseqid', keep='first').copy()
@@ -1049,13 +1056,14 @@ def run(inputs):
                 gene.anno = 'hypothetical protein'
             gene.pident = row['pident']
             gene.coverage = row['coverage']
+            gene.inference = db2ref.get(db2ref[row['sseqid']], 'unknown')
 
         # write the gene annotation by genomes
         with open(f'{rootpth}/{out_dir}/{supplementary}/gene_annotation.tsv', 'w') as f:
-            f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\tpident\tcoverage\n')
+            f.write('Genome\tORF\tStart\tEnd\tStrand\tGC\tAnnotation\tpident\tcoverage\tcloest_gene\n')
             for genome in genomes:
                 for gene in genomes[genome].genes:
-                    f.write(f'{genome}\t{gene}\t{genes[gene].start}\t{genes[gene].end}\t{genes[gene].strand}\t{genes[gene].gc}\t{genes[gene].anno}\t{genes[gene].pident:.2f}\t{genes[gene].coverage:.2f}\n')
+                    f.write(f'{genome}\t{gene}\t{genes[gene].start}\t{genes[gene].end}\t{genes[gene].strand}\t{genes[gene].gc}\t{genes[gene].anno}\t{genes[gene].pident:.2f}\t{genes[gene].coverage:.2f}\t{genes[gene].inference}\n')
 
         phavip_dump_result(genomes, rootpth, out_dir, logger, supplementary = 'cherry_supplementary')
 
