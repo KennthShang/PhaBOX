@@ -43,7 +43,7 @@ jobs:
         python -m pip install .
         cd ..
         wget https://github.com/KennthShang/PhaBOX/releases/download/v2/example_contigs.fa
-        wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2.zip
+        wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2_1.zip
         unzip phabox_db_v2.zip > /dev/null
         phabox2 --task end_to_end --contigs example_contigs.fa -o end_to_end -d phabox_db_v2
         head end_to_end/final_prediction/final_prediction_summary.tsv
