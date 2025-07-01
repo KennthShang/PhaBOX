@@ -57,6 +57,8 @@ jobs:
         head phatyp/final_prediction/phatyp_prediction.tsv
         phabox2 --task cherry --contigs example_contigs.fa -o cherry -d phabox_db_v2
         head cherry/final_prediction/cherry_prediction.tsv
+        phabox2 --task phavip --contigs example_contigs.fa -o phavip -d phabox_db_v2
+        head phavip/final_prediction/phavip_supplementary/gene_annotation.tsv
         phabox2 --task contamination --contigs example_contigs.fa -o contamination -d phabox_db_v2
         head contamination/final_prediction/contamination_prediction.tsv
         phabox2 --task votu --contigs example_contigs.fa -o votu -d phabox_db_v2 --mode AAI
