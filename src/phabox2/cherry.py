@@ -1056,7 +1056,7 @@ def run(inputs):
                 gene.anno = 'hypothetical protein'
             gene.pident = row['pident']
             gene.coverage = row['coverage']
-            gene.inference = db2ref.get(db2ref[row['sseqid']], 'unknown')
+            gene.inference = db2ref.get(row['sseqid'], 'unknown')
 
         # write the gene annotation by genomes
         with open(f'{rootpth}/{out_dir}/{supplementary}/gene_annotation.tsv', 'w') as f:
