@@ -64,7 +64,7 @@ If you are familiar with the PhaBOX2, please check our [Update log](https://gith
 ### 2.1.12 June 30, 2025
 To use this version, please also update your phabox database as below:
 ```
-wget https://github.com/KennthShang/PhaBOX/releases/download/2.1.0/phabox_db_v2_1.zip
+wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2_1.zip
 ```
 
 > [!IMPORTANT]
