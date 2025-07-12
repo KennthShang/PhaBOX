@@ -99,5 +99,5 @@ New added parameters in `--task cherry`
 <a name="license"></a>
 
 ## 📘&nbsp; License
-The PhaBOX pipelines are released under the terms of the [Academic Free License v3.0 License](https://choosealicense.com/licenses/afl-3.0/).
+The PhaBOX pipelines are released under the terms of the [GPL v3.0 License](https://github.com/KennthShang/PhaBOX?tab=GPL-3.0-1-ov-file).
 
