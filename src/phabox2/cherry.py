@@ -407,11 +407,11 @@ def run(inputs):
             if magonly == 'Y' or not unpredicted:
                 logger.info(f"[4/{jy}] writing the results...")
                 # Create lists by combining existing data with new entries
-                all_contigs = list(crispr_pred_mag.keys()) + blast_set + kmer_set + filtered_contig + unpredicted_contig
-                all_pred = [crispr_pred_mag[item]['pred'] for item in crispr_pred_mag] + [blast_pred_mag[item]['pred'] for item in blast_set] + [virus2host_kmer_reorg[item]['pred'] for item in kmer_set] + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
-                all_score = [crispr_pred_mag[item]['ident'] for item in crispr_pred_mag] + [blast_pred_mag[item]['ident'] for item in blast_pred_mag] + [virus2host_kmer_reorg[item]['ident'] for item in kmer_set] + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
-                all_length = [genomes[item].length for item in crispr_pred_mag] + [genomes[item].length for item in blast_set] + [genomes[item].length for item in kmer_set] + filtered_lenth + unpredicted_length
-                all_method = ['CIRPSR-based (MAG)']*len(crispr_pred_mag) + ['BLASTN-based (MAG)']*len(blast_set) + ['Kmer-based (MAG)']*len(kmer_set) + [] + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+                all_contigs = list(crispr_pred_mag.keys())                               + blast_set                                                  + kmer_set                                                    + filtered_contig                     + unpredicted_contig
+                all_pred = [crispr_pred_mag[item]['pred'] for item in crispr_pred_mag]   + [blast_pred_mag[item]['pred'] for item in blast_set]       + [virus2host_kmer_reorg[item]['pred'] for item in kmer_set]  + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+                all_score = [crispr_pred_mag[item]['ident'] for item in crispr_pred_mag] + [blast_pred_mag[item]['ident'] for item in blast_set]      + [virus2host_kmer_reorg[item]['ident'] for item in kmer_set] + [0] * len(filtered_contig)          + [0] * len(unpredicted_contig)
+                all_length = [genomes[item].length for item in crispr_pred_mag]          + [genomes[item].length for item in blast_set]               + [genomes[item].length for item in kmer_set]                 + filtered_lenth                      + unpredicted_length
+                all_method = ['CIRPSR-based (MAG)']*len(crispr_pred_mag)                 + ['BLASTN-based (MAG)']*len(blast_set)                      + ['Kmer-based (MAG)']*len(kmer_set)                          + ['-'] * len(filtered_contig)        + ['-'] * len(unpredicted_contig)
                 
                 if bgtdb != 'None':
                     all_linage = []
