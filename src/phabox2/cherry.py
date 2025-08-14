@@ -145,8 +145,7 @@ def run(inputs):
             for future in as_completed(futures):
                 result = future.result()
                 if result:
-                    logger.info(f"Error in running CRT for MAG: {result}")
-                    logger.info("Please check the MAGs, currently it is ignored.")
+                    logger.info(f"Error in running CRT for MAG: {result} (ignored)")
 
 
 
@@ -157,6 +156,9 @@ def run(inputs):
             outputfile = prefix + '.crispr'
             crispr_rec = []
             cnt = 0
+            if not os.path.exists(f'{rootpth}/{midfolder}/crispr_tmp/{outputfile}'):
+                logger.info(f"CRISPR file not found for MAG: {prefix}.")
+                continue
             with open(f'{rootpth}/{midfolder}/crispr_tmp/{outputfile}') as file_in:
                 for line in file_in:
                     tmp_list = line.split("\t")
