@@ -69,10 +69,10 @@ wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2_1.z
 
 > [!IMPORTANT]
 >  New functions were added to the taxonomy classification (--phagcn), host prediction (--cherry), and phylogenetic tree (--tree)
->  The taxonomy classification task allows classification of viruses at the species level.
->  The Host prediction task allows the user to provide the GTDB-tk taxonomy file (gtdbtk.tsv) for high-confidence filtering and labeling (--bgtdb gtdbtk.tsv).
->  The phylogenetic tree task allows running MSA and tree construction without genes from the database (--msadb Y or N).
->  A marker_stats.tsv file (information of marker genes in the database) will be copied to the final_prediction folder once the tree task is finished.
+>  1. The taxonomy classification task allows classification of viruses at the species level.
+>  2. The Host prediction task allows the user to provide the GTDB-tk taxonomy file (gtdbtk.tsv) for high-confidence filtering and labeling (--bgtdb gtdbtk.tsv).
+>  3. The phylogenetic tree task allows running MSA and tree construction without genes from the database (--msadb Y or N).
+>  4. A marker_stats.tsv file (information of marker genes in the database) will be copied to the final_prediction folder once the tree task is finished.
 
 
 ### 2.1.11 March 6, 2025
