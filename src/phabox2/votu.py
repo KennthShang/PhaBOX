@@ -138,6 +138,10 @@ def run(inputs):
 
         df = pd.DataFrame(data, columns=['Accession', 'vOTU', 'Representative', 'Length'])
         df.to_csv(f'{rootpth}/{out_dir}/ANI_based_vOTU.tsv', index=False, sep='\t')
+
+        # Write fasta output
+        all_representatives = [genomes[rep].seq for rep in clust_to_seqs.keys()]
+        _ = SeqIO.write(all_representatives, f'{rootpth}/{out_dir}/votu_supplementary/ANI_based_vOTU.fasta', 'fasta')
         return
                 
     elif mode.upper() == 'AAI':

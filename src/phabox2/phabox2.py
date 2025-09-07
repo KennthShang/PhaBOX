@@ -6,10 +6,10 @@ import pandas as pd
 from  phabox2.scripts.ulity import *
 
 
-__version__ = "2.1.12"
+__version__ = "2.1.13"
 description = """
-                                  \033[1m\033[96mPhaBOX v2.1.12\033[0m\033[0m                  
-               \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Dec. 2024\033[0m\033[0m 
+                                  \033[1m\033[96mPhaBOX v2.1.13\033[0m\033[0m                  
+               \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Sep. 2025\033[0m\033[0m 
 
 
 \033[1mDocumentation, support and updates available at https://github.com/KennthShang/PhaBOX/wiki \033[0m
@@ -408,8 +408,7 @@ def main():
             df  = df1.merge(df2, on=['Accession', 'Length'], how='outer') \
                 .merge(df3, on=['Accession', 'Length'], how='outer') \
                 .merge(df4, on=['Accession', 'Length'], how='outer')
-            df.fillna('NA', inplace=True)
-            df.replace('-', 'NA', inplace=True)
+            df.fillna('-', inplace=True)
             df.to_csv(f'{inputs.outpth}/final_prediction/final_prediction_summary.tsv', index=False, sep='\t')
             logger.info(f"Summarized finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction', 'final_prediction_summary.tsv')}\n\n")
         else:
@@ -418,8 +417,7 @@ def main():
             df4 = pd.read_csv(os.path.join(inputs.outpth, 'final_prediction', 'cherry_prediction.tsv'), sep='\t')
             df  = df2.merge(df3, on=['Accession', 'Length'], how='outer') \
                 .merge(df4, on=['Accession', 'Length'], how='outer')
-            df.fillna('NA', inplace=True)
-            df.replace('-', 'NA', inplace=True)
+            df.fillna('-', inplace=True)
             df.to_csv(f'{inputs.outpth}/final_prediction/final_prediction_summary.tsv', index=False, sep='\t')
             logger.info(f"Summarized finished! please check the results in {os.path.join(inputs.outpth, 'final_prediction', 'final_prediction_summary.tsv')}\n\n")
     elif inputs.task == "phamer":

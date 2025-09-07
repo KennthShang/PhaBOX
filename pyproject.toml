@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "phabox2"
-version = "2.1.12"  # Specify your version here
+version = "2.1.13"  # Specify your version here
 authors = [
     {name = "SHANG Jiayu", email = "jiayushang@cuhk.edu.hk"}
 ]

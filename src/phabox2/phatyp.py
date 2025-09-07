@@ -146,7 +146,7 @@ def run(inputs):
         for record in SeqIO.parse(f'{contigs}', 'fasta'):
             Accession.append(record.id)
             Length_list.append(len(record.seq))
-            Pred_tmp.append('unknown')
+            Pred_tmp.append('-')
 
         df = pd.DataFrame({"Accession": Accession, "Length": Length_list, "TYPE":Pred_tmp, "PhaTYPScore":[0]*len(Accession)})
         df.to_csv(os.path.join(rootpth, out_dir, "phatyp_prediction.tsv"), index = None, sep='\t')
@@ -225,7 +225,9 @@ def run(inputs):
         run_command(f"cp {rootpth}/filtered_contigs.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_contigs.fa")
         run_command(f"cp {rootpth}/{midfolder}/query_protein.fa {rootpth}/{out_dir}/{supplementary}/all_predicted_protein.fa")
         run_command(f"cp {rootpth}/{midfolder}/db_results.tab {rootpth}/{out_dir}/{supplementary}/alignment_results.tab")
-        run_command(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore' {rootpth}/{out_dir}/{supplementary}/alignment_results.tab")
+        tmp = pd.read_csv(f'{rootpth}/{out_dir}/{supplementary}/alignment_results.tab', sep='\t', names=['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend', 'sstart', 'send', 'evalue', 'bitscore'])
+        tmp.to_csv(f'{rootpth}/{out_dir}/{supplementary}/alignment_results.tab', sep='\t', index=False)
+        #run_command(f"sed -i '1i\qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore' {rootpth}/{out_dir}/{supplementary}/alignment_results.tab")
         
         anno_df = pkl.load(open(f'{db_dir}/RefVirus_anno.pkl', 'rb'))
         try:
@@ -248,7 +250,7 @@ def run(inputs):
                 gene.anno = 'hypothetical protein'
             gene.pident = row['pident']
             gene.coverage = row['coverage']
-            gene.inference = db2ref.get(row['sseqid'], 'unknown')
+            gene.inference = db2ref.get(row['sseqid'], '-')
         
         # write the gene annotation by genomes
         with open(f'{rootpth}/{out_dir}/{supplementary}/gene_annotation.tsv', 'w') as f:
