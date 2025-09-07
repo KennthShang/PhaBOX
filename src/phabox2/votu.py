@@ -52,6 +52,7 @@ def run(inputs):
             genome.id = record.id
             genome.length = len(record.seq)
             genome.genes = []
+            genome.seq = record
             genome.viral_hits = {}
             genome.regions = None
             genome.proportion = 0
