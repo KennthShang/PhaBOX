@@ -450,8 +450,6 @@ def run(inputs):
                         'Method': all_method
                     })
                 contig_to_pred.to_csv(f"{rootpth}/{out_dir}/cherry_prediction.tsv", index=False, sep='\t')
-                contig_to_pred = contig_to_pred[['Accession', 'Length', 'Host', 'Method']]
-                contig_to_pred.to_csv(f"{rootpth}/{out_dir}/{agent}/cherry_prediction.tsv", index=False, sep='\t')
                 logger.info("Run time: %s seconds\n" % round(time.time() - program_start, 2))
                 return()
     else:
