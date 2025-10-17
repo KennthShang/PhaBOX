@@ -63,7 +63,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/phagcn_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tLineage\tPhaGCNScore\tGenus\tGenusCluster\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\t-\t-\n')
+                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\t-\t-\n')
             logger.info(f"PhaGCN finished! please check the results in {os.path.join(rootpth,out_dir, 'phagcn_prediction.tsv')}")
             exit()
     else:
@@ -84,7 +84,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/phagcn_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tLineage\tPhaGCNScore\tGenus\tGenusCluster\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\t-\t-\n')
+                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\t-\t-\n')
             logger.info(f"PhaGCN finished! please check the results in {os.path.join(rootpth,out_dir, 'phagcn_prediction.tsv')}")
             exit()
 

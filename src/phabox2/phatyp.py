@@ -67,7 +67,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tLineage\tPhaTYPScore\tLifestyle\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\t-\n')
+                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\t-\n')
             logger.info(f"PhaTYP finished! please check the results in {os.path.join(rootpth,out_dir, 'phatyp_prediction.tsv')}")
             exit()
     else:
@@ -89,7 +89,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tTYPE\tPhaTYPScore\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id}\t{len({record.seq})}\tfiltered\t0\n')
+                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\n')
             logger.info(f"PhaTYP finished! please check the results in {os.path.join(rootpth,out_dir, 'phatyp_prediction.tsv')}")
             exit()
 
