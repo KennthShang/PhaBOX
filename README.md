@@ -61,11 +61,21 @@ If you are familiar with the PhaBOX2, please check our [Update log](https://gith
 
 
 ## 🚀&nbsp; The Most Recent Update Logs
+
+### 2.1.13 Oct 17, 2025
+If you did not upgrade the database from v2 to v2.1, please also update it as below:
+```
+wget https://github.com/KennthShang/PhaBOX/releases/download/2.1.0/phabox_db_v2_1.zip
+```
+
+> [!IMPORTANT]
+> The main upgrade is the host prediction module (CHERRY)
+> We have added two major features:
+> 1. Provide tRNA-based host prediction results (if bacteria/archaea MAGs are provided)
+> 2. Provide a new file `cherry_multihost_prediction.tsv` containing the multi-host prediction results (if bacteria/archaea MAGs are provided)
+
+
 ### 2.1.12 June 30, 2025
-To use this version, please also update your phabox database as below:
-```
-wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2_1.zip
-```
 
 > [!IMPORTANT]
 >  New functions were added to the taxonomy classification (--phagcn), host prediction (--cherry), and phylogenetic tree (--tree)
