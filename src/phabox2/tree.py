@@ -147,10 +147,13 @@ def run(inputs):
                 logger.info(f"Running msa: {item}...This may take a long time...")
                 # with database
                 run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}_combined_db.fa > {rootpth}/{midfolder}/msa/{item}_combined_db.aln')
-                # with database
-                run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}.fa > {rootpth}/{midfolder}/msa/{item}.aln')
-        
-        
+                # without database
+                if len(rec) > 1:
+                    run_command(f'mafft --auto --quiet --thread {threads} {rootpth}/{midfolder}/marker/{item}.fa > {rootpth}/{midfolder}/msa/{item}.aln')
+                else:
+                    run_command(f'cp {rootpth}/{midfolder}/marker/{item}.fa {rootpth}/{midfolder}/msa/{item}.aln')
+
+
         if msadb == 'Y':
             run_command(f'cp {db_dir}/marker/marker_stats.tsv  {rootpth}/{out_dir}/tree_supplementary/marker_stats_db.tsv')
             msa = {}
