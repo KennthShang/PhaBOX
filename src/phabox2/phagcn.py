@@ -311,6 +311,7 @@ def run(inputs):
     df = df.reset_index(drop=True)
 
     # issues that NaN will assign known_genus
+    df['cluster'] = df['cluster'].astype(str)
     predicted = df[(df['Genus'] != '-') & (df['Genus'].notna())]
     unpredicted = df[(df['Genus'] == '-') | (df['Genus'].isna())]
     df.loc[predicted.index, 'cluster'] = 'known_genus'
