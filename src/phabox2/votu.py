@@ -210,8 +210,10 @@ def run(inputs):
         # assign cluster id to the unassigned entries (continuous number with the existing cluster id)
         cluster_df.loc[cluster_df['cluster'] == -1, 'cluster'] = range(cluster_df['cluster'].max() + 1, cluster_df['cluster'].max() + 1 + len(cluster_df[cluster_df['cluster'] == -1]))
         cluster_df.reset_index(drop=True, inplace=True)
+        cluster_df['cluster'] = cluster_df['cluster'].astype(object)
 
         groups = cluster_df.groupby('cluster')
+        
         cluster_idx = 0
         for cluster, group in groups:
             if group.shape[0] == 1:
