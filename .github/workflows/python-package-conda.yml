@@ -33,7 +33,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        conda create -n phabox2 phabox=2.1.12 -c conda-forge -c bioconda -y
+        conda create -n phabox2 phabox=2.1.13 -c conda-forge -c bioconda -y
 
     - name: Test PhaBOX utilities
       run: |
