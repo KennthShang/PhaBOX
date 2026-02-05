@@ -1028,7 +1028,7 @@ def run(inputs):
     predicted = df[df['Host'] != '-']
     unpredicted = df[df['Host'] == '-']
 
-    df['Score'] = df['Score'].astype(str)
+    df['Score'] = df['Score'].astype(object)
     df.loc[unpredicted.index, 'Score'] = '-'
     df.loc[predicted.index, 'Score'] = [genus2score[acc].split(';')[-1] if acc in genus2score else 1 for acc in predicted['Genus']]
     # Update 'Method' column where 'Host' is not '-'
