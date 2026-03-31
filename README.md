@@ -67,12 +67,14 @@ If you are familiar with the PhaBOX2, please check our [Update log](https://gith
 
 ## 🚀&nbsp; The Most Recent Update Logs
 
-### 2.1.13 Oct 17, 2025
-If you did not upgrade the database from v2 to v2.1, please also update it as below:
-```
-wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2_1.zip
-```
 
+### 2.2 Mar 31, 2026
+> [!IMPORTANT]
+> If you did not upgrade the database to v2.2, please update it as below:
+> `wget https://github.com/KennthShang/PhaBOX/releases/download/v2/phabox_db_v2_2.zip`
+> This has been updated according to the latest taxonomy information provided by the NCBI Taxonomy database
+
+### 2.1.13 Oct 17, 2025
 > [!IMPORTANT]
 > The main upgrade is the host prediction module (CHERRY)
 > We have added two major features:
