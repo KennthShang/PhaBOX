@@ -63,7 +63,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/phagcn_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tLineage\tPhaGCNScore\tGenus\tGenusCluster\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\t-\t-\n')
+                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered by length\t0\t-\t-\n')
             logger.info(f"PhaGCN finished! please check the results in {os.path.join(rootpth,out_dir, 'phagcn_prediction.tsv')}")
             exit()
     else:
@@ -126,10 +126,10 @@ def run(inputs):
         logger.info("[3/8] using existing all-against-all alignment results...")
     else:  
         logger.info("[3/8] running all-against-all alignment...")
-        run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+        run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover {inputs.cov} --subject-cover {inputs.cov} --quiet")
         run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
     # align to itself
-    run_command(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+    run_command(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover {inputs.cov} --subject-cover {inputs.cov} --quiet")
     run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
 
     logger.info("[4/8] generating phagcn networks...")
@@ -356,7 +356,7 @@ def run(inputs):
 
     # Create lists by combining existing data with new entries
     all_contigs = df['Accession'].tolist() + filtered_contig + unpredicted_contig
-    all_pred = df['Pred'].tolist() + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+    all_pred = df['Pred'].tolist() + ['filtered by length'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
     all_score = df['Score'].tolist() + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
     all_length = df['Length'].tolist() + filtered_lenth + unpredicted_length
     all_genus = df['Genus'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)

@@ -74,7 +74,7 @@ def run(inputs):
         with open(f'{rootpth}/{out_dir}/phamer_prediction.tsv', 'w') as file_out:
             file_out.write("Accession\tLength\tPred\tPhaMerScore\tPhaMerConfidence\n")
             for record in SeqIO.parse(contigs, 'fasta'):
-                file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\trejected\n')
+                file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered by length\t0\trejected\n')
         if inputs.skip == 'N':
             logger.info(f"PhaMer finished! please check the results in {os.path.join(rootpth,out_dir, 'phamer_prediction.tsv')}")
         else:
@@ -115,7 +115,7 @@ def run(inputs):
     
 
     # align to the database
-    run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+    run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover {inputs.cov} --subject-cover {inputs.cov} --quiet")
     run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
     
     # FLAGS: no proteins aligned to the database
@@ -211,7 +211,7 @@ def run(inputs):
             if len(record.seq) < inputs.len:
                 contigs_add.append(record.id)
                 length_add.append(len(record.seq))
-                all_pred.append('filtered')
+                all_pred.append('filtered by length')
                 all_score.append(0)
                 all_proportion.append(0)
                 all_confidence.append('rejected')

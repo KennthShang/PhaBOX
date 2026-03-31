@@ -6,9 +6,9 @@ import pandas as pd
 from  phabox2.scripts.ulity import *
 
 
-__version__ = "2.1.13"
+__version__ = "2.2.0"
 description = """
-                                  \033[1m\033[96mPhaBOX v2.1.13\033[0m\033[0m                  
+                                  \033[1m\033[96mPhaBOX v2.2\033[0m\033[0m                  
                \033[1m\033[96mJiayu SHANG, Cheng Peng, and Yanni SUN Sep. 2025\033[0m\033[0m 
 
 
@@ -353,6 +353,7 @@ def main():
     parser.add_argument('--midfolder', help='Midfolder for intermediate files || (optional)', default='midfolder/')
     parser.add_argument('--threads', help='Number of threads to use || (default use all the threads)', type=int, default=int(os.cpu_count()))
     parser.add_argument('--len', help='Filter the length of contigs || (default 3000)', type=int, default=3000)
+    parser.add_argument('--cov', help='Alignment coverage for filtering proteins || (default 50)', type=float, default=50)
     parser.add_argument('--reject', help='Reject sequences that < 10 percent proteins aligned to known phages: 0-20  || (default 10)',  type=float, default = 10)
     parser.add_argument('--aai', help='Average amino acids identity for AAI based genus grouping: 0-100  || (default 75)',  type=float, default = 75)
     parser.add_argument('--share', help='Minimum shared number of proteins for AAI based genus grouping: 0-100  || (default 15)',  type=float, default = 15)

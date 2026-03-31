@@ -67,7 +67,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tLineage\tPhaTYPScore\tLifestyle\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\t-\n')
+                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered by length\t0\t-\n')
             logger.info(f"PhaTYP finished! please check the results in {os.path.join(rootpth,out_dir, 'phatyp_prediction.tsv')}")
             exit()
     else:
@@ -89,7 +89,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tTYPE\tPhaTYPScore\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered\t0\n')
+                    file_out.write(f'{record.id}\t{len(record.seq)}\tfiltered by length\t0\n')
             logger.info(f"PhaTYP finished! please check the results in {os.path.join(rootpth,out_dir, 'phatyp_prediction.tsv')}")
             exit()
 
@@ -134,7 +134,7 @@ def run(inputs):
     else:
         logger.info("[3/7] running all-against-all alignment...")
         # align to the database
-        run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+        run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover {inputs.cov} --subject-cover {inputs.cov} --quiet")
         run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
     
 
@@ -197,7 +197,7 @@ def run(inputs):
         except:
             if len(record.seq) < inputs.len:
                 contigs_add.append(record.id)
-                all_pred.append('filtered')
+                all_pred.append('filtered by length')
                 all_score.append('0')
             else:
                 contigs_add.append(record.id)

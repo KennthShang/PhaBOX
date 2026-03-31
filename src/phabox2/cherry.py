@@ -91,7 +91,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/cherry_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tHost\tCHERRYScore\tMethod\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id},{len(record.seq)},filtered,0,-\n')
+                    file_out.write(f'{record.id},{len(record.seq)},filtered by length,0,-\n')
             logger.info(f"Cherry finished! please check the results in {os.path.join(rootpth,out_dir, 'cherry_prediction.tsv')}")
             exit()
     else:
@@ -112,7 +112,7 @@ def run(inputs):
             with open(f'{rootpth}/{out_dir}/cherry_prediction.tsv', 'w') as file_out:
                 file_out.write("Accession\tLength\tHost\tCHERRYScore\tMethod\n")
                 for record in SeqIO.parse(contigs, 'fasta'):
-                    file_out.write(f'{record.id},{len(record.seq)},filtered,0,-\n')
+                    file_out.write(f'{record.id},{len(record.seq)},filtered by length,0,-\n')
             logger.info(f"Cherry finished! please check the results in {os.path.join(rootpth,out_dir, 'cherry_prediction.tsv')}")
             exit()
 
@@ -318,7 +318,7 @@ def run(inputs):
 
             for db in os.listdir(f'{rootpth}/{midfolder}/bfolder_protein_db/'):
                 db_name = db.split('.dmnd')[0]
-                _ = os.system(f'diamond blastp -d {rootpth}/{midfolder}/bfolder_protein_db/{db} -q {rootpth}/{midfolder}/query_protein.fa -o {rootpth}/{midfolder}/bfolder_protein_align/{db_name}.tsv --threads {threads}  --query-cover 50 --subject-cover 50 --quiet')
+                _ = os.system(f'diamond blastp -d {rootpth}/{midfolder}/bfolder_protein_db/{db} -q {rootpth}/{midfolder}/query_protein.fa -o {rootpth}/{midfolder}/bfolder_protein_align/{db_name}.tsv --threads {threads}  --query-cover {inputs.cov} --subject-cover {inputs.cov} --quiet')
 
             df_list = []
             for file in os.listdir(f'{rootpth}/{midfolder}/bfolder_protein_align/'):
@@ -476,7 +476,7 @@ def run(inputs):
                 logger.info(f"[4/{jy}] writing the results...")
                 # Create lists by combining existing data with new entries
                 all_contigs = list(crispr_pred_mag.keys())                               + blast_set                                                  + tRNA_set                                                    + kmer_set                                                    + filtered_contig                     + unpredicted_contig
-                all_pred = [crispr_pred_mag[item]['pred'] for item in crispr_pred_mag]   + [blast_pred_mag[item]['pred'] for item in blast_set]       + [tRNA_pred_mag[item]['pred'] for item in tRNA_set]          + [virus2host_kmer_reorg[item]['pred'] for item in kmer_set]  + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+                all_pred = [crispr_pred_mag[item]['pred'] for item in crispr_pred_mag]   + [blast_pred_mag[item]['pred'] for item in blast_set]       + [tRNA_pred_mag[item]['pred'] for item in tRNA_set]          + [virus2host_kmer_reorg[item]['pred'] for item in kmer_set]  + ['filtered by length'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
                 all_score = [crispr_pred_mag[item]['ident'] for item in crispr_pred_mag] + [blast_pred_mag[item]['ident'] for item in blast_set]      + [tRNA_pred_mag[item]['ident'] for item in tRNA_set]         + [virus2host_kmer_reorg[item]['ident'] for item in kmer_set] + [0] * len(filtered_contig)          + [0] * len(unpredicted_contig)
                 all_length = [genomes[item].length for item in crispr_pred_mag]          + [genomes[item].length for item in blast_set]               + [genomes[item].length for item in tRNA_set]                 + [genomes[item].length for item in kmer_set]                 + filtered_lenth                      + unpredicted_length
                 all_method = ['CIRPSR-based (MAG)']*len(crispr_pred_mag)                 + ['BLASTN-based (MAG)']*len(blast_set)                      + ['tRNA-based (MAG)']*len(tRNA_set)                          + ['Kmer-based (MAG)']*len(kmer_set)                          + ['-'] * len(filtered_contig)        + ['-'] * len(unpredicted_contig)
@@ -648,10 +648,10 @@ def run(inputs):
         # generate the diamond database
         run_command(f"diamond makedb --in {rootpth}/{midfolder}/query_protein.fa -d {rootpth}/{midfolder}/query_protein.dmnd --threads {threads} --quiet")
         # align to the database
-        run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+        run_command(f"diamond blastp --db {db_dir}/RefVirus.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/db_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover {inputs.cov} --subject-cover {inputs.cov} --quiet")
         run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/db_results.tab > {rootpth}/{midfolder}/db_results.abc")
         # align to itself
-        run_command(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover 50 --subject-cover 50 --quiet")
+        run_command(f"diamond blastp --db {rootpth}/{midfolder}/query_protein.dmnd --query {rootpth}/{midfolder}/query_protein.fa --out {rootpth}/{midfolder}/self_results.tab --outfmt 6 --threads {threads} --evalue 1e-5 --max-target-seqs 10000 --query-cover {inputs.cov} --subject-cover {inputs.cov} --quiet")
         run_command(f"awk '{{print $1,$2,$3,$12}}' {rootpth}/{midfolder}/self_results.tab > {rootpth}/{midfolder}/self_results.abc")
 
 
@@ -1152,7 +1152,7 @@ def run(inputs):
 
     # Create lists by combining existing data with new entries
     all_contigs = df['Accession'].tolist() + filtered_contig + unpredicted_contig
-    all_pred = df['Host'].tolist() + ['filtered'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
+    all_pred = df['Host'].tolist() + ['filtered by length'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
     all_score = df['Score'].tolist() + [0] * len(filtered_contig) + [0] * len(unpredicted_contig)
     all_length = df['Length'].tolist() + filtered_lenth + unpredicted_length
     all_method = df['Method'].tolist() + ['-'] * len(filtered_contig) + ['-'] * len(unpredicted_contig)
