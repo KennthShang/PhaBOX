@@ -978,19 +978,28 @@ def run(inputs):
     groups = cluster_df.groupby('cluster')
     for cluster, group in groups:
         acc_list = group['Accession']
-        # check whether  NCBI accession exist
+        # check whether NCBI accession (phabox) exist
         if any('phabox' in acc for acc in acc_list):
             continue
-        idx = group['Length'].idxmax()
-        Lineage = group.loc[idx, 'Lineage']
+
+        # sort by Length descending, then find the first valid Lineage
+        sorted_group = group.sort_values('Length', ascending=False)
+        valid = sorted_group[sorted_group['Lineage'] != 'no hits to database']
+
+        # if all sequences are "no hits to database", skip this cluster
+        if valid.empty:
+            continue
+
+        best_idx = valid.index[0]
+        Lineage = group.loc[best_idx, 'Lineage']
         cluster_df.loc[group.index, 'Lineage'] = Lineage
-        Genus = group.loc[idx, 'Genus']
+        Genus = group.loc[best_idx, 'Genus']
         cluster_df.loc[group.index, 'Genus'] = Genus
-        Host = group.loc[idx, 'Host']
+        Host = group.loc[best_idx, 'Host']
         cluster_df.loc[group.index, 'Host'] = Host
-        ncbi = group.loc[idx, 'Host_NCBI']
+        ncbi = group.loc[best_idx, 'Host_NCBI']
         cluster_df.loc[group.index, 'Host_NCBI'] = ncbi
-        gtdb = group.loc[idx, 'Host_GTDB']
+        gtdb = group.loc[best_idx, 'Host_GTDB']
         cluster_df.loc[group.index, 'Host_GTDB'] = gtdb
 
     # assign the Lineage according to the entry in database
