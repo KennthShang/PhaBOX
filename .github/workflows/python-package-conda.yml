@@ -5,6 +5,10 @@ on:
     branches:
     - main
     - release/*
+  pull_request:
+    branches:
+      - main 
+    types: [opened, synchronize, reopened] 
 
 jobs:
   build-linux:
