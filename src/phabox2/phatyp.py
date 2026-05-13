@@ -217,7 +217,7 @@ def run(inputs):
         rows_to_update = ~merged_df['Lineage'].apply(lambda lineage: any(group in lineage for group in ProkaryoticGroup))
         # Update the pred_csv dataframe
         pred_csv.loc[rows_to_update, 'TYPE'] = '-'
-        pred_csv.loc[rows_to_update, 'PhaTYPScore'] = '0'
+        pred_csv.loc[rows_to_update, 'PhaTYPScore'] = 0.0
 
     pred_csv.to_csv(f'{rootpth}/{out_dir}/phatyp_prediction.tsv', index = False, sep='\t')
 
