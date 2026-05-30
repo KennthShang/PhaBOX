@@ -910,6 +910,8 @@ def run(inputs):
     cluster_df['Host_NCBI'] = cluster_df['Host'].apply(lambda x: genus2hostlineage[x] if x in genus2hostlineage else '-')
     cluster_df['Host_GTDB'] = cluster_df['Host'].apply(lambda x: '-')
     cluster_df['Score'] = 0
+    for col in ['Lineage', 'Genus', 'Host', 'Host_NCBI', 'Host_GTDB']:
+        cluster_df[col] = cluster_df[col].astype(object)
 
 
     ref_df = cluster_df[cluster_df['Accession'].isin(ref_df['Accession'])]
@@ -974,61 +976,43 @@ def run(inputs):
     cluster_df.reset_index(drop=True, inplace=True)
 
 
-    # assign the Lineage according to the entry with longest length
-    groups = cluster_df.groupby('cluster')
-    for cluster, group in groups:
-        acc_list = group['Accession']
-        # check whether NCBI accession (phabox) exist
-        if any('phabox' in acc for acc in acc_list):
-            continue
+    # Propagate lineage/host within clusters from the best representative
+    phabox_clusters = set(
+        cluster_df.loc[cluster_df['Accession'].str.contains('phabox', na=False), 'cluster'].unique()
+    )
+    is_query_row = cluster_df['Accession'].isin(set(query_df['Accession']))
 
-        # sort by Length descending, then find the first valid Lineage
-        sorted_group = group.sort_values('Length', ascending=False)
-        valid = sorted_group[sorted_group['Lineage'] != 'no hits to database']
+    # Non-phabox clusters: propagate from the longest entry with a valid Lineage
+    non_phabox_valid = cluster_df[
+        ~cluster_df['cluster'].isin(phabox_clusters) &
+        (cluster_df['Lineage'] != 'no hits to database')
+    ].sort_values('Length', ascending=False)
+    best_non_phabox = non_phabox_valid.drop_duplicates(subset='cluster', keep='first').set_index('cluster')
+    if not best_non_phabox.empty:
+        update_mask = cluster_df['cluster'].isin(best_non_phabox.index)
+        for col in ['Lineage', 'Genus', 'Host', 'Host_NCBI', 'Host_GTDB']:
+            cluster_df.loc[update_mask, col] = cluster_df.loc[update_mask, 'cluster'].map(best_non_phabox[col])
 
-        # if all sequences are "no hits to database", skip this cluster
-        if valid.empty:
-            continue
+    # Phabox clusters: propagate from reference entries
+    phabox_rows = cluster_df[cluster_df['Accession'].str.contains('phabox', na=False)]
+    genus_per_cluster = phabox_rows[phabox_rows['Genus'] != '-'].groupby('cluster')['Genus'].nunique()
+    single_genus = set(genus_per_cluster[genus_per_cluster == 1].index)
+    multi_genus  = phabox_clusters - single_genus
 
-        best_idx = valid.index[0]
-        Lineage = group.loc[best_idx, 'Lineage']
-        cluster_df.loc[group.index, 'Lineage'] = Lineage
-        Genus = group.loc[best_idx, 'Genus']
-        cluster_df.loc[group.index, 'Genus'] = Genus
-        Host = group.loc[best_idx, 'Host']
-        cluster_df.loc[group.index, 'Host'] = Host
-        ncbi = group.loc[best_idx, 'Host_NCBI']
-        cluster_df.loc[group.index, 'Host_NCBI'] = ncbi
-        gtdb = group.loc[best_idx, 'Host_GTDB']
-        cluster_df.loc[group.index, 'Host_GTDB'] = gtdb
+    if single_genus:
+        best_phabox = (phabox_rows[phabox_rows['cluster'].isin(single_genus)]
+                       .drop_duplicates(subset='cluster', keep='first')
+                       .set_index('cluster'))
+        query_single_mask = is_query_row & cluster_df['cluster'].isin(single_genus)
+        all_single_mask = cluster_df['cluster'].isin(single_genus)
+        cluster_df.loc[query_single_mask, 'Lineage'] = cluster_df.loc[query_single_mask, 'cluster'].map(best_phabox['Lineage'])
+        for col in ['Genus', 'Host', 'Host_NCBI', 'Host_GTDB']:
+            cluster_df.loc[all_single_mask, col] = cluster_df.loc[all_single_mask, 'cluster'].map(best_phabox[col])
 
-    # assign the Lineage according to the entry in database
-    for cluster, group in groups:
-        acc_list = group['Accession']
-        # check whether  NCBI accession exist
-        if not any('phabox' in acc for acc in acc_list):
-            continue
-        ref_group = group[group['Accession'].apply(lambda x: 'phabox' in x)]
-        query_group = group[group['Accession'].isin(query_df['Accession'])]
-        if len(ref_group[ref_group['Genus'] != '-']['Genus'].unique()) == 1:
-            Lineage = ref_group['Lineage'].values[0]
-            cluster_df.loc[query_group.index, 'Lineage'] = Lineage
-            Genus = ref_group['Genus'].values[0]
-            cluster_df.loc[group.index, 'Genus'] = Genus
-            Host = ref_group['Host'].values[0]
-            cluster_df.loc[group.index, 'Host'] = Host
-            ncbi = ref_group['Host_NCBI'].values[0]
-            cluster_df.loc[group.index, 'Host_NCBI'] = ncbi
-            gtdb = ref_group['Host_GTDB'].values[0]
-            cluster_df.loc[group.index, 'Host_GTDB'] = gtdb
-        else:
-            # assign the host for the query group accoding to the genus
-            for idx, row in query_group[query_group['Genus'] != '-'].iterrows():
-                try:
-                    cluster_df.loc[idx, 'Host'] = genus2host[row['Genus']]
-                except:
-                    pass
-
+    if multi_genus:
+        valid_query = cluster_df[is_query_row & cluster_df['cluster'].isin(multi_genus) & (cluster_df['Genus'] != '-')]
+        mapped = valid_query['Genus'].map(genus2host)
+        cluster_df.loc[mapped.dropna().index, 'Host'] = mapped.dropna()
 
     df = cluster_df[cluster_df['Accession'].isin(genomes.keys())].copy()
     df = df.reset_index(drop=True)
@@ -1043,63 +1027,30 @@ def run(inputs):
     # Update 'Method' column where 'Host' is not '-'
     df.loc[predicted.index, 'Method'] = 'AAI-based'
 
-    for index, row in unpredicted.iterrows():
-        if row['Crispr_mag'] != '-':
-            df.loc[index, 'Host'] = row['Crispr_mag']
-            df.loc[index, 'Score'] = row['Crispr_score_mag']
-            df.loc[index, 'Method'] = 'CRISPR-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
-        elif row['BLASTN_mag'] != '-':
-            df.loc[index, 'Host'] = row['BLASTN_mag']
-            df.loc[index, 'Score'] = row['BLASTN_score_mag']
-            df.loc[index, 'Method'] = 'BLASTN-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
-        elif row['tRNA_mag'] != '-':
-            df.loc[index, 'Host'] = row['tRNA_mag']
-            df.loc[index, 'Score'] = row['tRNA_score_mag']
-            df.loc[index, 'Method'] = 'tRNA-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
-        elif row['Kmer_mag'] != '-':
-            df.loc[index, 'Host'] = row['Kmer_mag']
-            df.loc[index, 'Score'] = row['Kmer_score_mag']
-            df.loc[index, 'Method'] = 'Kmer-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
-        elif row['Crispr_db'] != '-':
-            df.loc[index, 'Host'] = row['Crispr_db']
-            df.loc[index, 'Score'] = row['Crispr_score_db']
-            df.loc[index, 'Method'] = 'CRISPR-based (DB)'
-            df.loc[index, 'Host_NCBI'] = row['Crispr_NCBI_db']
-            df.loc[index, 'Host_GTDB'] = row['Crispr_GTDB_db']
+    # Priority cascade: apply lowest-to-highest so highest-priority source wins
+    # CRISPR-DB: last resort for currently-unpredicted rows only
+    crispr_db_mask = (df['Host'] == '-') & (df['Crispr_db'] != '-')
+    if crispr_db_mask.any():
+        df.loc[crispr_db_mask, 'Host']      = df.loc[crispr_db_mask, 'Crispr_db']
+        df.loc[crispr_db_mask, 'Score']     = df.loc[crispr_db_mask, 'Crispr_score_db']
+        df.loc[crispr_db_mask, 'Method']    = 'CRISPR-based (DB)'
+        df.loc[crispr_db_mask, 'Host_NCBI'] = df.loc[crispr_db_mask, 'Crispr_NCBI_db']
+        df.loc[crispr_db_mask, 'Host_GTDB'] = df.loc[crispr_db_mask, 'Crispr_GTDB_db']
 
-    for index, row in predicted.iterrows():
-        if row['Crispr_mag'] != '-':
-            df.loc[index, 'Host'] = row['Crispr_mag']
-            df.loc[index, 'Score'] = row['Crispr_score_mag']
-            df.loc[index, 'Method'] = 'CRISPR-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
-        elif row['BLASTN_mag'] != '-':
-            df.loc[index, 'Host'] = row['BLASTN_mag']
-            df.loc[index, 'Score'] = row['BLASTN_score_mag']
-            df.loc[index, 'Method'] = 'BLASTN-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
-        elif row['tRNA_mag'] != '-':
-            df.loc[index, 'Host'] = row['tRNA_mag']
-            df.loc[index, 'Score'] = row['tRNA_score_mag']
-            df.loc[index, 'Method'] = 'tRNA-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
-        elif row['Kmer_mag'] != '-':
-            df.loc[index, 'Host'] = row['Kmer_mag']
-            df.loc[index, 'Score'] = row['Kmer_score_mag']
-            df.loc[index, 'Method'] = 'Kmer-based (MAG)'
-            df.loc[index, 'Host_NCBI'] = '-'
-            df.loc[index, 'Host_GTDB'] = '-'
+    # MAG-based sources override AAI and CRISPR-DB (apply to all rows, lowest → highest priority)
+    for host_col, score_col, method in [
+        ('Kmer_mag',   'Kmer_score_mag',   'Kmer-based (MAG)'),
+        ('tRNA_mag',   'tRNA_score_mag',   'tRNA-based (MAG)'),
+        ('BLASTN_mag', 'BLASTN_score_mag', 'BLASTN-based (MAG)'),
+        ('Crispr_mag', 'Crispr_score_mag', 'CRISPR-based (MAG)'),
+    ]:
+        mask = df[host_col] != '-'
+        if mask.any():
+            df.loc[mask, 'Host']      = df.loc[mask, host_col]
+            df.loc[mask, 'Score']     = df.loc[mask, score_col]
+            df.loc[mask, 'Method']    = method
+            df.loc[mask, 'Host_NCBI'] = '-'
+            df.loc[mask, 'Host_GTDB'] = '-'
 
     """
     groups = df.groupby('cluster')
